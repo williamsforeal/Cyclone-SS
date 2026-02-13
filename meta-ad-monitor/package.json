@@ -1,0 +1,16 @@
+{
+  "name": "meta-ad-library-monitor",
+  "version": "1.0.0",
+  "description": "Monitor top-performing Facebook ads for DTC brands, sorted by impressions",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "better-sqlite3": "^9.4.3",
+    "dotenv": "^16.4.5",
+    "node-cron": "^3.0.3"
+  }
+}

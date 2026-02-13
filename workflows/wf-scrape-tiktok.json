@@ -1,0 +1,127 @@
+{
+  "name": "WF-Scrape-TikTok Transcripts",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bomb-scrape-tiktok",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-tiktok",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.apify.com/v2/acts/emQXBCL3xePZYgJyn/runs?token={{ $env.APIFY_TOKEN }}&waitForFinish=120",
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"videoUrls\": {{ JSON.stringify($json.videoUrls) }}\n}",
+        "options": {}
+      },
+      "id": "apify-tiktok",
+      "name": "Apify - TikTok Transcripts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.apify.com/v2/acts/emQXBCL3xePZYgJyn/runs/{{ $json.data.id }}/dataset/items?token={{ $env.APIFY_TOKEN }}",
+        "options": {}
+      },
+      "id": "fetch-results",
+      "name": "Fetch Dataset Items",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are a DTC product research analyst. Given TikTok video transcripts, extract the key pain points, objections, and buying signals mentioned. Return a JSON array of objects with: title (short label), notes (key insight), url (video url if available)."
+            },
+            {
+              "role": "user",
+              "content": "=Analyze these TikTok transcripts and extract pain points/buying signals:\n\n{{ JSON.stringify($json) }}"
+            }
+          ]
+        },
+        "options": {
+          "responseFormat": "json_object"
+        }
+      },
+      "id": "ai-extract",
+      "name": "AI - Extract Pain Points",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.N8N_CALLBACK_URL }}/api/webhook/scrape-results",
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"type\": \"trend\",\n  \"platform\": \"tiktok\",\n  \"items\": {{ $json.message.content }}\n}",
+        "options": {}
+      },
+      "id": "callback",
+      "name": "POST Results to App",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"success\": true, \"message\": \"TikTok scrape job queued\" }"
+      },
+      "id": "respond",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [460, 500]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          { "node": "Apify - TikTok Transcripts", "type": "main", "index": 0 },
+          { "node": "Respond to Webhook", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Apify - TikTok Transcripts": {
+      "main": [
+        [{ "node": "Fetch Dataset Items", "type": "main", "index": 0 }]
+      ]
+    },
+    "Fetch Dataset Items": {
+      "main": [
+        [{ "node": "AI - Extract Pain Points", "type": "main", "index": 0 }]
+      ]
+    },
+    "AI - Extract Pain Points": {
+      "main": [
+        [{ "node": "POST Results to App", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "description": "Scrapes TikTok video transcripts via Apify actor emQXBCL3xePZYgJyn, extracts pain points with GPT-4o-mini, POSTs results back to /api/webhook/scrape-results as trendItems (platform: tiktok). Trigger: POST /webhook/bomb-scrape-tiktok with { videoUrls: [] }. Requires: APIFY_TOKEN, N8N_CALLBACK_URL env vars."
+  }
+}

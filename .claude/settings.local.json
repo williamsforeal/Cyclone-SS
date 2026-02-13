@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Read(//c/Users/Jake/.cursor/worktrees/Cyclone-SS/**)"
+      "Read(//c/Users/Jake/.cursor/worktrees/Cyclone-SS/**)",
+      "WebFetch(domain:docs.apify.com)",
+      "WebFetch(domain:api.apify.com)"
     ]
   }
 }

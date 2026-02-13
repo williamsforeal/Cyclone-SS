@@ -1,0 +1,80 @@
+{
+  "_meta": {
+    "variant": "B",
+    "name": "PalmAura Variant B — DTC Static Ad",
+    "description": "Clean, graphic, high-contrast commercial photography. Strong negative space for text overlay. Casper/Bombas/Olipop aesthetic. Built for performance.",
+    "routing_triggers": {
+      "ad_types": ["Comparison", "Before/After", "Benefits Wheel"],
+      "angles": ["Us vs Them", "Cost", "Science", "Social Proof"],
+      "avatars": ["General", "Desk Workers (when angle is Cost or Science)"],
+      "note": "Strongest signal is ad_type. If Comparison or Benefits Wheel → always B."
+    },
+    "ksettings": {
+      "steps": 25,
+      "cfg": 5.0,
+      "sampler_name": "dpmpp_2m",
+      "scheduler": "karras",
+      "note": "Higher CFG = prompt adherence, crisp execution. dpmpp_2m karras = sharp edges, clean tones."
+    },
+    "style_suffix": "clean DTC advertisement, commercial photography, high contrast, strong composition, generous negative space in lower third, professional studio lighting, crisp edges, minimal design, graphic clarity, brand campaign aesthetic",
+    "negative_emphasis": "No people, no faces, no warm bokeh, no clutter — this is a GRAPHIC ad not a lifestyle photo",
+    "format": "ComfyUI API format — use as the value of the 'prompt' key when POSTing to /api/prompt"
+  },
+  "1": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "flux1-dev.safetensors"
+    }
+  },
+  "2": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "SCENE_PROMPT_PLACEHOLDER, clean DTC advertisement aesthetic, commercial photography, high contrast, strong composition, generous negative space in lower third for text overlay, professional studio lighting, crisp sharp edges, minimal design, graphic clarity, brand campaign aesthetic, white or neutral background tones",
+      "clip": ["1", 1]
+    }
+  },
+  "3": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "text, words, letters, logos, watermarks, typography, overlay, captions, massager, device, product, PalmAura, people, faces, hands, portrait, blurry, bokeh, film grain, natural imperfections, warm soft tones, lo-fi aesthetic, messy, cluttered, low quality, distorted, deformed",
+      "clip": ["1", 1]
+    }
+  },
+  "4": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+      "width": 1024,
+      "height": 1280,
+      "batch_size": 1
+    }
+  },
+  "5": {
+    "class_type": "KSampler",
+    "inputs": {
+      "seed": 0,
+      "steps": 25,
+      "cfg": 5.0,
+      "sampler_name": "dpmpp_2m",
+      "scheduler": "karras",
+      "denoise": 1.0,
+      "model": ["1", 0],
+      "positive": ["2", 0],
+      "negative": ["3", 0],
+      "latent_image": ["4", 0]
+    }
+  },
+  "6": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": ["5", 0],
+      "vae": ["1", 2]
+    }
+  },
+  "7": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "palmaura_B_",
+      "images": ["6", 0]
+    }
+  }
+}

@@ -1,0 +1,127 @@
+{
+  "name": "WF-Scrape-IG Reel Transcripts",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bomb-scrape-ig-transcripts",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-igt",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.apify.com/v2/acts/3C7L8IMQOkq3isV2Y/runs?token={{ $env.APIFY_TOKEN }}&waitForFinish=180",
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"urls\": {{ JSON.stringify($json.reelUrls) }}\n}",
+        "options": {}
+      },
+      "id": "apify-igt",
+      "name": "Apify - IG Transcript Extractor",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.apify.com/v2/acts/3C7L8IMQOkq3isV2Y/runs/{{ $json.data.id }}/dataset/items?token={{ $env.APIFY_TOKEN }}",
+        "options": {}
+      },
+      "id": "fetch-igt-results",
+      "name": "Fetch Dataset Items",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are a DTC product research analyst specializing in finding market opportunities. Given Instagram Reel transcripts with engagement data, extract: key pain points mentioned, objections buyers have, buying signals, product gaps mentioned. For each insight return: title (short label, <60 chars), notes (the insight + engagement context), url (reel url). Return as JSON array under key 'items'."
+            },
+            {
+              "role": "user",
+              "content": "=Extract pain points and buying signals from these IG Reel transcripts:\n\n{{ JSON.stringify($json.slice(0, 10)) }}"
+            }
+          ]
+        },
+        "options": {
+          "responseFormat": "json_object"
+        }
+      },
+      "id": "ai-extract-igt",
+      "name": "AI - Extract Insights",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.N8N_CALLBACK_URL }}/api/webhook/scrape-results",
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"type\": \"trend\",\n  \"platform\": \"instagram\",\n  \"items\": {{ $json.message.content.items }}\n}",
+        "options": {}
+      },
+      "id": "callback-igt",
+      "name": "POST Results to App",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"success\": true, \"message\": \"IG transcript scrape job queued\" }"
+      },
+      "id": "respond-igt",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [460, 500]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          { "node": "Apify - IG Transcript Extractor", "type": "main", "index": 0 },
+          { "node": "Respond to Webhook", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Apify - IG Transcript Extractor": {
+      "main": [
+        [{ "node": "Fetch Dataset Items", "type": "main", "index": 0 }]
+      ]
+    },
+    "Fetch Dataset Items": {
+      "main": [
+        [{ "node": "AI - Extract Insights", "type": "main", "index": 0 }]
+      ]
+    },
+    "AI - Extract Insights": {
+      "main": [
+        [{ "node": "POST Results to App", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "description": "Extracts transcripts from Instagram Reels via Apify actor 3C7L8IMQOkq3isV2Y, analyzes for pain points/buying signals with GPT-4o-mini, POSTs results to /api/webhook/scrape-results as trendItems (platform: instagram). Trigger: POST /webhook/bomb-scrape-ig-transcripts with { reelUrls: [] }. Requires: APIFY_TOKEN, N8N_CALLBACK_URL env vars."
+  }
+}

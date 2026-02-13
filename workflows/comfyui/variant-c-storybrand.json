@@ -1,0 +1,80 @@
+{
+  "_meta": {
+    "variant": "C",
+    "name": "PalmAura Variant C — StoryBrand Emotional",
+    "description": "Cinematic, warm, narrative-driven. Golden hour. Implies a character in a moment of transformation. Built for the Aging Independent avatar and Testimonial/Transformation angles. Makes the viewer FEEL something.",
+    "routing_triggers": {
+      "ad_types": ["Testimonial"],
+      "angles": ["Transformation", "Gift", "Identity"],
+      "avatars": ["Women 45+", "Hobbyists", "Gift Buyers"],
+      "note": "Avatar is a strong signal here. Women 45+ or Gift Buyers → always C regardless of angle."
+    },
+    "ksettings": {
+      "steps": 26,
+      "cfg": 3.0,
+      "sampler_name": "euler_ancestral",
+      "scheduler": "normal",
+      "note": "Lowest CFG = most organic, emotional quality. euler_ancestral = texture and variation, slight painterly feel. This is intentional — makes it feel more human."
+    },
+    "style_suffix": "cinematic storytelling, warm emotional lighting, golden hour atmosphere, documentary photography style, hope and transformation, intimate moment, soft bokeh background, nostalgic warmth, quiet determination",
+    "negative_emphasis": "No clinical or sterile aesthetics — warmth and hope only",
+    "format": "ComfyUI API format — use as the value of the 'prompt' key when POSTing to /api/prompt"
+  },
+  "1": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "flux1-dev.safetensors"
+    }
+  },
+  "2": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "SCENE_PROMPT_PLACEHOLDER, cinematic storytelling photography, warm emotional lighting, golden hour atmosphere, documentary photography style, hope and transformation narrative, intimate quiet moment, soft bokeh background, nostalgic warmth, quiet determination, Leica M10 aesthetic",
+      "clip": ["1", 1]
+    }
+  },
+  "3": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "text, words, letters, logos, watermarks, typography, overlay, captions, massager, device, product, PalmAura, electronic, cold tones, clinical, sterile, harsh lighting, high contrast, graphic design, minimalist, artificial, over-processed, CGI, fake, blurry, low quality, distorted, deformed",
+      "clip": ["1", 1]
+    }
+  },
+  "4": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+      "width": 1024,
+      "height": 1280,
+      "batch_size": 1
+    }
+  },
+  "5": {
+    "class_type": "KSampler",
+    "inputs": {
+      "seed": 0,
+      "steps": 26,
+      "cfg": 3.0,
+      "sampler_name": "euler_ancestral",
+      "scheduler": "normal",
+      "denoise": 1.0,
+      "model": ["1", 0],
+      "positive": ["2", 0],
+      "negative": ["3", 0],
+      "latent_image": ["4", 0]
+    }
+  },
+  "6": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": ["5", 0],
+      "vae": ["1", 2]
+    }
+  },
+  "7": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "palmaura_C_",
+      "images": ["6", 0]
+    }
+  }
+}

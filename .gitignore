@@ -165,3 +165,4 @@ nul
 # Generated analysis/template output files
 analysis_*.txt
 template_*.json
+*.lnk

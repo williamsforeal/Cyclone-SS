@@ -1,0 +1,127 @@
+{
+  "name": "WF-Meta-Ad-Library-Scraper",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bomb-meta-ad-scrape",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-meta",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.apify.com/v2/acts/JJghSZmShuco4j9gJ/runs?token={{ $env.APIFY_TOKEN }}&waitForFinish=300",
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"startUrls\": [{ \"url\": \"https://www.facebook.com/ads/library/?active_status=active&sort_data[direction]=desc&sort_data[mode]=total_impressions&view_all_page_id={{ $json.pageId }}\" }],\n  \"resultsLimit\": {{ $json.limit || 20 }},\n  \"activeStatus\": \"active\"\n}",
+        "options": {}
+      },
+      "id": "apify-meta",
+      "name": "Apify - Meta Ad Library",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.apify.com/v2/acts/JJghSZmShuco4j9gJ/runs/{{ $json.data.id }}/dataset/items?token={{ $env.APIFY_TOKEN }}",
+        "options": {}
+      },
+      "id": "fetch-meta-results",
+      "name": "Fetch Dataset Items",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are a DTC ad creative strategist. Analyze Meta Ad Library results and for each ad classify:\n- asset_type: image | video | carousel | collection\n- visual_format: lifestyle | product_only | ugc | talking_head | slideshow | animation\n- messaging_angle: pain_point | social_proof | transformation | authority | curiosity | scarcity | value\n- hook_tactic: question | bold_claim | statistic | story | direct_offer | pattern_interrupt\n- offer_type: discount | free_trial | bundle | guarantee | limited_time | standard\n\nReturn JSON array under key 'ads'. Each item: { ad_archive_id, page_name, start_date, display_format, ad_text, text_hook, hook_excerpt, visual_notes, asset_type, visual_format, messaging_angle, hook_tactic, offer_type, media_url, permalink_url }"
+            },
+            {
+              "role": "user",
+              "content": "=Analyze these Meta ads and apply the 5-tag taxonomy:\n\n{{ JSON.stringify($json.slice(0, 20)) }}"
+            }
+          ]
+        },
+        "options": {
+          "responseFormat": "json_object"
+        }
+      },
+      "id": "ai-analyze-meta",
+      "name": "AI - Analyze & Tag Ads",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.N8N_CALLBACK_URL }}/api/meta-ads/ingest",
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"brandId\": \"{{ $('Webhook').item.json.brandId }}\",\n  \"jobId\": \"{{ $('Webhook').item.json.jobId }}\",\n  \"ads\": {{ JSON.stringify($json.message.content.ads) }}\n}",
+        "options": {}
+      },
+      "id": "callback-meta",
+      "name": "POST Results to App",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"success\": true, \"message\": \"Meta Ad Library scrape job queued\" }"
+      },
+      "id": "respond-meta",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [460, 500]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          { "node": "Apify - Meta Ad Library", "type": "main", "index": 0 },
+          { "node": "Respond to Webhook", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Apify - Meta Ad Library": {
+      "main": [
+        [{ "node": "Fetch Dataset Items", "type": "main", "index": 0 }]
+      ]
+    },
+    "Fetch Dataset Items": {
+      "main": [
+        [{ "node": "AI - Analyze & Tag Ads", "type": "main", "index": 0 }]
+      ]
+    },
+    "AI - Analyze & Tag Ads": {
+      "main": [
+        [{ "node": "POST Results to App", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "description": "Scrapes Meta Ad Library for a brand's Facebook page via Apify actor JJghSZmShuco4j9gJ, applies 5-tag AI taxonomy (asset_type, visual_format, messaging_angle, hook_tactic, offer_type) with GPT-4o-mini, POSTs analyzed ads to /api/meta-ads/ingest. Trigger: POST /webhook/bomb-meta-ad-scrape with { pageId, brandId, jobId, limit? }. Requires: APIFY_TOKEN, N8N_CALLBACK_URL env vars. Results saved to Airtable base appTXrjxnh0XRggsp (Ads Intelligence table tblrQjmINznO4rgtk)."
+  }
+}

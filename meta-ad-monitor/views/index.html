@@ -1,0 +1,2716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meta Ads Spy</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+
+    :root {
+      --bg-primary: #f0f2f5;
+      --bg-secondary: #ffffff;
+      --bg-card: #ffffff;
+      --border-color: #dddfe2;
+      --text-primary: #1c1e21;
+      --text-secondary: #65676b;
+      --accent-blue: #1877f2;
+      --accent-green: #31a24c;
+      --accent-orange: #f7931a;
+    }
+
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+    }
+
+    .glass-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    .glass-card-hover:hover {
+      background: #f5f6f7;
+      border-color: #bec3c9;
+    }
+
+    .gradient-text {
+      color: var(--accent-blue);
+    }
+
+    .btn-primary {
+      background: var(--accent-blue);
+      color: white;
+      transition: all 0.2s;
+    }
+
+    .btn-primary:hover {
+      background: #166fe5;
+      box-shadow: 0 2px 8px rgba(24, 119, 242, 0.3);
+    }
+
+    .btn-secondary {
+      background: #e4e6eb;
+      border: 1px solid #dddfe2;
+      color: var(--text-primary);
+      transition: all 0.2s;
+    }
+
+    .btn-secondary:hover {
+      background: #d8dadf;
+    }
+
+    input[type="date"] {
+      color-scheme: light;
+    }
+
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      cursor: pointer;
+    }
+
+    .ad-card {
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .ad-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .tab-active {
+      color: var(--accent-blue);
+      border-bottom: 2px solid var(--accent-blue);
+    }
+
+    .modal-overlay {
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+    }
+
+    .spinner {
+      border: 3px solid #e4e6eb;
+      border-top: 3px solid var(--accent-blue);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .fade-in {
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Toast notifications */
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .toast {
+      background: #ffffff;
+      border: 1px solid #dddfe2;
+      border-radius: 8px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 320px;
+      max-width: 420px;
+      animation: slideIn 0.3s ease-out;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .toast.success { border-left: 3px solid var(--accent-green); }
+    .toast.info { border-left: 3px solid var(--accent-blue); }
+    .toast.warning { border-left: 3px solid var(--accent-orange); }
+    .toast.error { border-left: 3px solid #fa383e; }
+
+    .toast-icon {
+      width: 24px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    .toast-content {
+      flex: 1;
+    }
+
+    .toast-title {
+      font-weight: 600;
+      font-size: 14px;
+      margin-bottom: 2px;
+    }
+
+    .toast-message {
+      font-size: 13px;
+      color: #65676b;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(100px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes slideOut {
+      from { opacity: 1; transform: translateX(0); }
+      to { opacity: 0; transform: translateX(100px); }
+    }
+
+    .scrollbar-hide::-webkit-scrollbar {
+      display: none;
+    }
+
+    .scrollbar-hide {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .badge-green {
+      background: #e6f4ea;
+      color: #1e7e34;
+    }
+
+    .badge-blue {
+      background: #e7f3ff;
+      color: #1877f2;
+    }
+
+    .badge-orange {
+      background: #fff4e5;
+      color: #e67700;
+    }
+
+    .badge-gray {
+      background: #e4e6eb;
+      color: #65676b;
+    }
+
+    /* AI Tag badge colors */
+    .badge-purple {
+      background: #f3e8ff;
+      color: #7c3aed;
+    }
+
+    .badge-pink {
+      background: #fce7f3;
+      color: #db2777;
+    }
+
+    .badge-yellow {
+      background: #fef3c7;
+      color: #b45309;
+    }
+
+    .badge-teal {
+      background: #ccfbf1;
+      color: #0d9488;
+    }
+
+    .badge-red {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    /* AI tag styling */
+    .ai-tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    /* Brand Multi-Select Dropdown */
+    .brand-multiselect .brand-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: background 0.15s;
+    }
+    .brand-multiselect .brand-option:hover {
+      background: #f0f2f5;
+    }
+    .brand-multiselect .brand-option input[type="checkbox"] {
+      accent-color: #1877f2;
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+    .brand-multiselect .brand-option label {
+      cursor: pointer;
+      flex: 1;
+      color: var(--text-primary);
+    }
+    .brand-multiselect .brand-option.hidden {
+      display: none;
+    }
+
+    /* AI Tags Dropdown */
+    .ai-tags-dropdown {
+      position: relative;
+    }
+
+    .ai-tags-dropdown-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: #ffffff;
+      border: 1px solid #dddfe2;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      color: var(--text-primary);
+    }
+
+    .ai-tags-dropdown-btn:hover {
+      background: #f5f6f7;
+    }
+
+    .ai-tags-dropdown-btn.active {
+      border-color: #1877f2;
+      background: #e7f3ff;
+    }
+
+    .ai-tags-menu {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      margin-top: 8px;
+      min-width: 280px;
+      background: #ffffff;
+      border: 1px solid #dddfe2;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      z-index: 1000;
+      overflow: hidden;
+      display: none;
+    }
+
+    .ai-tags-menu.open {
+      display: block;
+    }
+
+    .ai-tags-category {
+      border-bottom: 1px solid #e4e6eb;
+    }
+
+    .ai-tags-category:last-child {
+      border-bottom: none;
+    }
+
+    .ai-tags-category-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .ai-tags-category-header:hover {
+      background: #f5f6f7;
+    }
+
+    .ai-tags-category-header .label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .ai-tags-category-header .count {
+      font-size: 11px;
+      color: #65676b;
+      background: #e4e6eb;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    .ai-tags-category-header .chevron {
+      transition: transform 0.2s;
+      color: #65676b;
+    }
+
+    .ai-tags-category.expanded .chevron {
+      transform: rotate(180deg);
+    }
+
+    .ai-tags-options {
+      display: none;
+      padding: 4px 8px 12px;
+    }
+
+    .ai-tags-category.expanded .ai-tags-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .ai-tag-option {
+      padding: 4px 10px;
+      font-size: 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #e4e6eb;
+      color: #65676b;
+      border: 1px solid transparent;
+    }
+
+    .ai-tag-option:hover {
+      background: #d8dadf;
+      color: var(--text-primary);
+    }
+
+    .ai-tag-option.selected {
+      border-color: currentColor;
+    }
+
+    .ai-tag-option.badge-purple.selected { background: #f3e8ff; color: #7c3aed; }
+    .ai-tag-option.badge-blue.selected { background: #e7f3ff; color: #1877f2; }
+    .ai-tag-option.badge-orange.selected { background: #fff4e5; color: #e67700; }
+    .ai-tag-option.badge-teal.selected { background: #ccfbf1; color: #0d9488; }
+    .ai-tag-option.badge-pink.selected { background: #fce7f3; color: #db2777; }
+
+    /* Selected filter pills */
+    .ai-filter-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .ai-filter-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 16px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .ai-filter-pill .remove-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .ai-filter-pill .remove-btn:hover {
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .ai-filter-pill .remove-btn svg {
+      width: 8px;
+      height: 8px;
+    }
+
+    select, input {
+      background-image: none;
+    }
+
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2365676b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 36px;
+    }
+
+    /* Light theme form inputs */
+    input, select {
+      color: var(--text-primary);
+    }
+
+    input::placeholder {
+      color: #8a8d91;
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+  <!-- Toast Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Header -->
+  <header class="border-b border-[#dddfe2] sticky top-0 z-40 bg-white shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 py-3">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-[#1877f2] flex items-center justify-center">
+            <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2C6.477 2 2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.879V14.89h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.989C18.343 21.129 22 16.99 22 12c0-5.523-4.477-10-10-10z"/>
+            </svg>
+          </div>
+          <h1 class="text-xl font-bold">
+            <span class="gradient-text">Meta Ads Spy</span>
+          </h1>
+        </div>
+        <div class="flex items-center gap-3">
+          <button id="analyzeNewBtn" onclick="openAnalyzeModal()" class="btn-secondary px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+            </svg>
+            Analyze New <span id="unanalyzedCount" class="ml-1 px-1.5 py-0.5 bg-[#1877f2] text-white rounded-md text-xs">0</span>
+          </button>
+          <button onclick="scrapeAllBrands()" class="btn-primary px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            Scrape All
+          </button>
+          <button onclick="openSettingsModal()" class="btn-secondary p-2 rounded-lg" title="Settings">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-4 py-6">
+    <!-- Tabs -->
+    <div class="flex gap-6 border-b border-[#dddfe2] mb-6">
+      <button onclick="switchTab('ads')" id="tabAds" class="pb-3 px-1 font-medium transition-colors tab-active">
+        Ad Vault
+      </button>
+      <button onclick="switchTab('brands')" id="tabBrands" class="pb-3 px-1 font-medium transition-colors text-[#65676b] hover:text-[#1c1e21]">
+        Brands
+        <span id="brandCount" class="ml-1.5 text-xs bg-[#e4e6eb] text-[#65676b] px-2 py-0.5 rounded-full">0</span>
+      </button>
+      <button onclick="switchTab('bookmarks')" id="tabBookmarks" class="pb-3 px-1 font-medium transition-colors text-[#65676b] hover:text-[#1c1e21] flex items-center gap-1.5">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
+        </svg>
+        Bookmarks
+        <span id="bookmarkCount" class="text-xs bg-[#e4e6eb] text-[#65676b] px-2 py-0.5 rounded-full">0</span>
+      </button>
+    </div>
+
+    <!-- Ads View -->
+    <div id="adsView">
+      <!-- Filters -->
+      <div class="glass-card p-4 mb-6 relative z-30">
+        <div class="flex flex-wrap gap-4 items-center">
+          <!-- Brand Multi-Select Dropdown -->
+          <div class="flex-1 min-w-[200px] relative brand-multiselect">
+            <button type="button" id="brandFilterBtn" onclick="toggleBrandFilter(event)" class="w-full px-4 py-2.5 bg-white border border-[#dddfe2] rounded-lg focus:outline-none cursor-pointer text-left flex items-center justify-between">
+              <span id="brandFilterLabel">All Brands</span>
+              <svg class="w-4 h-4 text-[#65676b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+            <div id="brandFilterMenu" class="hidden absolute top-full left-0 right-0 mt-1 bg-white border border-[#dddfe2] rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
+              <div class="p-2 border-b border-[#dddfe2]">
+                <input type="text" id="brandSearchInput" placeholder="Search brands..." oninput="filterBrandOptions()" class="w-full px-3 py-2 bg-[#f0f2f5] border border-[#dddfe2] rounded-lg text-sm focus:outline-none focus:border-[#1877f2]">
+              </div>
+              <div class="p-2 border-b border-[#dddfe2] flex gap-2">
+                <button onclick="selectAllBrands()" class="text-xs text-[#1877f2] hover:underline">Select All</button>
+                <span class="text-[#dddfe2]">|</span>
+                <button onclick="clearAllBrands()" class="text-xs text-[#65676b] hover:text-[#1c1e21]">Clear All</button>
+              </div>
+              <div id="brandFilterOptions" class="p-2">
+                <!-- Brand checkboxes will be inserted here -->
+              </div>
+            </div>
+          </div>
+          <div class="flex-1 min-w-[200px]">
+            <select id="filterVertical" onchange="loadAds()" class="w-full px-4 py-2.5 bg-white border border-[#dddfe2] rounded-lg focus:outline-none appearance-none cursor-pointer">
+              <option value="">All Verticals</option>
+              <option value="Apparel">Apparel</option>
+              <option value="Health">Health</option>
+              <option value="Beauty">Beauty</option>
+              <option value="Food">Food & Beverage</option>
+              <option value="Tech">Tech</option>
+              <option value="Home">Home & Garden</option>
+              <option value="Accessories">Accessories</option>
+              <option value="Footwear">Footwear</option>
+            </select>
+          </div>
+          <div class="flex-1 min-w-[150px]">
+            <input type="date" id="filterDateFrom" onchange="loadAds()"
+              class="w-full px-4 py-2.5 bg-white border border-[#dddfe2] rounded-lg focus:outline-none cursor-pointer"
+              title="Start date">
+          </div>
+          <div class="flex-1 min-w-[150px]">
+            <input type="date" id="filterDateTo" onchange="loadAds()"
+              class="w-full px-4 py-2.5 bg-white border border-[#dddfe2] rounded-lg focus:outline-none cursor-pointer"
+              title="End date">
+          </div>
+          <div class="min-w-[120px]">
+            <select id="filterMediaType" onchange="loadAds()" class="w-full px-4 py-2.5 bg-white border border-[#dddfe2] rounded-lg focus:outline-none appearance-none cursor-pointer">
+              <option value="">All Media</option>
+              <option value="video">Video</option>
+              <option value="image">Image</option>
+            </select>
+          </div>
+          <div class="min-w-[140px]">
+            <select id="sortOrder" onchange="loadAds()" class="w-full px-4 py-2.5 bg-white border border-[#dddfe2] rounded-lg focus:outline-none appearance-none cursor-pointer">
+              <option value="rank">Top Ranked</option>
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+            </select>
+          </div>
+          <!-- AI Tags Dropdown -->
+          <div class="ai-tags-dropdown">
+            <button type="button" class="ai-tags-dropdown-btn" onclick="toggleAiTagsMenu(event)">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/>
+              </svg>
+              AI Tags
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+            <div id="aiTagsMenu" class="ai-tags-menu">
+              <!-- Asset Type -->
+              <div class="ai-tags-category" data-category="ai_asset_type">
+                <div class="ai-tags-category-header" onclick="toggleAiTagCategory(this)">
+                  <span class="label">Asset Type</span>
+                  <svg class="chevron w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                  </svg>
+                </div>
+                <div class="ai-tags-options">
+                  <!-- Options loaded dynamically -->
+                </div>
+              </div>
+              <!-- Visual Format -->
+              <div class="ai-tags-category" data-category="ai_visual_format">
+                <div class="ai-tags-category-header" onclick="toggleAiTagCategory(this)">
+                  <span class="label">Visual Format</span>
+                  <svg class="chevron w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                  </svg>
+                </div>
+                <div class="ai-tags-options">
+                  <!-- Options loaded dynamically -->
+                </div>
+              </div>
+              <!-- Messaging Angle -->
+              <div class="ai-tags-category" data-category="ai_messaging_angle">
+                <div class="ai-tags-category-header" onclick="toggleAiTagCategory(this)">
+                  <span class="label">Messaging Angle</span>
+                  <svg class="chevron w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                  </svg>
+                </div>
+                <div class="ai-tags-options">
+                  <!-- Options loaded dynamically -->
+                </div>
+              </div>
+              <!-- Hook Tactic -->
+              <div class="ai-tags-category" data-category="ai_hook_tactic">
+                <div class="ai-tags-category-header" onclick="toggleAiTagCategory(this)">
+                  <span class="label">Hook Tactic</span>
+                  <svg class="chevron w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                  </svg>
+                </div>
+                <div class="ai-tags-options">
+                  <!-- Options loaded dynamically -->
+                </div>
+              </div>
+              <!-- Offer Type -->
+              <div class="ai-tags-category" data-category="ai_offer_type">
+                <div class="ai-tags-category-header" onclick="toggleAiTagCategory(this)">
+                  <span class="label">Offer Type</span>
+                  <svg class="chevron w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                  </svg>
+                </div>
+                <div class="ai-tags-options">
+                  <!-- Options loaded dynamically -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- AI Filter Pills -->
+        <div id="aiFilterPills" class="ai-filter-pills hidden">
+          <!-- Selected filter pills will be inserted here -->
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div id="loadingState" class="hidden text-center py-16">
+        <div class="spinner mx-auto mb-4"></div>
+        <p class="text-[#65676b]">Loading ads...</p>
+      </div>
+
+      <!-- Empty State -->
+      <div id="emptyState" class="hidden text-center py-16">
+        <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-[#e4e6eb] flex items-center justify-center">
+          <svg class="w-10 h-10 text-[#65676b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+          </svg>
+        </div>
+        <h3 class="text-lg font-medium text-[#65676b] mb-2">No Ads Found</h3>
+        <p class="text-[#8a8d91]">Add brands and run a scrape to populate the ad vault</p>
+      </div>
+
+      <!-- Ads Grid -->
+      <div id="adsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <!-- Ad cards will be inserted here -->
+      </div>
+
+      <!-- Results Info -->
+      <div id="resultsInfo" class="hidden mt-4 text-sm text-[#65676b] text-center">
+        <!-- Results count will be shown here -->
+      </div>
+    </div>
+
+    <!-- Brands View -->
+    <div id="brandsView" class="hidden">
+      <!-- Add Brand Button -->
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-semibold">Manage Brands</h2>
+        <button onclick="openAddBrandModal()" class="btn-primary px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          Add Brand
+        </button>
+      </div>
+
+      <!-- Brands Table -->
+      <div class="glass-card overflow-hidden">
+        <table class="w-full">
+          <thead class="bg-[#f0f2f5]">
+            <tr>
+              <th class="text-left px-4 py-3 text-sm font-medium text-[#65676b]">Brand</th>
+              <th class="text-left px-4 py-3 text-sm font-medium text-[#65676b]">Vertical</th>
+              <th class="text-left px-4 py-3 text-sm font-medium text-[#65676b]">Page ID</th>
+              <th class="text-left px-4 py-3 text-sm font-medium text-[#65676b]">Ads</th>
+              <th class="text-left px-4 py-3 text-sm font-medium text-[#65676b]">Last Scraped</th>
+              <th class="text-right px-4 py-3 text-sm font-medium text-[#65676b]">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="brandsTableBody">
+            <!-- Brand rows will be inserted here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Bookmarks View -->
+    <div id="bookmarksView" class="hidden">
+      <div class="flex justify-between items-center mb-6">
+        <div>
+          <h2 class="text-xl font-semibold">Bookmarked Ads</h2>
+          <p class="text-[#65676b] text-sm mt-1">Your saved ads for inspiration and reference</p>
+        </div>
+      </div>
+
+      <div id="bookmarksGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <!-- Bookmarked ad cards will be inserted here -->
+      </div>
+
+      <div id="bookmarksEmpty" class="hidden text-center py-16">
+        <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-[#e4e6eb] flex items-center justify-center">
+          <svg class="w-10 h-10 text-[#65676b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
+          </svg>
+        </div>
+        <h3 class="text-lg font-medium text-[#65676b] mb-2">No Bookmarks Yet</h3>
+        <p class="text-[#8a8d91]">Click the bookmark icon on any ad to save it here</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Ad Detail Modal -->
+  <div id="adModal" class="fixed inset-0 z-50 hidden">
+    <div class="modal-overlay absolute inset-0" onclick="closeAdModal()"></div>
+    <div class="absolute inset-4 md:inset-10 lg:inset-20 flex items-center justify-center">
+      <div class="glass-card w-full max-w-4xl max-h-full overflow-hidden flex flex-col fade-in">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between p-4 border-b border-[#dddfe2]">
+          <h2 class="font-semibold text-lg" id="adModalTitle">Ad Details</h2>
+          <div class="flex items-center gap-2">
+            <button onclick="toggleBookmark()" id="bookmarkBtn" class="p-2 hover:bg-[#f0f2f5] rounded-lg transition-colors" title="Bookmark this ad">
+              <svg id="bookmarkIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
+              </svg>
+            </button>
+            <button onclick="closeAdModal()" class="p-2 hover:bg-[#f0f2f5] rounded-lg transition-colors">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Modal Content -->
+        <div class="flex-1 overflow-y-auto scrollbar-hide p-6">
+          <div class="flex flex-col md:flex-row gap-8">
+            <!-- Left Column: Ad Preview + Dates -->
+            <div class="md:w-2/5 flex flex-col">
+              <a id="adModalImageLink" href="#" target="_blank" class="block rounded-lg overflow-hidden bg-[#f0f2f5] mb-4 hover:opacity-90 transition-opacity cursor-pointer" style="aspect-ratio: 4/5;">
+                <div id="adModalImageContainer" class="w-full h-full">
+                  <img id="adModalImage" src="" alt="Ad creative" class="w-full h-full object-cover">
+                </div>
+              </a>
+              <a id="adModalLink" href="#" target="_blank" class="btn-primary w-full py-3 rounded-lg font-medium flex items-center justify-center gap-2 mb-4">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C6.477 2 2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.879V14.89h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.989C18.343 21.129 22 16.99 22 12c0-5.523-4.477-10-10-10z"/>
+                </svg>
+                View in Ad Library
+              </a>
+
+              <!-- Dates moved here -->
+              <div class="grid grid-cols-2 gap-3 text-sm">
+                <div class="glass-card p-3 text-center">
+                  <div class="text-gray-500 text-xs mb-1">Running Since</div>
+                  <div class="font-medium" id="adModalStartDate">-</div>
+                </div>
+                <div class="glass-card p-3 text-center">
+                  <div class="text-gray-500 text-xs mb-1">Running For</div>
+                  <div class="font-medium" id="adModalRunningFor">-</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Column: Ad Info + AI Tags -->
+            <div class="md:w-3/5">
+              <!-- Brand & Stats -->
+              <div class="flex items-center gap-3 mb-4">
+                <div>
+                  <div class="font-medium text-xl" id="adModalBrand">Brand Name</div>
+                  <div class="text-sm text-[#65676b] flex items-center gap-2">
+                    <span id="adModalVertical">Vertical</span>
+                    <span class="text-[#dddfe2]">|</span>
+                    <span>Rank #<span id="adModalRank">1</span></span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Badges -->
+              <div class="flex flex-wrap gap-2 mb-5">
+                <span id="adModalStartBadge" class="badge badge-green">Running since -</span>
+                <span id="adModalTypeBadge" class="badge badge-blue">Video</span>
+                <span id="adModalCtaBadge" class="badge badge-gray">Shop Now</span>
+              </div>
+
+              <!-- Headline -->
+              <div class="mb-4">
+                <h4 class="text-sm font-medium text-[#65676b] mb-1">Headline</h4>
+                <p class="text-[#1c1e21] font-medium text-lg" id="adModalHeadline">Headline will appear here...</p>
+              </div>
+
+              <!-- Ad Copy -->
+              <div class="mb-6">
+                <h4 class="text-sm font-medium text-[#65676b] mb-1">Ad Copy</h4>
+                <p class="text-[#65676b] text-sm leading-relaxed" id="adModalCopy">Ad copy will appear here...</p>
+              </div>
+
+              <!-- AI Analysis Section -->
+              <div>
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="font-semibold text-lg flex items-center gap-2">
+                    <svg class="w-5 h-5 text-[#1877f2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                    </svg>
+                    AI Tags
+                  </h3>
+                  <button onclick="analyzeAd()" id="analyzeAdBtn" class="btn-secondary px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    Analyze
+                  </button>
+                </div>
+
+                <div class="glass-card p-5 space-y-4">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[#65676b]">Asset Type</span>
+                    <span class="ai-tag badge-purple text-sm px-3 py-1" id="adModalAssetType">-</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-[#65676b]">Visual Format</span>
+                    <span class="ai-tag badge-blue text-sm px-3 py-1" id="adModalVisualFormat">-</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-[#65676b]">Messaging Angle</span>
+                    <span class="ai-tag badge-orange text-sm px-3 py-1" id="adModalMessagingAngle">-</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-[#65676b]">Hook Tactic</span>
+                    <span class="ai-tag badge-teal text-sm px-3 py-1" id="adModalHookTactic">-</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-[#65676b]">Offer Type</span>
+                    <span class="ai-tag badge-pink text-sm px-3 py-1" id="adModalOfferType">-</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Brand Modal -->
+  <div id="brandModal" class="fixed inset-0 z-50 hidden">
+    <div class="modal-overlay absolute inset-0" onclick="closeBrandModal()"></div>
+    <div class="absolute inset-4 md:inset-20 flex items-center justify-center">
+      <div class="glass-card w-full max-w-lg overflow-hidden fade-in">
+        <div class="flex items-center justify-between p-4 border-b border-[#dddfe2]">
+          <h2 class="font-semibold text-lg" id="brandModalTitle">Add Brand</h2>
+          <button onclick="closeBrandModal()" class="p-2 hover:bg-[#f0f2f5] rounded-lg transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <form onsubmit="saveBrand(event)" class="p-6 space-y-4">
+          <input type="hidden" id="brandId">
+
+          <div>
+            <label class="block text-sm font-medium text-[#65676b] mb-1">Brand Name *</label>
+            <input type="text" id="brandName" required class="w-full px-4 py-2.5 bg-white border border-[#dddfe2] rounded-lg focus:outline-none focus:border-[#1877f2]">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-[#65676b] mb-1">Ad Library URL *</label>
+            <input type="url" id="brandAdLibraryUrl" required placeholder="https://www.facebook.com/ads/library/?...&view_all_page_id=123456789" class="w-full px-4 py-2.5 bg-white border border-[#dddfe2] rounded-lg focus:outline-none focus:border-[#1877f2]">
+            <p class="text-xs text-[#8a8d91] mt-1">Go to Meta Ad Library, find the brand, and paste the URL here. Page ID will be extracted automatically.</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-[#65676b] mb-1">Vertical</label>
+            <select id="brandVertical" class="w-full px-4 py-2.5 bg-white border border-[#dddfe2] rounded-lg focus:outline-none appearance-none cursor-pointer">
+              <option value="">Select vertical...</option>
+              <option value="Apparel">Apparel</option>
+              <option value="Health">Health & Wellness</option>
+              <option value="Beauty">Beauty</option>
+              <option value="Food">Food & Beverage</option>
+              <option value="Tech">Tech & Electronics</option>
+              <option value="Home">Home & Garden</option>
+              <option value="Accessories">Accessories</option>
+              <option value="Footwear">Footwear</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div class="flex gap-3 pt-4">
+            <button type="button" onclick="closeBrandModal()" class="flex-1 btn-secondary py-2.5 rounded-lg">Cancel</button>
+            <button type="submit" class="flex-1 btn-primary py-2.5 rounded-lg font-medium">Save Brand</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="deleteModal" class="fixed inset-0 z-50 hidden">
+    <div class="modal-overlay absolute inset-0" onclick="closeDeleteModal()"></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+      <div class="glass-card w-full max-w-md overflow-hidden fade-in">
+        <div class="p-6 text-center">
+          <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-[#fee2e2] flex items-center justify-center">
+            <svg class="w-8 h-8 text-[#dc2626]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold mb-2">Delete Brand</h3>
+          <p class="text-[#65676b] mb-6">Are you sure you want to delete <span id="deleteBrandName" class="text-[#1c1e21] font-medium"></span>? This will also remove all associated ads.</p>
+          <div class="flex gap-3">
+            <button onclick="closeDeleteModal()" class="flex-1 btn-secondary py-2.5 rounded-lg">Cancel</button>
+            <button onclick="confirmDeleteBrand()" class="flex-1 bg-[#dc2626] hover:bg-[#b91c1c] text-white py-2.5 rounded-lg font-medium transition-colors">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scrape All Confirmation Modal -->
+  <div id="scrapeAllModal" class="fixed inset-0 z-50 hidden">
+    <div class="modal-overlay absolute inset-0" onclick="closeScrapeAllModal()"></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+      <div class="glass-card w-full max-w-md overflow-hidden fade-in">
+        <div class="p-6 text-center">
+          <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-[#e7f3ff] flex items-center justify-center">
+            <svg class="w-8 h-8 text-[#1877f2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold mb-2">Scrape All Brands</h3>
+          <p class="text-[#65676b] mb-6">This will start scraping ads for all <span id="scrapeAllBrandCount" class="text-[#1c1e21] font-medium">0</span> brands. This may take a while and use API credits.</p>
+          <div class="flex gap-3">
+            <button onclick="closeScrapeAllModal()" class="flex-1 btn-secondary py-2.5 rounded-lg">Cancel</button>
+            <button onclick="confirmScrapeAll()" class="flex-1 btn-primary py-2.5 rounded-lg font-medium">Scrape All</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Analyze New Ads Modal -->
+  <div id="analyzeModal" class="fixed inset-0 z-50 hidden">
+    <div class="modal-overlay absolute inset-0" onclick="closeAnalyzeModal()"></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+      <div class="glass-card w-full max-w-md p-6 text-center fade-in">
+        <div class="w-12 h-12 mx-auto mb-4 rounded-full bg-[#e7f3ff] flex items-center justify-center">
+          <svg class="w-6 h-6 text-[#1877f2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+          </svg>
+        </div>
+        <h3 class="text-xl font-semibold mb-2">Analyze New Ads</h3>
+        <div id="analyzeModalContent">
+          <p class="text-[#65676b] mb-6">This will use AI to analyze <span id="analyzeModalCount" class="text-[#1c1e21] font-medium">0</span> unanalyzed ads. This uses Gemini API credits.</p>
+          <div class="flex gap-3">
+            <button onclick="closeAnalyzeModal()" class="flex-1 btn-secondary py-2.5 rounded-lg">Cancel</button>
+            <button onclick="startBatchAnalysis()" class="flex-1 btn-primary py-2.5 rounded-lg font-medium">Analyze All</button>
+          </div>
+        </div>
+        <div id="analyzeModalProgress" class="hidden">
+          <div class="mb-4">
+            <div class="flex justify-between text-sm mb-2">
+              <span class="text-[#65676b]">Analyzing ads...</span>
+              <span id="analyzeProgressText" class="text-[#1c1e21]">0 / 0</span>
+            </div>
+            <div class="w-full bg-[#e4e6eb] rounded-full h-2">
+              <div id="analyzeProgressBar" class="bg-[#1877f2] h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+          </div>
+          <p class="text-[#8a8d91] text-sm">Please wait, this may take a few minutes...</p>
+        </div>
+        <div id="analyzeModalComplete" class="hidden">
+          <p class="text-[#31a24c] mb-4"><span id="analyzeCompleteCount">0</span> ads analyzed successfully!</p>
+          <button onclick="closeAnalyzeModal()" class="btn-primary py-2.5 px-8 rounded-lg font-medium">Done</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="fixed inset-0 z-50 hidden">
+    <div class="modal-overlay absolute inset-0" onclick="closeSettingsModal()"></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+      <div class="glass-card w-full max-w-md overflow-hidden fade-in">
+        <div class="flex items-center justify-between p-4 border-b border-[#dddfe2]">
+          <h2 class="font-semibold text-lg">Settings</h2>
+          <button onclick="closeSettingsModal()" class="p-2 hover:bg-[#f0f2f5] rounded-lg transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+        <div class="p-5 space-y-6">
+          <!-- Weekly Scrape Schedule -->
+          <div>
+            <h3 class="font-medium mb-3 flex items-center gap-2">
+              <svg class="w-5 h-5 text-[#1877f2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              Scheduled Weekly Scrape
+            </h3>
+            <div class="glass-card p-4 space-y-4">
+              <label class="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" id="scheduleEnabled" class="w-5 h-5 rounded bg-white border-[#dddfe2] text-[#1877f2] focus:ring-[#1877f2] focus:ring-offset-0">
+                <span>Enable automatic weekly scraping</span>
+              </label>
+              <div id="scheduleOptions" class="space-y-3 pl-8 hidden">
+                <div class="flex items-center gap-3">
+                  <label class="text-sm text-[#65676b] w-16">Day:</label>
+                  <select id="scheduleDay" class="flex-1 px-3 py-2 bg-white border border-[#dddfe2] rounded-lg focus:outline-none focus:border-[#1877f2] appearance-none">
+                    <option value="0">Sunday</option>
+                    <option value="1" selected>Monday</option>
+                    <option value="2">Tuesday</option>
+                    <option value="3">Wednesday</option>
+                    <option value="4">Thursday</option>
+                    <option value="5">Friday</option>
+                    <option value="6">Saturday</option>
+                  </select>
+                </div>
+                <div class="flex items-center gap-3">
+                  <label class="text-sm text-[#65676b] w-16">Time:</label>
+                  <select id="scheduleHour" class="flex-1 px-3 py-2 bg-white border border-[#dddfe2] rounded-lg focus:outline-none focus:border-[#1877f2] appearance-none">
+                    <option value="0">12:00 AM</option>
+                    <option value="1">1:00 AM</option>
+                    <option value="2">2:00 AM</option>
+                    <option value="3">3:00 AM</option>
+                    <option value="4">4:00 AM</option>
+                    <option value="5">5:00 AM</option>
+                    <option value="6" selected>6:00 AM</option>
+                    <option value="7">7:00 AM</option>
+                    <option value="8">8:00 AM</option>
+                    <option value="9">9:00 AM</option>
+                    <option value="10">10:00 AM</option>
+                    <option value="11">11:00 AM</option>
+                    <option value="12">12:00 PM</option>
+                    <option value="13">1:00 PM</option>
+                    <option value="14">2:00 PM</option>
+                    <option value="15">3:00 PM</option>
+                    <option value="16">4:00 PM</option>
+                    <option value="17">5:00 PM</option>
+                    <option value="18">6:00 PM</option>
+                    <option value="19">7:00 PM</option>
+                    <option value="20">8:00 PM</option>
+                    <option value="21">9:00 PM</option>
+                    <option value="22">10:00 PM</option>
+                    <option value="23">11:00 PM</option>
+                  </select>
+                </div>
+                <p class="text-xs text-[#8a8d91]">Scrapes all brands automatically on the selected day and time.</p>
+
+                <!-- Auto-analyze option (only shows when scheduling is enabled) -->
+                <label class="flex items-center gap-3 cursor-pointer mt-4 pt-4 border-t border-[#dddfe2] -ml-8">
+                  <input type="checkbox" id="autoAnalyze" class="w-5 h-5 rounded bg-white border-[#dddfe2] text-[#1877f2] focus:ring-[#1877f2] focus:ring-offset-0">
+                  <div>
+                    <span class="block">Auto-analyze new ads with AI</span>
+                    <span class="text-xs text-[#8a8d91]">Automatically tag new ads after scraping (uses Gemini API)</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Save Button -->
+          <div class="flex justify-end">
+            <button onclick="saveSettings()" class="btn-primary px-6 py-2.5 rounded-lg font-medium">
+              Save Settings
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================
+    // STATE
+    // ============================================
+    let currentTab = 'ads';
+    let ads = [];
+    let brands = [];
+    let currentAd = null;
+    let editingBrandId = null;
+    let scrapingBrands = new Set(); // Track brands currently being scraped
+    let selectedAiFilters = {}; // Track selected AI tag filters { category: [values] }
+
+    // Pagination state
+    const ADS_PER_PAGE = 50;
+    let currentOffset = 0;
+    let isLoadingMore = false;
+    let hasMoreAds = true;
+
+    // ============================================
+    // INITIALIZATION
+    // ============================================
+    document.addEventListener('DOMContentLoaded', () => {
+      loadBrands();
+      loadAds();
+      loadBookmarkCount();
+      loadUnanalyzedCount();
+
+      // Restore tab from URL hash if present
+      const hash = window.location.hash.replace('#', '');
+      const validTabs = ['ads', 'brands', 'bookmarks'];
+      if (hash && validTabs.includes(hash)) {
+        switchTab(hash);
+      }
+
+      // Set up infinite scroll
+      window.addEventListener('scroll', handleScroll);
+    });
+
+    // Handle infinite scroll
+    function handleScroll() {
+      // Only load more if we're on the ads tab and not already loading
+      if (currentTab !== 'ads' || isLoadingMore || !hasMoreAds) return;
+
+      // Check if we're near the bottom (within 500px)
+      const scrollPosition = window.innerHeight + window.scrollY;
+      const threshold = document.body.offsetHeight - 500;
+
+      if (scrollPosition >= threshold) {
+        loadMoreAds();
+      }
+    }
+
+    // Handle browser back/forward navigation
+    window.addEventListener('hashchange', () => {
+      const hash = window.location.hash.replace('#', '');
+      const validTabs = ['ads', 'brands', 'bookmarks'];
+      if (hash && validTabs.includes(hash) && hash !== currentTab) {
+        switchTab(hash);
+      }
+    });
+
+    // ============================================
+    // TAB SWITCHING
+    // ============================================
+    function switchTab(tab) {
+      currentTab = tab;
+      const tabs = ['ads', 'brands', 'bookmarks'];
+
+      // Update URL hash without triggering scroll
+      history.replaceState(null, '', `#${tab}`);
+
+      tabs.forEach(t => {
+        const tabBtn = document.getElementById(`tab${t.charAt(0).toUpperCase() + t.slice(1)}`);
+        const view = document.getElementById(`${t}View`);
+
+        if (t === tab) {
+          // Special handling for bookmarks tab which has extra classes
+          if (t === 'bookmarks') {
+            tabBtn.className = 'pb-3 px-1 font-medium transition-colors tab-active flex items-center gap-1.5';
+          } else {
+            tabBtn.className = 'pb-3 px-1 font-medium transition-colors tab-active';
+          }
+          view.classList.remove('hidden');
+        } else {
+          if (t === 'bookmarks') {
+            tabBtn.className = 'pb-3 px-1 font-medium transition-colors text-gray-500 hover:text-white flex items-center gap-1.5';
+          } else {
+            tabBtn.className = 'pb-3 px-1 font-medium transition-colors text-gray-500 hover:text-white';
+          }
+          view.classList.add('hidden');
+        }
+      });
+
+      if (tab === 'brands') loadBrands();
+      if (tab === 'bookmarks') loadBookmarks();
+    }
+
+    // ============================================
+    // TOAST NOTIFICATIONS
+    // ============================================
+    function showToast(type, title, message, duration = 5000) {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+
+      const icons = {
+        success: '<svg class="toast-icon text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+        info: '<svg class="toast-icon text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+        warning: '<svg class="toast-icon text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>',
+        error: '<svg class="toast-icon text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
+      };
+
+      toast.innerHTML = `
+        ${icons[type] || icons.info}
+        <div class="toast-content">
+          <div class="toast-title">${title}</div>
+          <div class="toast-message">${message}</div>
+        </div>
+      `;
+
+      container.appendChild(toast);
+
+      // Auto-remove after duration
+      setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease-out forwards';
+        setTimeout(() => toast.remove(), 300);
+      }, duration);
+    }
+
+    // ============================================
+    // BRANDS FUNCTIONS
+    // ============================================
+    // Track selected brands for multi-select filter
+    let selectedBrandIds = [];
+
+    async function loadBrands() {
+      try {
+        const response = await fetch('/api/brands');
+        brands = await response.json();
+
+        document.getElementById('brandCount').textContent = brands.length;
+
+        // Populate brand multi-select dropdown
+        populateBrandFilter();
+
+        // Populate brands table
+        renderBrandsTable();
+      } catch (error) {
+        console.error('Load brands error:', error);
+      }
+    }
+
+    function populateBrandFilter() {
+      const container = document.getElementById('brandFilterOptions');
+      container.innerHTML = brands.map(b => `
+        <div class="brand-option" data-brand-id="${b.id}" data-brand-name="${b.brand_name.toLowerCase()}">
+          <input type="checkbox" id="brand_${b.id}" value="${b.id}" onchange="onBrandSelectionChange()">
+          <label for="brand_${b.id}">${b.brand_name}</label>
+        </div>
+      `).join('');
+    }
+
+    function toggleBrandFilter(event) {
+      event.stopPropagation();
+      const menu = document.getElementById('brandFilterMenu');
+      const btn = document.getElementById('brandFilterBtn');
+
+      if (menu.classList.contains('hidden')) {
+        menu.classList.remove('hidden');
+        btn.classList.add('ring-1', 'ring-blue-500/50');
+        // Focus search input
+        document.getElementById('brandSearchInput').focus();
+      } else {
+        menu.classList.add('hidden');
+        btn.classList.remove('ring-1', 'ring-blue-500/50');
+      }
+    }
+
+    function filterBrandOptions() {
+      const searchTerm = document.getElementById('brandSearchInput').value.toLowerCase();
+      const options = document.querySelectorAll('.brand-option');
+
+      options.forEach(opt => {
+        const brandName = opt.dataset.brandName;
+        if (brandName.includes(searchTerm)) {
+          opt.classList.remove('hidden');
+        } else {
+          opt.classList.add('hidden');
+        }
+      });
+    }
+
+    function selectAllBrands() {
+      const checkboxes = document.querySelectorAll('#brandFilterOptions input[type="checkbox"]');
+      checkboxes.forEach(cb => cb.checked = true);
+      onBrandSelectionChange();
+    }
+
+    function clearAllBrands() {
+      const checkboxes = document.querySelectorAll('#brandFilterOptions input[type="checkbox"]');
+      checkboxes.forEach(cb => cb.checked = false);
+      onBrandSelectionChange();
+    }
+
+    function onBrandSelectionChange() {
+      const checkboxes = document.querySelectorAll('#brandFilterOptions input[type="checkbox"]:checked');
+      selectedBrandIds = Array.from(checkboxes).map(cb => cb.value);
+
+      // Update label
+      const label = document.getElementById('brandFilterLabel');
+      const sortSelect = document.getElementById('sortOrder');
+
+      if (selectedBrandIds.length === 0) {
+        label.textContent = 'All Brands';
+        // Multiple brands: default to newest first (ranks not comparable across brands)
+        if (sortSelect.value === 'rank') {
+          sortSelect.value = 'newest';
+        }
+      } else if (selectedBrandIds.length === 1) {
+        const brand = brands.find(b => b.id == selectedBrandIds[0]);
+        label.textContent = brand ? brand.brand_name : '1 Brand';
+        // Single brand: default to rank sorting (show best performing ads first)
+        sortSelect.value = 'rank';
+      } else {
+        label.textContent = `${selectedBrandIds.length} Brands`;
+        // Multiple brands: default to newest first (ranks not comparable across brands)
+        if (sortSelect.value === 'rank') {
+          sortSelect.value = 'newest';
+        }
+      }
+
+      // Reload ads
+      loadAds();
+    }
+
+    // Close brand filter when clicking outside
+    document.addEventListener('click', (e) => {
+      const dropdown = document.querySelector('.brand-multiselect');
+      if (dropdown && !dropdown.contains(e.target)) {
+        document.getElementById('brandFilterMenu').classList.add('hidden');
+        document.getElementById('brandFilterBtn').classList.remove('ring-1', 'ring-blue-500/50');
+      }
+    });
+
+    function renderBrandsTable() {
+      const tbody = document.getElementById('brandsTableBody');
+
+      if (brands.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="px-4 py-8 text-center text-[#65676b]">
+              No brands added yet. Click "Add Brand" to get started.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = brands.map(brand => `
+        <tr class="border-t border-[#dddfe2] hover:bg-[#f5f6f7] transition-colors">
+          <td class="px-4 py-3">
+            <div class="font-medium">${brand.brand_name}</div>
+          </td>
+          <td class="px-4 py-3">
+            <span class="badge ${brand.vertical ? 'badge-blue' : 'badge-gray'}">${brand.vertical || 'Unset'}</span>
+          </td>
+          <td class="px-4 py-3">
+            ${brand.page_id
+              ? `<span class="text-sm font-mono text-[#65676b]">${brand.page_id}</span>`
+              : `<button onclick="resolvePageId(${brand.id})" class="text-[#1877f2] text-sm hover:underline">Resolve</button>`
+            }
+          </td>
+          <td class="px-4 py-3">
+            <span class="text-sm">${brand.ad_count || 0}</span>
+            ${brand.evergreen_count > 0 ? `<span class="text-[#31a24c] text-xs ml-1">(${brand.evergreen_count} evergreen)</span>` : ''}
+          </td>
+          <td class="px-4 py-3 text-sm" id="lastScraped-${brand.id}">
+            ${scrapingBrands.has(brand.id)
+              ? '<span class="text-[#1877f2] flex items-center gap-1"><svg class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Scraping...</span>'
+              : `<span class="text-[#65676b]">${brand.last_scraped ? formatDate(brand.last_scraped) : 'Never'}</span>`
+            }
+          </td>
+          <td class="px-4 py-3 text-right">
+            <div class="flex justify-end gap-2">
+              <button onclick="scrapeBrand(${brand.id})" class="p-2 hover:bg-[#e4e6eb] rounded-lg transition-colors ${scrapingBrands.has(brand.id) ? 'opacity-50 cursor-not-allowed' : ''}" title="Scrape now" ${scrapingBrands.has(brand.id) ? 'disabled' : ''}>
+                <svg class="w-4 h-4 ${scrapingBrands.has(brand.id) ? 'animate-spin' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+              </button>
+              <button onclick="editBrand(${brand.id})" class="p-2 hover:bg-[#e4e6eb] rounded-lg transition-colors" title="Edit">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                </svg>
+              </button>
+              <button onclick="deleteBrand(${brand.id})" class="p-2 hover:bg-[#fee2e2] rounded-lg transition-colors text-[#dc2626]" title="Delete">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function openAddBrandModal() {
+      editingBrandId = null;
+      document.getElementById('brandModalTitle').textContent = 'Add Brand';
+      document.getElementById('brandId').value = '';
+      document.getElementById('brandName').value = '';
+      document.getElementById('brandAdLibraryUrl').value = '';
+      document.getElementById('brandVertical').value = '';
+      document.getElementById('brandModal').classList.remove('hidden');
+    }
+
+    function editBrand(id) {
+      const brand = brands.find(b => b.id === id);
+      if (!brand) return;
+
+      editingBrandId = id;
+      document.getElementById('brandModalTitle').textContent = 'Edit Brand';
+      document.getElementById('brandId').value = brand.id;
+      document.getElementById('brandName').value = brand.brand_name || '';
+      document.getElementById('brandAdLibraryUrl').value = brand.fb_page_url || '';
+      document.getElementById('brandVertical').value = brand.vertical || '';
+      document.getElementById('brandModal').classList.remove('hidden');
+    }
+
+    function closeBrandModal() {
+      document.getElementById('brandModal').classList.add('hidden');
+      editingBrandId = null;
+    }
+
+    async function saveBrand(e) {
+      e.preventDefault();
+
+      const adLibraryUrl = document.getElementById('brandAdLibraryUrl').value;
+
+      // For new brands, require Ad Library URL with page ID
+      if (!editingBrandId && !adLibraryUrl.includes('view_all_page_id=')) {
+        showToast('error', 'Invalid URL', 'Please paste a valid Ad Library URL that contains view_all_page_id=');
+        return;
+      }
+
+      const data = {
+        brand_name: document.getElementById('brandName').value,
+        ad_library_url: adLibraryUrl,
+        vertical: document.getElementById('brandVertical').value || null
+      };
+
+      try {
+        const url = editingBrandId ? `/api/brands/${editingBrandId}` : '/api/brands';
+        const method = editingBrandId ? 'PUT' : 'POST';
+        const isNewBrand = !editingBrandId;
+        const brandName = data.brand_name;
+
+        const response = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to save brand');
+        }
+
+        closeBrandModal();
+        await loadBrands();
+
+        // Show toast notification for new brands
+        if (isNewBrand && result.scrapeJobId) {
+          // Mark brand as scraping and update UI
+          if (result.brandId) {
+            scrapingBrands.add(result.brandId);
+            renderBrandsTable();
+          }
+
+          showToast(
+            'info',
+            'Scraping Started',
+            `Fetching top 10 ads for ${brandName}. This may take up to a minute.`,
+            8000
+          );
+
+          // Poll for completion and show success toast
+          pollScrapeCompletion(result.scrapeJobId, brandName, result.brandId);
+        } else if (isNewBrand) {
+          showToast('success', 'Brand Added', `${brandName} has been added successfully.`);
+        } else {
+          showToast('success', 'Brand Updated', `${brandName} has been updated.`);
+        }
+      } catch (error) {
+        console.error('Save brand error:', error);
+        showToast('error', 'Error', 'Failed to save brand: ' + error.message);
+      }
+    }
+
+    async function pollScrapeCompletion(jobId, brandName, brandId = null) {
+      let attempts = 0;
+      const maxAttempts = 40;
+
+      const finishScraping = () => {
+        // Remove from scraping set and update UI
+        if (brandId) {
+          scrapingBrands.delete(brandId);
+          renderBrandsTable();
+        }
+      };
+
+      const checkStatus = async () => {
+        try {
+          const response = await fetch(`/api/scrape/status/${jobId}`);
+          const data = await response.json();
+
+          if (data.status === 'complete') {
+            finishScraping();
+            showToast(
+              'success',
+              'Scraping Complete',
+              `Found ${data.resultCount} ads for ${brandName}!`,
+              6000
+            );
+            await loadBrands();
+            await loadAds();
+            return;
+          }
+
+          if (data.status === 'error') {
+            finishScraping();
+            showToast('error', 'Scraping Failed', `Could not fetch ads for ${brandName}.`);
+            return;
+          }
+
+          attempts++;
+          if (attempts < maxAttempts) {
+            setTimeout(checkStatus, 3000);
+          } else {
+            // Timeout - remove from scraping state
+            finishScraping();
+            showToast('warning', 'Scraping Timeout', `Scraping for ${brandName} took too long. Please try again.`);
+          }
+        } catch (error) {
+          console.error('Poll error:', error);
+          finishScraping();
+        }
+      };
+
+      checkStatus();
+    }
+
+    let deletingBrandId = null;
+
+    function deleteBrand(id) {
+      const brand = brands.find(b => b.id === id);
+      if (!brand) return;
+
+      deletingBrandId = id;
+      document.getElementById('deleteBrandName').textContent = brand.brand_name;
+      document.getElementById('deleteModal').classList.remove('hidden');
+    }
+
+    function closeDeleteModal() {
+      document.getElementById('deleteModal').classList.add('hidden');
+      deletingBrandId = null;
+    }
+
+    async function confirmDeleteBrand() {
+      if (!deletingBrandId) return;
+
+      const brandName = brands.find(b => b.id === deletingBrandId)?.brand_name || 'Brand';
+
+      try {
+        const response = await fetch(`/api/brands/${deletingBrandId}`, { method: 'DELETE' });
+        if (!response.ok) throw new Error('Failed to delete brand');
+
+        closeDeleteModal();
+        await loadBrands();
+        await loadAds();
+        showToast('success', 'Brand Deleted', `${brandName} and its ads have been removed.`);
+      } catch (error) {
+        console.error('Delete brand error:', error);
+        showToast('error', 'Error', 'Failed to delete brand');
+      }
+    }
+
+    async function resolvePageId(id) {
+      try {
+        const response = await fetch(`/api/brands/${id}/resolve-page-id`, { method: 'POST' });
+        const data = await response.json();
+
+        if (data.success) {
+          showToast('success', 'Page ID Resolved', `Page ID: ${data.pageId}`);
+          await loadBrands();
+        } else {
+          showToast('error', 'Resolution Failed', data.error || 'Could not resolve Page ID');
+        }
+      } catch (error) {
+        console.error('Resolve page ID error:', error);
+        showToast('error', 'Error', 'Failed to resolve Page ID');
+      }
+    }
+
+    // ============================================
+    // ADS FUNCTIONS
+    // ============================================
+    async function loadAds() {
+      const loadingState = document.getElementById('loadingState');
+      const emptyState = document.getElementById('emptyState');
+      const adsGrid = document.getElementById('adsGrid');
+      const resultsInfo = document.getElementById('resultsInfo');
+
+      // Reset pagination state
+      currentOffset = 0;
+      hasMoreAds = true;
+      ads = [];
+
+      loadingState.classList.remove('hidden');
+      emptyState.classList.add('hidden');
+      adsGrid.innerHTML = '';
+      resultsInfo.classList.add('hidden');
+
+      try {
+        const params = new URLSearchParams();
+        const dateFrom = document.getElementById('filterDateFrom').value;
+        const dateTo = document.getElementById('filterDateTo').value;
+        const sortOrder = document.getElementById('sortOrder').value;
+        const mediaType = document.getElementById('filterMediaType').value;
+
+        // Multi-select brands - only filter if some (but not all) brands selected
+        if (selectedBrandIds.length > 0 && selectedBrandIds.length < brands.length) {
+          selectedBrandIds.forEach(id => params.append('brand_ids', id));
+        }
+        if (dateFrom) params.append('date_from', dateFrom);
+        if (dateTo) params.append('date_to', dateTo);
+        if (mediaType) params.append('media_type', mediaType);
+
+        // AI tag filters - send to server
+        for (const [category, values] of Object.entries(selectedAiFilters)) {
+          if (values && values.length > 0) {
+            values.forEach(v => params.append(category, v));
+          }
+        }
+
+        params.append('sort', sortOrder);
+        params.append('limit', ADS_PER_PAGE);
+        params.append('offset', 0);
+
+        const response = await fetch(`/api/ads?${params.toString()}`);
+        const newAds = await response.json();
+        ads = newAds;
+        currentOffset = newAds.length;
+
+        // Check if we got fewer ads than requested (means no more to load)
+        if (newAds.length < ADS_PER_PAGE) {
+          hasMoreAds = false;
+        }
+
+        loadingState.classList.add('hidden');
+
+        // Apply client-side filters
+        let filteredAds = applyClientFilters(ads);
+
+        if (filteredAds.length === 0) {
+          emptyState.classList.remove('hidden');
+          return;
+        }
+
+        renderAds(filteredAds);
+        resultsInfo.classList.remove('hidden');
+        updateResultsInfo(filteredAds.length);
+      } catch (error) {
+        console.error('Load ads error:', error);
+        loadingState.classList.add('hidden');
+        emptyState.classList.remove('hidden');
+      }
+    }
+
+    // Load more ads for infinite scroll
+    async function loadMoreAds() {
+      if (isLoadingMore || !hasMoreAds) return;
+
+      isLoadingMore = true;
+
+      // Show loading indicator at bottom
+      const adsGrid = document.getElementById('adsGrid');
+      const loadingIndicator = document.createElement('div');
+      loadingIndicator.id = 'loadMoreIndicator';
+      loadingIndicator.className = 'col-span-full flex justify-center py-8';
+      loadingIndicator.innerHTML = `
+        <div class="flex items-center gap-3 text-gray-400">
+          <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span>Loading more ads...</span>
+        </div>
+      `;
+      adsGrid.appendChild(loadingIndicator);
+
+      try {
+        const params = new URLSearchParams();
+        const dateFrom = document.getElementById('filterDateFrom').value;
+        const dateTo = document.getElementById('filterDateTo').value;
+        const sortOrder = document.getElementById('sortOrder').value;
+        const mediaType = document.getElementById('filterMediaType').value;
+
+        // Multi-select brands - only filter if some (but not all) brands selected
+        if (selectedBrandIds.length > 0 && selectedBrandIds.length < brands.length) {
+          selectedBrandIds.forEach(id => params.append('brand_ids', id));
+        }
+        if (dateFrom) params.append('date_from', dateFrom);
+        if (dateTo) params.append('date_to', dateTo);
+        if (mediaType) params.append('media_type', mediaType);
+
+        // AI tag filters - send to server
+        for (const [category, values] of Object.entries(selectedAiFilters)) {
+          if (values && values.length > 0) {
+            values.forEach(v => params.append(category, v));
+          }
+        }
+
+        params.append('sort', sortOrder);
+        params.append('limit', ADS_PER_PAGE);
+        params.append('offset', currentOffset);
+
+        const response = await fetch(`/api/ads?${params.toString()}`);
+        const newAds = await response.json();
+
+        // Remove loading indicator
+        const indicator = document.getElementById('loadMoreIndicator');
+        if (indicator) indicator.remove();
+
+        if (newAds.length === 0) {
+          hasMoreAds = false;
+          isLoadingMore = false;
+          return;
+        }
+
+        // Add new ads to our collection
+        ads = [...ads, ...newAds];
+        currentOffset += newAds.length;
+
+        // Check if we got fewer ads than requested
+        if (newAds.length < ADS_PER_PAGE) {
+          hasMoreAds = false;
+        }
+
+        // Apply filters to new ads and append them
+        const filteredNewAds = applyClientFilters(newAds);
+        appendAds(filteredNewAds);
+
+        // Update results info
+        const allFilteredAds = applyClientFilters(ads);
+        updateResultsInfo(allFilteredAds.length);
+
+      } catch (error) {
+        console.error('Load more ads error:', error);
+        const indicator = document.getElementById('loadMoreIndicator');
+        if (indicator) indicator.remove();
+      }
+
+      isLoadingMore = false;
+    }
+
+    // Apply client-side filters (vertical, AI tags)
+    function applyClientFilters(adsToFilter) {
+      let filteredAds = adsToFilter;
+      const vertical = document.getElementById('filterVertical').value;
+
+      if (vertical) {
+        filteredAds = filteredAds.filter(ad => ad.vertical === vertical);
+      }
+
+      // AI tag filters are now applied server-side for proper pagination support
+
+      return filteredAds;
+    }
+
+    // Update results info text
+    function updateResultsInfo(count) {
+      const resultsInfo = document.getElementById('resultsInfo');
+      resultsInfo.textContent = hasMoreAds ? `Showing ${count} ads` : `Showing all ${count} ads`;
+    }
+
+    // Append ads to the grid (for infinite scroll)
+    function appendAds(adsToAppend) {
+      const grid = document.getElementById('adsGrid');
+      const startIndex = grid.children.length;
+      const newHtml = adsToAppend.map((ad, index) => createAdCard(ad, startIndex + index)).join('');
+      grid.insertAdjacentHTML('beforeend', newHtml);
+    }
+
+    function renderAds(adsToRender) {
+      const grid = document.getElementById('adsGrid');
+      grid.innerHTML = adsToRender.map((ad, index) => createAdCard(ad, index)).join('');
+    }
+
+    function createAdCard(ad, index, showBookmarkBadge = false) {
+      // Format the start date for display on the card
+      const startDateShort = ad.start_date ? formatDateShort(ad.start_date) : '-';
+      const isBookmarked = ad.bookmarked === 1;
+      const thumbnailUrl = getAdThumbnailUrl(ad);
+      const hasValidThumbnail = !!thumbnailUrl;
+
+      return `
+        <div class="ad-card glass-card overflow-hidden cursor-pointer fade-in" style="animation-delay: ${index * 30}ms" onclick="openAdModal('${ad.ad_id || ad.id}')">
+          <div class="relative overflow-hidden bg-[#f0f2f5]" style="aspect-ratio: 4/6;">
+            ${hasValidThumbnail ? `
+              <img src="${thumbnailUrl}"
+                   alt="Ad creative"
+                   class="w-full h-full object-cover"
+                   loading="lazy">
+            ` : `
+              <div class="w-full h-full flex flex-col items-center justify-center bg-[#e4e6eb]">
+                <svg class="w-16 h-16 text-[#65676b] mb-2" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+                <span class="text-[#65676b] text-sm">Video Ad</span>
+              </div>
+            `}
+            <div class="absolute top-2 left-2 flex flex-wrap gap-1">
+              <span class="badge badge-green">${startDateShort}</span>
+              <span class="badge badge-blue">#${ad.rank || '-'}</span>
+            </div>
+            ${isBookmarked ? `
+              <div class="absolute top-2 right-2">
+                <svg class="w-5 h-5 text-[#f7931a]" fill="currentColor" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
+                </svg>
+              </div>
+            ` : ''}
+            ${ad.creative_type === 'video' ? `
+              <div class="absolute bottom-2 right-2">
+                <span class="badge badge-gray flex items-center gap-1">
+                  <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                  Video
+                </span>
+              </div>
+            ` : ''}
+          </div>
+          <div class="p-3">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-medium text-sm truncate">${ad.brand_name || 'Unknown Brand'}</span>
+              <span class="badge badge-gray text-xs">${ad.vertical || '-'}</span>
+            </div>
+            <p class="text-sm text-[#65676b] line-clamp-2">${ad.headline || ad.ad_copy?.substring(0, 60) || 'No headline'}</p>
+            ${ad.ai_asset_type ? `
+              <div class="mt-2 flex flex-wrap gap-1">
+                <span class="ai-tag badge-purple">${ad.ai_asset_type}</span>
+                ${ad.ai_visual_format ? `<span class="ai-tag badge-blue">${ad.ai_visual_format}</span>` : ''}
+                ${ad.ai_messaging_angle ? `<span class="ai-tag badge-orange">${ad.ai_messaging_angle}</span>` : ''}
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    function openAdModal(adId) {
+      currentAd = ads.find(a => (a.ad_id || a.id) === adId || a.id == adId);
+      if (!currentAd) return;
+
+      document.getElementById('adModalTitle').textContent = currentAd.headline || 'Ad Details';
+
+      // Handle thumbnail display - show placeholder for video ads without thumbnails
+      const thumbnailUrl = getAdThumbnailUrl(currentAd);
+      const imageContainer = document.getElementById('adModalImageContainer');
+      if (thumbnailUrl) {
+        imageContainer.innerHTML = `<img id="adModalImage" src="${thumbnailUrl}" alt="Ad creative" class="w-full h-full object-cover">`;
+      } else {
+        imageContainer.innerHTML = `
+          <div class="w-full h-full flex flex-col items-center justify-center bg-[#e4e6eb]">
+            <svg class="w-20 h-20 text-[#65676b] mb-3" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z"/>
+            </svg>
+            <span class="text-[#65676b]">Video Ad</span>
+            <span class="text-[#8a8d91] text-sm mt-1">Thumbnail not available</span>
+          </div>
+        `;
+      }
+
+      const adLibraryUrl = currentAd.ad_library_link || '#';
+      document.getElementById('adModalLink').href = adLibraryUrl;
+      document.getElementById('adModalImageLink').href = adLibraryUrl;
+      document.getElementById('adModalBrand').textContent = currentAd.brand_name || 'Unknown Brand';
+      document.getElementById('adModalVertical').textContent = currentAd.vertical || 'Unknown';
+      document.getElementById('adModalRank').textContent = currentAd.rank || '-';
+      const startDateText = currentAd.start_date ? formatDate(currentAd.start_date) : '-';
+      document.getElementById('adModalStartBadge').textContent = `Running since ${startDateText}`;
+      document.getElementById('adModalTypeBadge').textContent = currentAd.creative_type || 'Unknown';
+      document.getElementById('adModalCtaBadge').textContent = currentAd.cta_type || 'Unknown';
+      document.getElementById('adModalCopy').textContent = currentAd.ad_copy || 'No ad copy available';
+      document.getElementById('adModalHeadline').textContent = currentAd.headline || 'No headline';
+
+      // New AI tag fields
+      document.getElementById('adModalAssetType').textContent = currentAd.ai_asset_type || '-';
+      document.getElementById('adModalVisualFormat').textContent = currentAd.ai_visual_format || '-';
+      document.getElementById('adModalMessagingAngle').textContent = currentAd.ai_messaging_angle || '-';
+      document.getElementById('adModalHookTactic').textContent = currentAd.ai_hook_tactic || '-';
+      document.getElementById('adModalOfferType').textContent = currentAd.ai_offer_type || '-';
+
+      document.getElementById('adModalStartDate').textContent = currentAd.start_date ? formatDate(currentAd.start_date) : '-';
+      document.getElementById('adModalRunningFor').textContent = currentAd.start_date ? calculateDaysRunning(currentAd.start_date) : '-';
+
+      // Update analyze button text based on whether analysis exists
+      const hasAnalysis = currentAd.ai_asset_type && currentAd.ai_visual_format;
+      const analyzeBtn = document.getElementById('analyzeAdBtn');
+      analyzeBtn.disabled = false;
+      analyzeBtn.innerHTML = hasAnalysis
+        ? '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Re-analyze'
+        : '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg> Analyze';
+
+      // Update bookmark icon state
+      updateBookmarkIcon(currentAd.bookmarked === 1);
+
+      document.getElementById('adModal').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeAdModal() {
+      document.getElementById('adModal').classList.add('hidden');
+      document.body.style.overflow = '';
+      currentAd = null;
+    }
+
+    async function analyzeAd() {
+      if (!currentAd) return;
+
+      const btn = document.getElementById('analyzeAdBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<div class="w-4 h-4 border-2 border-[#dddfe2] border-t-[#1877f2] rounded-full animate-spin"></div> Analyzing...';
+
+      try {
+        const response = await fetch(`/api/ads/${currentAd.id}/analyze`, { method: 'POST' });
+        const analysis = await response.json();
+
+        // Update new AI tag fields in modal
+        document.getElementById('adModalAssetType').textContent = analysis.asset_type || '-';
+        document.getElementById('adModalVisualFormat').textContent = analysis.visual_format || '-';
+        document.getElementById('adModalMessagingAngle').textContent = analysis.messaging_angle || '-';
+        document.getElementById('adModalHookTactic').textContent = analysis.hook_tactic || '-';
+        document.getElementById('adModalOfferType').textContent = analysis.offer_type || '-';
+
+        // Update local data
+        currentAd.ai_asset_type = analysis.asset_type;
+        currentAd.ai_visual_format = analysis.visual_format;
+        currentAd.ai_messaging_angle = analysis.messaging_angle;
+        currentAd.ai_hook_tactic = analysis.hook_tactic;
+        currentAd.ai_offer_type = analysis.offer_type;
+
+        btn.innerHTML = '<svg class="w-4 h-4 text-[#31a24c]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Done';
+      } catch (error) {
+        console.error('Analyze ad error:', error);
+        const hasAnalysis = currentAd.ai_format && currentAd.ai_hook;
+        btn.innerHTML = hasAnalysis
+          ? '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Re-analyze'
+          : '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg> Analyze';
+        btn.disabled = false;
+        showToast('error', 'Analysis Failed', 'Could not analyze this ad. Please try again.');
+      }
+    }
+
+    // ============================================
+    // SCRAPING FUNCTIONS
+    // ============================================
+    async function scrapeBrand(id) {
+      // Prevent double-scraping
+      if (scrapingBrands.has(id)) {
+        showToast('info', 'Already Scraping', 'This brand is already being scraped');
+        return;
+      }
+
+      const brand = brands.find(b => b.id === id);
+      const brandName = brand?.brand_name || 'Brand';
+
+      try {
+        const response = await fetch(`/api/scrape/brand/${id}`, { method: 'POST' });
+        const data = await response.json();
+
+        if (data.error) {
+          showToast('error', 'Scrape Failed', data.error);
+          return;
+        }
+
+        if (data.mock) {
+          showToast('info', 'Demo Mode', `Using mock data for ${brandName}`);
+          await loadBrands();
+          await loadAds();
+        } else {
+          // Mark brand as scraping and update UI
+          scrapingBrands.add(id);
+          renderBrandsTable();
+          showToast('info', 'Scraping Started', `Fetching top ads for ${brandName}. This may take up to a minute.`, 8000);
+          pollScrapeCompletion(data.jobId, brandName, id);
+        }
+      } catch (error) {
+        console.error('Scrape brand error:', error);
+        showToast('error', 'Error', 'Failed to start scrape');
+      }
+    }
+
+    async function scrapeAllBrands() {
+      // Show confirmation modal instead of browser confirm
+      showScrapeAllConfirmation();
+    }
+
+    function showScrapeAllConfirmation() {
+      // Show modal with brand count
+      const brandCount = brands.length;
+      document.getElementById('scrapeAllBrandCount').textContent = brandCount;
+      document.getElementById('scrapeAllModal').classList.remove('hidden');
+    }
+
+    function closeScrapeAllModal() {
+      document.getElementById('scrapeAllModal').classList.add('hidden');
+    }
+
+    function confirmScrapeAll() {
+      closeScrapeAllModal();
+      doScrapeAll();
+    }
+
+    async function doScrapeAll() {
+      try {
+        const response = await fetch('/api/scrape/all', { method: 'POST' });
+        const data = await response.json();
+
+        if (data.error) {
+          showToast('error', 'Scrape Failed', data.error);
+          return;
+        }
+
+        // Mark all brands as scraping and update UI
+        for (const job of data.jobs) {
+          if (job.brandId) {
+            scrapingBrands.add(job.brandId);
+          }
+        }
+        renderBrandsTable();
+
+        showToast('info', 'Scraping All Brands', `Started ${data.jobs.length} scrape jobs. This may take a few minutes.`, 10000);
+
+        // Use bulk polling instead of individual polling
+        pollBulkScrapeCompletion(data.jobs);
+      } catch (error) {
+        console.error('Scrape all error:', error);
+        showToast('error', 'Error', 'Failed to start scrape');
+      }
+    }
+
+    // Bulk scrape polling - tracks all jobs and shows single summary toast
+    async function pollBulkScrapeCompletion(jobs) {
+      const jobStatuses = new Map(); // jobId -> { brandName, brandId, status, resultCount }
+      let completedCount = 0;
+      let totalAdsFound = 0;
+      let errorCount = 0;
+      const totalJobs = jobs.length;
+
+      // Initialize job tracking
+      for (const job of jobs) {
+        jobStatuses.set(job.jobId, {
+          brandName: job.brandName,
+          brandId: job.brandId,
+          status: 'pending',
+          resultCount: 0
+        });
+      }
+
+      const checkAllJobs = async () => {
+        let stillRunning = false;
+
+        for (const [jobId, jobInfo] of jobStatuses) {
+          if (jobInfo.status === 'pending' || jobInfo.status === 'running') {
+            try {
+              const response = await fetch(`/api/scrape/status/${jobId}`);
+              const data = await response.json();
+
+              if (data.status === 'complete') {
+                jobInfo.status = 'complete';
+                jobInfo.resultCount = data.resultCount || 0;
+                completedCount++;
+                totalAdsFound += jobInfo.resultCount;
+
+                // Update UI for this brand
+                if (jobInfo.brandId) {
+                  scrapingBrands.delete(jobInfo.brandId);
+                }
+              } else if (data.status === 'error') {
+                jobInfo.status = 'error';
+                completedCount++;
+                errorCount++;
+
+                if (jobInfo.brandId) {
+                  scrapingBrands.delete(jobInfo.brandId);
+                }
+              } else {
+                jobInfo.status = 'running';
+                stillRunning = true;
+              }
+            } catch (e) {
+              // Network error, keep trying
+              stillRunning = true;
+            }
+          }
+        }
+
+        renderBrandsTable();
+
+        // Check if all done
+        if (completedCount >= totalJobs) {
+          // All jobs complete - show summary toast
+          await loadBrands();
+          await loadAds();
+          await loadUnanalyzedCount();
+
+          if (errorCount > 0) {
+            showToast(
+              'warning',
+              'Scraping Complete',
+              `Found ${totalAdsFound} ads across ${totalJobs - errorCount} brands. ${errorCount} brands failed.`,
+              8000
+            );
+          } else {
+            showToast(
+              'success',
+              'Scraping Complete',
+              `Found ${totalAdsFound} ads across ${totalJobs} brands!`,
+              8000
+            );
+          }
+        } else if (stillRunning) {
+          // Continue polling
+          setTimeout(checkAllJobs, 3000);
+        }
+      };
+
+      // Start polling
+      setTimeout(checkAllJobs, 3000);
+    }
+
+    async function pollScrapeJob(jobId) {
+      const maxAttempts = 40;
+      let attempts = 0;
+
+      while (attempts < maxAttempts) {
+        try {
+          const response = await fetch(`/api/scrape/status/${jobId}`);
+          const data = await response.json();
+
+          if (data.status === 'complete') {
+            await loadBrands();
+            await loadAds();
+            await loadUnanalyzedCount();
+            return;
+          }
+
+          if (data.status === 'error') {
+            console.error('Scrape job failed:', data.error);
+            return;
+          }
+
+          await new Promise(r => setTimeout(r, 3000));
+          attempts++;
+        } catch (error) {
+          console.error('Poll scrape job error:', error);
+          return;
+        }
+      }
+    }
+
+    // ============================================
+    // BOOKMARKS FUNCTIONS
+    // ============================================
+    let bookmarkedAds = [];
+
+    async function loadBookmarks() {
+      const grid = document.getElementById('bookmarksGrid');
+      const empty = document.getElementById('bookmarksEmpty');
+
+      try {
+        const response = await fetch('/api/ads/bookmarked');
+        bookmarkedAds = await response.json();
+
+        // Update bookmark count in tab
+        document.getElementById('bookmarkCount').textContent = bookmarkedAds.length;
+
+        if (bookmarkedAds.length === 0) {
+          grid.innerHTML = '';
+          empty.classList.remove('hidden');
+          return;
+        }
+
+        empty.classList.add('hidden');
+        grid.innerHTML = bookmarkedAds.map((ad, index) => createAdCard(ad, index, true)).join('');
+
+        // Update global ads for modal when viewing bookmarks
+        ads = bookmarkedAds;
+      } catch (error) {
+        console.error('Load bookmarks error:', error);
+        empty.classList.remove('hidden');
+      }
+    }
+
+    async function toggleBookmark() {
+      if (!currentAd) return;
+
+      const btn = document.getElementById('bookmarkBtn');
+      const icon = document.getElementById('bookmarkIcon');
+
+      try {
+        const response = await fetch(`/api/ads/${currentAd.id}/bookmark`, { method: 'POST' });
+        const result = await response.json();
+
+        // Update current ad state
+        currentAd.bookmarked = result.bookmarked ? 1 : 0;
+
+        // Update icon appearance
+        updateBookmarkIcon(result.bookmarked);
+
+        // Show toast
+        if (result.bookmarked) {
+          showToast('success', 'Bookmarked', 'Ad saved to your bookmarks');
+        } else {
+          showToast('info', 'Removed', 'Ad removed from bookmarks');
+        }
+
+        // Refresh bookmark count
+        loadBookmarkCount();
+
+        // If we're on the bookmarks tab, refresh the view
+        if (currentTab === 'bookmarks') {
+          loadBookmarks();
+        }
+      } catch (error) {
+        console.error('Toggle bookmark error:', error);
+        showToast('error', 'Error', 'Failed to update bookmark');
+      }
+    }
+
+    function updateBookmarkIcon(isBookmarked) {
+      const icon = document.getElementById('bookmarkIcon');
+      if (isBookmarked) {
+        icon.setAttribute('fill', 'currentColor');
+        icon.classList.add('text-yellow-400');
+      } else {
+        icon.setAttribute('fill', 'none');
+        icon.classList.remove('text-yellow-400');
+      }
+    }
+
+    async function loadBookmarkCount() {
+      try {
+        const response = await fetch('/api/ads/bookmarked');
+        const bookmarks = await response.json();
+        document.getElementById('bookmarkCount').textContent = bookmarks.length;
+      } catch (error) {
+        console.error('Load bookmark count error:', error);
+      }
+    }
+
+    // ============================================
+    // SETTINGS FUNCTIONS
+    // ============================================
+    async function openSettingsModal() {
+      // Load current settings
+      try {
+        const response = await fetch('/api/settings/schedule');
+        const settings = await response.json();
+
+        document.getElementById('scheduleEnabled').checked = settings.enabled;
+        document.getElementById('scheduleDay').value = settings.day;
+        document.getElementById('scheduleHour').value = settings.hour;
+        document.getElementById('autoAnalyze').checked = settings.autoAnalyze || false;
+
+        // Show/hide schedule options based on enabled state
+        toggleScheduleOptions(settings.enabled);
+      } catch (error) {
+        console.error('Load settings error:', error);
+      }
+
+      document.getElementById('settingsModal').classList.remove('hidden');
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('settingsModal').classList.add('hidden');
+    }
+
+    function toggleScheduleOptions(enabled) {
+      const options = document.getElementById('scheduleOptions');
+      if (enabled) {
+        options.classList.remove('hidden');
+      } else {
+        options.classList.add('hidden');
+        // Also uncheck auto-analyze when disabling scheduled scrape
+        document.getElementById('autoAnalyze').checked = false;
+      }
+    }
+
+    // Listen for checkbox change
+    document.addEventListener('DOMContentLoaded', () => {
+      const checkbox = document.getElementById('scheduleEnabled');
+      if (checkbox) {
+        checkbox.addEventListener('change', (e) => {
+          toggleScheduleOptions(e.target.checked);
+        });
+      }
+    });
+
+    async function saveSettings() {
+      try {
+        const enabled = document.getElementById('scheduleEnabled').checked;
+        const day = document.getElementById('scheduleDay').value;
+        const hour = document.getElementById('scheduleHour').value;
+        const autoAnalyze = document.getElementById('autoAnalyze').checked;
+
+        const response = await fetch('/api/settings/schedule', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ enabled, day, hour, autoAnalyze })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          closeSettingsModal();
+          if (enabled) {
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const hourNum = parseInt(hour);
+            const timeStr = hourNum === 0 ? '12:00 AM' : hourNum < 12 ? `${hourNum}:00 AM` : hourNum === 12 ? '12:00 PM' : `${hourNum - 12}:00 PM`;
+            const analyzeMsg = autoAnalyze ? ' + auto-analyze' : '';
+            showToast('success', 'Schedule Saved', `Weekly scrape${analyzeMsg} scheduled for ${days[day]} at ${timeStr}`);
+          } else {
+            showToast('success', 'Schedule Saved', 'Automatic weekly scraping disabled');
+          }
+        } else {
+          throw new Error(result.error || 'Failed to save settings');
+        }
+      } catch (error) {
+        console.error('Save settings error:', error);
+        showToast('error', 'Error', 'Failed to save settings');
+      }
+    }
+
+    // ============================================
+    // BATCH ANALYZE FUNCTIONS
+    // ============================================
+    let unanalyzedCount = 0;
+
+    async function loadUnanalyzedCount() {
+      try {
+        const response = await fetch('/api/ads/unanalyzed/count');
+        const data = await response.json();
+        unanalyzedCount = data.count;
+        document.getElementById('unanalyzedCount').textContent = unanalyzedCount;
+
+        // Hide button if no unanalyzed ads
+        const btn = document.getElementById('analyzeNewBtn');
+        if (unanalyzedCount === 0) {
+          btn.style.display = 'none';
+        } else {
+          btn.style.display = 'flex';
+        }
+      } catch (error) {
+        console.error('Failed to load unanalyzed count:', error);
+      }
+    }
+
+    function openAnalyzeModal() {
+      if (unanalyzedCount === 0) {
+        showToast('info', 'All Analyzed', 'All ads have already been analyzed.');
+        return;
+      }
+      document.getElementById('analyzeModalCount').textContent = unanalyzedCount;
+      document.getElementById('analyzeModalContent').classList.remove('hidden');
+      document.getElementById('analyzeModalProgress').classList.add('hidden');
+      document.getElementById('analyzeModalComplete').classList.add('hidden');
+      document.getElementById('analyzeModal').classList.remove('hidden');
+    }
+
+    function closeAnalyzeModal() {
+      document.getElementById('analyzeModal').classList.add('hidden');
+      loadUnanalyzedCount(); // Refresh count
+      loadAds(); // Refresh ads to show new AI tags
+    }
+
+    async function startBatchAnalysis() {
+      // Show progress UI
+      document.getElementById('analyzeModalContent').classList.add('hidden');
+      document.getElementById('analyzeModalProgress').classList.remove('hidden');
+      document.getElementById('analyzeProgressText').textContent = `0 / ${unanalyzedCount}`;
+      document.getElementById('analyzeProgressBar').style.width = '0%';
+
+      try {
+        const response = await fetch('/api/ads/analyze-batch', { method: 'POST' });
+        const result = await response.json();
+
+        // Show complete UI
+        document.getElementById('analyzeModalProgress').classList.add('hidden');
+        document.getElementById('analyzeModalComplete').classList.remove('hidden');
+        document.getElementById('analyzeCompleteCount').textContent = result.analyzed;
+
+        if (result.errors > 0) {
+          showToast('warning', 'Analysis Complete', `Analyzed ${result.analyzed} ads with ${result.errors} errors.`);
+        } else {
+          showToast('success', 'Analysis Complete', `Successfully analyzed ${result.analyzed} ads.`);
+        }
+      } catch (error) {
+        console.error('Batch analysis error:', error);
+        showToast('error', 'Analysis Failed', error.message);
+        closeAnalyzeModal();
+      }
+    }
+
+    // ============================================
+    // AI TAGS FILTER FUNCTIONS
+    // ============================================
+    const AI_TAG_CATEGORIES = {
+      ai_asset_type: { label: 'Asset Type', color: 'badge-purple' },
+      ai_visual_format: { label: 'Visual Format', color: 'badge-blue' },
+      ai_messaging_angle: { label: 'Messaging Angle', color: 'badge-orange' },
+      ai_hook_tactic: { label: 'Hook Tactic', color: 'badge-teal' },
+      ai_offer_type: { label: 'Offer Type', color: 'badge-pink' }
+    };
+
+    function toggleAiTagsMenu(event) {
+      event.stopPropagation();
+      const menu = document.getElementById('aiTagsMenu');
+      const btn = event.currentTarget;
+      const isOpen = menu.classList.contains('open');
+
+      if (isOpen) {
+        menu.classList.remove('open');
+        btn.classList.remove('active');
+      } else {
+        menu.classList.add('open');
+        btn.classList.add('active');
+        loadAiTagOptions();
+      }
+    }
+
+    function toggleAiTagCategory(header) {
+      const category = header.parentElement;
+      category.classList.toggle('expanded');
+    }
+
+    async function loadAiTagOptions() {
+      // Get unique values for each AI tag category from the loaded ads
+      // If we need more comprehensive data, we could add an API endpoint
+      const categories = document.querySelectorAll('.ai-tags-category');
+
+      categories.forEach(catEl => {
+        const category = catEl.dataset.category;
+        const optionsContainer = catEl.querySelector('.ai-tags-options');
+        const colorClass = AI_TAG_CATEGORIES[category]?.color || 'badge-gray';
+
+        // Get unique values from ads for this category
+        const values = [...new Set(ads.map(ad => ad[category]).filter(Boolean))].sort();
+
+        if (values.length === 0) {
+          optionsContainer.innerHTML = '<span class="text-xs text-gray-500">No analyzed ads yet</span>';
+          return;
+        }
+
+        optionsContainer.innerHTML = values.map(value => {
+          const isSelected = selectedAiFilters[category]?.includes(value);
+          return `
+            <span class="ai-tag-option ${colorClass} ${isSelected ? 'selected' : ''}"
+                  onclick="selectAiTagFilter('${category}', '${value.replace(/'/g, "\\'")}')">${value}</span>
+          `;
+        }).join('');
+      });
+    }
+
+    function selectAiTagFilter(category, value) {
+      if (!selectedAiFilters[category]) {
+        selectedAiFilters[category] = [];
+      }
+
+      const index = selectedAiFilters[category].indexOf(value);
+      if (index > -1) {
+        // Remove if already selected
+        selectedAiFilters[category].splice(index, 1);
+        if (selectedAiFilters[category].length === 0) {
+          delete selectedAiFilters[category];
+        }
+      } else {
+        // Add to selection
+        selectedAiFilters[category].push(value);
+      }
+
+      // Update UI
+      loadAiTagOptions(); // Refresh option states
+      renderAiFilterPills();
+      loadAds(); // Reload with filters
+    }
+
+    function removeAiFilter(category, value) {
+      if (selectedAiFilters[category]) {
+        const index = selectedAiFilters[category].indexOf(value);
+        if (index > -1) {
+          selectedAiFilters[category].splice(index, 1);
+          if (selectedAiFilters[category].length === 0) {
+            delete selectedAiFilters[category];
+          }
+        }
+      }
+      renderAiFilterPills();
+      loadAds();
+    }
+
+    function renderAiFilterPills() {
+      const container = document.getElementById('aiFilterPills');
+      const hasFilters = Object.keys(selectedAiFilters).length > 0;
+
+      if (!hasFilters) {
+        container.classList.add('hidden');
+        container.innerHTML = '';
+        // Update button state
+        document.querySelector('.ai-tags-dropdown-btn')?.classList.remove('active');
+        return;
+      }
+
+      container.classList.remove('hidden');
+      document.querySelector('.ai-tags-dropdown-btn')?.classList.add('active');
+
+      let pillsHtml = '';
+      for (const [category, values] of Object.entries(selectedAiFilters)) {
+        const colorClass = AI_TAG_CATEGORIES[category]?.color || 'badge-gray';
+        for (const value of values) {
+          pillsHtml += `
+            <span class="ai-filter-pill ${colorClass}">
+              ${value}
+              <span class="remove-btn" onclick="removeAiFilter('${category}', '${value.replace(/'/g, "\\'")}')">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </span>
+            </span>
+          `;
+        }
+      }
+      container.innerHTML = pillsHtml;
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      const dropdown = document.querySelector('.ai-tags-dropdown');
+      const menu = document.getElementById('aiTagsMenu');
+      if (dropdown && !dropdown.contains(e.target) && menu?.classList.contains('open')) {
+        menu.classList.remove('open');
+        // Only remove active if no filters selected
+        if (Object.keys(selectedAiFilters).length === 0) {
+          document.querySelector('.ai-tags-dropdown-btn')?.classList.remove('active');
+        }
+      }
+    });
+
+    // ============================================
+    // UTILITY FUNCTIONS
+    // ============================================
+    function formatDate(dateStr) {
+      if (!dateStr) return '-';
+
+      let date;
+      // Check if it's a Unix timestamp (all digits, typically 10+ digits)
+      if (/^\d{10,}$/.test(String(dateStr))) {
+        date = new Date(parseInt(dateStr) * 1000);
+      } else {
+        // Handle datetime with space (e.g., "2026-01-26 20:28:02") or date only
+        let normalizedStr = String(dateStr);
+        if (normalizedStr.includes(' ')) {
+          // Replace space with T for ISO format
+          normalizedStr = normalizedStr.replace(' ', 'T');
+        } else if (!normalizedStr.includes('T')) {
+          // Date only - append T00:00:00 to force local timezone
+          normalizedStr = normalizedStr + 'T00:00:00';
+        }
+        date = new Date(normalizedStr);
+      }
+
+      // Check for invalid date or epoch (1970)
+      if (isNaN(date.getTime()) || date.getFullYear() < 2000) {
+        return '-';
+      }
+
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      });
+    }
+
+    // Short date format for badges (e.g., "Dec 26")
+    function formatDateShort(dateStr) {
+      if (!dateStr) return '-';
+
+      let date;
+      if (/^\d{10,}$/.test(String(dateStr))) {
+        date = new Date(parseInt(dateStr) * 1000);
+      } else {
+        let normalizedStr = String(dateStr);
+        if (normalizedStr.includes(' ')) {
+          normalizedStr = normalizedStr.replace(' ', 'T');
+        } else if (!normalizedStr.includes('T')) {
+          normalizedStr = normalizedStr + 'T00:00:00';
+        }
+        date = new Date(normalizedStr);
+      }
+
+      if (isNaN(date.getTime()) || date.getFullYear() < 2000) {
+        return '-';
+      }
+
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric'
+      });
+    }
+
+    // Calculate days running from start date to today
+    function calculateDaysRunning(dateStr) {
+      if (!dateStr) return '-';
+
+      let startDate;
+      if (/^\d{10,}$/.test(String(dateStr))) {
+        startDate = new Date(parseInt(dateStr) * 1000);
+      } else {
+        let normalizedStr = String(dateStr);
+        if (normalizedStr.includes(' ')) {
+          normalizedStr = normalizedStr.replace(' ', 'T');
+        } else if (!normalizedStr.includes('T')) {
+          normalizedStr = normalizedStr + 'T00:00:00';
+        }
+        startDate = new Date(normalizedStr);
+      }
+
+      if (isNaN(startDate.getTime()) || startDate.getFullYear() < 2000) {
+        return '-';
+      }
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      startDate.setHours(0, 0, 0, 0);
+
+      const diffTime = today - startDate;
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays < 0) return '-';
+      if (diffDays === 0) return 'Today';
+      if (diffDays === 1) return '1 day';
+      return `${diffDays} days`;
+    }
+
+    // Check if a URL is a video file (not a valid thumbnail)
+    function isVideoUrl(url) {
+      if (!url) return false;
+      const videoExtensions = ['.mp4', '.webm', '.mov', '.avi', '.mkv', '.m4v'];
+      const lowerUrl = url.toLowerCase();
+      return videoExtensions.some(ext => lowerUrl.includes(ext));
+    }
+
+    // Get the best display URL for an ad thumbnail
+    // Returns null if no valid thumbnail exists
+    function getAdThumbnailUrl(ad) {
+      // Prefer locally stored image (never expires)
+      if (ad.stored_creative_url) {
+        return ad.stored_creative_url;
+      }
+      // Fall back to CDN URL (may expire)
+      const url = ad.creative_url;
+      if (!url || isVideoUrl(url)) {
+        return null;
+      }
+      return url;
+    }
+
+    // Close modals on escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeAdModal();
+        closeBrandModal();
+        closeImportModal();
+        closeDeleteModal();
+      }
+    });
+  </script>
+</body>
+</html>

@@ -55,6 +55,8 @@ services:
       - GUMLOOP_WEBHOOK_URL=${GUMLOOP_WEBHOOK_URL}
       - BANNERBEAR_API_KEY=${BANNERBEAR_API_KEY}
       - FAL_AI_API_KEY=${FAL_AI_API_KEY}
+      - APIFY_TOKEN=${APIFY_TOKEN}
+      - N8N_CALLBACK_URL=${N8N_CALLBACK_URL}
     volumes:
       - n8n_data:/home/node/.n8n
       - ./workflows:/data/workflows

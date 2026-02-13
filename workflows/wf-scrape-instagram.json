@@ -1,0 +1,127 @@
+{
+  "name": "WF-Scrape-Instagram Competitor",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bomb-scrape-instagram",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-ig",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.apify.com/v2/acts/shu8hvrXbJbY3Eb9W/runs?token={{ $env.APIFY_TOKEN }}&waitForFinish=120",
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"directUrls\": {{ JSON.stringify($json.handles || []) }},\n  \"searchType\": \"hashtag\",\n  \"searchLimit\": 20,\n  \"addParentData\": false,\n  \"resultsLimit\": 50\n}",
+        "options": {}
+      },
+      "id": "apify-ig",
+      "name": "Apify - Instagram Scraper",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.apify.com/v2/acts/shu8hvrXbJbY3Eb9W/runs/{{ $json.data.id }}/dataset/items?token={{ $env.APIFY_TOKEN }}",
+        "options": {}
+      },
+      "id": "fetch-ig-results",
+      "name": "Fetch Dataset Items",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are a DTC competitor analyst. Given Instagram post data, identify competitor brands, their content angles, engagement rates, and weaknesses. Return a JSON array with: name (brand/handle), url (profile url), adCount (estimated post count), weaknesses (what they're missing), notes (key insight)."
+            },
+            {
+              "role": "user",
+              "content": "=Analyze these Instagram posts for competitor intelligence. candidateId: {{ $('Webhook').item.json.candidateId }}\n\n{{ JSON.stringify($json.slice(0, 20)) }}"
+            }
+          ]
+        },
+        "options": {
+          "responseFormat": "json_object"
+        }
+      },
+      "id": "ai-analyze",
+      "name": "AI - Analyze Competitors",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.N8N_CALLBACK_URL }}/api/webhook/scrape-results",
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"type\": \"competitor\",\n  \"candidateId\": {{ $('Webhook').item.json.candidateId }},\n  \"items\": {{ $json.message.content }}\n}",
+        "options": {}
+      },
+      "id": "callback-ig",
+      "name": "POST Results to App",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"success\": true, \"message\": \"Instagram scrape job queued\" }"
+      },
+      "id": "respond-ig",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [460, 500]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          { "node": "Apify - Instagram Scraper", "type": "main", "index": 0 },
+          { "node": "Respond to Webhook", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Apify - Instagram Scraper": {
+      "main": [
+        [{ "node": "Fetch Dataset Items", "type": "main", "index": 0 }]
+      ]
+    },
+    "Fetch Dataset Items": {
+      "main": [
+        [{ "node": "AI - Analyze Competitors", "type": "main", "index": 0 }]
+      ]
+    },
+    "AI - Analyze Competitors": {
+      "main": [
+        [{ "node": "POST Results to App", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "description": "Scrapes Instagram competitor data via Apify actor shu8hvrXbJbY3Eb9W, analyzes competitors with GPT-4o-mini, POSTs results back to /api/webhook/scrape-results as competitorIntel. Trigger: POST /webhook/bomb-scrape-instagram with { handles: [], candidateId: number }. Requires: APIFY_TOKEN, N8N_CALLBACK_URL env vars."
+  }
+}
