@@ -1,0 +1,3738 @@
+{
+  "name": "AI UGC Video Creator [SCALE]",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst actor = data.body || data;\nconst description = actor.Description || '';\n\nconst shotTypes = ['close-up POV portrait', 'mid-shot snapshot'];\nconst lightSources = ['a nearby window', 'soft overcast sky', 'golden hour sun from the side'];\nconst distances = ['very close to the lens', 'at a comfortable speaking distance'];\nconst gazes = ['directly into the lens', 'directly into the lens', 'slightly off-camera'];\nconst energies = ['raw POV energy', 'candid UGC snapshot energy'];\nconst backgrounds = [\n  'a softly blurred living room with neutral tones',\n  'a clean bathroom with soft natural light',\n  'a casual home office setting',\n  'an outdoor patio with greenery'\n];\n\nconst pick = arr => arr[Math.floor(Math.random() * arr.length)];\n\nconst prompt = `A vertical 9:16 ${pick(shotTypes)} captured on an iPhone 16 Pro at high resolution, with the typical computational look of a real smartphone photo: natural soft daylight coming from ${pick(lightSources)}, creating gentle highlights and subtle falloff. A ${description} stands ${pick(distances)}, filling the frame. Their skin is completely clean and natural with fully realistic texture: visible pores on the cheeks and nose, natural skin variations, and soft lighting falloff. Their expression is warm and authentic, eyes looking ${pick(gazes)}. Hands not visible. Only one person in the frame, no other people visible, no partial figures, no bystanders. The background is ${pick(backgrounds)}, slight depth of field. The lighting is unfiltered and true to life, preserving fine facial details. No filters, no retouching, no timestamps, no date stamps, no watermarks, no text overlays, no camera UI, no viewfinder, no shutter buttons, no \"PORTRAIT\" text, no phone interface elements of any kind — full realistic ${pick(energies)}.`;\n\nreturn [{ json: { ...actor, prompt } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "a0db6db0-9770-44bc-bc64-9011a784be8c",
+      "name": "Build Actor Prompt"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://fal.run/fal-ai/nano-banana-pro",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n{\nprompt: $json.prompt,\nnum_images: 1,\naspect_ratio: \"9:16\",\noutput_format: \"png\",\nresolution: \"2K\"\n}\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        880,
+        64
+      ],
+      "id": "cbba99e6-ff65-4d4e-b273-87bda68725e9",
+      "name": "Call Nano Banana",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "ofQWkjssOcJBogqH",
+          "name": "FAL AI"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const original = $('Build Actor Prompt').first().json;\nconst falResponse = $input.first().json;\n\nconst imageUrl = falResponse.images[0].url;\n\nreturn [{\n  json: {\n    id: original.id,\n    Name: original.Name,\n    imageUrl: imageUrl,\n    prompt: original.prompt\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1136,
+        64
+      ],
+      "id": "c11cccd9-5727-4985-ad89-3bc4fcc2eead",
+      "name": "Prepare Update"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appyUXScDFStwoqXv",
+          "mode": "list",
+          "cachedResultName": "UGC Builder",
+          "cachedResultUrl": "https://airtable.com/appyUXScDFStwoqXv"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblHZGnzFpq4e16sG",
+          "mode": "list",
+          "cachedResultName": "Actors",
+          "cachedResultUrl": "https://airtable.com/appyUXScDFStwoqXv/tblHZGnzFpq4e16sG"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.id }}",
+            "Photo": "={{ [{ \"url\": $json.imageUrl }] }}",
+            "Generation Prompt": "={{ $json.prompt }}",
+            "Status": "Ready",
+            "Gender": "={{ $json.gender }}",
+            "Ethnicity": "={{ $json.ethnicity }}",
+            "Age Range": "={{ $json.ageRange }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Photo",
+              "displayName": "Photo",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Description",
+              "displayName": "Description",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Generation Prompt",
+              "displayName": "Generation Prompt",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Gender",
+              "displayName": "Gender",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Male",
+                  "value": "Male"
+                },
+                {
+                  "name": "Female",
+                  "value": "Female"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Ethnicity",
+              "displayName": "Ethnicity",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "White",
+                  "value": "White"
+                },
+                {
+                  "name": "Black",
+                  "value": "Black"
+                },
+                {
+                  "name": "Hispanic",
+                  "value": "Hispanic"
+                },
+                {
+                  "name": "Asian",
+                  "value": "Asian"
+                },
+                {
+                  "name": "Middle-Eastern",
+                  "value": "Middle-Eastern"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Age Range",
+              "displayName": "Age Range",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "18-25",
+                  "value": "18-25"
+                },
+                {
+                  "name": "26-35",
+                  "value": "26-35"
+                },
+                {
+                  "name": "36-45",
+                  "value": "36-45"
+                },
+                {
+                  "name": "46-55",
+                  "value": "46-55"
+                },
+                {
+                  "name": "55+",
+                  "value": "55+"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Product Image",
+              "displayName": "Product Image",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Generating",
+                  "value": "Generating"
+                },
+                {
+                  "name": "Ready",
+                  "value": "Ready"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Scenes",
+              "displayName": "Scenes",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Calculation",
+              "displayName": "Calculation",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        2144,
+        64
+      ],
+      "id": "47ef49a9-8f37-41be-9c3f-7838805b9d77",
+      "name": "Update Actor",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "7CWIYitnBJMr6lSU",
+          "name": "Airtable"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "12a6824e-771d-478d-8c41-c2a832317dce",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "148876a0-340a-428d-b141-56cbee34dde8",
+      "name": "Generate UGC Photo",
+      "webhookId": "12a6824e-771d-478d-8c41-c2a832317dce"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "1215301f-2972-483a-bafa-3e401dff5073",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        576
+      ],
+      "id": "fefd19b6-28f9-4d0a-9e83-5d2b1741d279",
+      "name": "Generate UGC Video",
+      "webhookId": "1215301f-2972-483a-bafa-3e401dff5073"
+    },
+    {
+      "parameters": {
+        "base": {
+          "__rl": true,
+          "value": "appyUXScDFStwoqXv",
+          "mode": "list",
+          "cachedResultName": "UGC Builder",
+          "cachedResultUrl": "https://airtable.com/appyUXScDFStwoqXv"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblbjImdLQtMFFjXN",
+          "mode": "list",
+          "cachedResultName": "Scenes",
+          "cachedResultUrl": "https://airtable.com/appyUXScDFStwoqXv/tblbjImdLQtMFFjXN"
+        },
+        "id": "={{ $json.body.id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        208,
+        576
+      ],
+      "id": "b881f237-af48-4c01-ab93-f3281b3a4caf",
+      "name": "Fetch Scene",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "7CWIYitnBJMr6lSU",
+          "name": "Airtable"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "base": {
+          "__rl": true,
+          "value": "appyUXScDFStwoqXv",
+          "mode": "list",
+          "cachedResultName": "UGC Builder",
+          "cachedResultUrl": "https://airtable.com/appyUXScDFStwoqXv"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblHZGnzFpq4e16sG",
+          "mode": "list",
+          "cachedResultName": "Actors",
+          "cachedResultUrl": "https://airtable.com/appyUXScDFStwoqXv/tblHZGnzFpq4e16sG"
+        },
+        "id": "={{ $json.Actor[0] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        448,
+        576
+      ],
+      "id": "f07dc7fe-5138-4ae4-b1cd-ef6f56fb4b53",
+      "name": "Fetch Actor",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "7CWIYitnBJMr6lSU",
+          "name": "Airtable"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const scene = $('Fetch Scene').first().json;\nconst actor = $('Fetch Actor').first().json;\nconst product = $input.first().json;\n\nlet productImageUrl = null;\nlet productName = null;\n\nif (product && product.id && product['Product Image']?.[0]?.url) {\n  productImageUrl = product['Product Image'][0].url;\n  productName = product.Name || null;\n}\n\nconst actorImageUrl = actor.Photo?.[0]?.url || '';\nconst actorName = actor.Name || '';\nconst voiceId = scene['Voice ID']?.[0] || 'cgSgspJ2msm6clMCkdW9';\n\nreturn [{\n  json: {\n    sceneId: scene.id,\n    dialogue: scene.Dialogue,\n    scenePreset: scene['Scene Preset'],\n    mode: scene.Mode,\n    action: scene.Action || '',\n    actorName: actorName,\n    actorImageUrl: actorImageUrl,\n    productName: productName,\n    productImageUrl: productImageUrl,\n    hasProduct: !!productImageUrl,\n    voiceId: voiceId\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1008,
+        576
+      ],
+      "id": "75937f04-35c6-40b3-88a2-dcf700e7104c",
+      "name": "Merge Data"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://fal.run/fal-ai/elevenlabs/tts/eleven-v3",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"{{ $json.dialogue }}\",\n  \"voice\": \"{{ $json.voiceId }}\",\n  \"stability\": 0.5,\n  \"similarity_boost\": 0.75\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1488,
+        832
+      ],
+      "id": "627e7b15-bb00-40e4-8414-a016fe738e34",
+      "name": "Generate Audio",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "ofQWkjssOcJBogqH",
+          "name": "FAL AI"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const mergedData = $('Merge Data').first().json;\nconst audioResponse = $input.first().json;\n\nlet actionText = '';\nif (mergedData.action) {\n  actionText = `, ${mergedData.action}`;\n}\n\nconst webhookUrl = \"https://mikefutia.app.n8n.cloud/webhook/28a54a6d-537f-4d5a-b267-7a9ae0351ab5?type=scene&id=\" + mergedData.sceneId;\n\nreturn [{\n  json: {\n    sceneId: mergedData.sceneId,\n    image_url: mergedData.actorImageUrl,\n    audio_url: audioResponse.audio.url,\n    prompt: `A person speaking directly to camera, natural UGC selfie style${actionText}`,\n    webhookUrl: encodeURIComponent(webhookUrl)\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1696,
+        832
+      ],
+      "id": "5292caed-8450-40f4-bf63-d670a1c67919",
+      "name": "Prepare Kling"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://queue.fal.run/fal-ai/kling-video/ai-avatar/v2/pro?fal_webhook={{ $json.webhookUrl }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n{\n  \"image_url\": $json.image_url,\n  \"audio_url\": $json.audio_url,\n  \"prompt\": $json.prompt\n}\n}}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1920,
+        832
+      ],
+      "id": "cf5416c2-2eea-4710-a403-8a1f6653e38c",
+      "name": "Generate Video",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "ofQWkjssOcJBogqH",
+          "name": "FAL AI"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appyUXScDFStwoqXv",
+          "mode": "list",
+          "cachedResultName": "UGC Builder",
+          "cachedResultUrl": "https://airtable.com/appyUXScDFStwoqXv"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblbjImdLQtMFFjXN",
+          "mode": "list",
+          "cachedResultName": "Scenes",
+          "cachedResultUrl": "https://airtable.com/appyUXScDFStwoqXv/tblbjImdLQtMFFjXN"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Prepare Kling').item.json.sceneId }}",
+            "Task ID": "={{ $json.request_id }}",
+            "Status": "Running",
+            "Status URL": "={{ $json.status_url }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true
+            },
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Actor",
+              "displayName": "Actor",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Mode",
+              "displayName": "Mode",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Quick",
+                  "value": "Quick"
+                },
+                {
+                  "name": "Extended",
+                  "value": "Extended"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Product",
+              "displayName": "Product",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Scene Preset",
+              "displayName": "Scene Preset",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Bathroom",
+                  "value": "Bathroom"
+                },
+                {
+                  "name": "Kitchen",
+                  "value": "Kitchen"
+                },
+                {
+                  "name": "Car",
+                  "value": "Car"
+                },
+                {
+                  "name": "Bedroom",
+                  "value": "Bedroom"
+                },
+                {
+                  "name": "Living Room",
+                  "value": "Living Room"
+                },
+                {
+                  "name": "Office",
+                  "value": "Office"
+                },
+                {
+                  "name": "Outdoor",
+                  "value": "Outdoor"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Dialogue",
+              "displayName": "Dialogue",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Notes",
+              "displayName": "Notes",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Draft",
+                  "value": "Draft"
+                },
+                {
+                  "name": "Queued",
+                  "value": "Queued"
+                },
+                {
+                  "name": "Running",
+                  "value": "Running"
+                },
+                {
+                  "name": "Success",
+                  "value": "Success"
+                },
+                {
+                  "name": "Fail",
+                  "value": "Fail"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Video",
+              "displayName": "Video",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Task ID",
+              "displayName": "Task ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status URL",
+              "displayName": "Status URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Error",
+              "displayName": "Error",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Version Of",
+              "displayName": "Version Of",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "From field: Version Of",
+              "displayName": "From field: Version Of",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Record ID",
+              "displayName": "Record ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Approved",
+              "displayName": "Approved",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        2192,
+        832
+      ],
+      "id": "ec4925d0-df19-442f-bb2c-39d3c011b81d",
+      "name": "Update Scene - Running",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "7CWIYitnBJMr6lSU",
+          "name": "Airtable"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "004ca23c-ecbd-40fe-8f30-155a7acddd47",
+              "leftValue": "={{ $json.mode }}",
+              "rightValue": "Quick",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1280,
+        576
+      ],
+      "id": "dd02ba8e-d4c3-4b1f-bb8f-273a81e851b3",
+      "name": "Check Mode"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\n\nlet actionText = '';\nif (data.action) {\n  actionText = `\\n\\nActions/expressions: ${data.action}`;\n}\n\nconst prompt = `A casual selfie-style iPhone video. A person speaks directly to camera with natural energy and authentic expression.\n\nThey say: \"${data.dialogue}\"${actionText}\n\nUGC style: handheld realism, direct eye contact, natural lighting, genuine emotion, raw unfiltered aesthetic.`;\n\nconst webhookUrl = \"https://mikefutia.app.n8n.cloud/webhook/28a54a6d-537f-4d5a-b267-7a9ae0351ab5?type=scene&id=\" + data.sceneId;\n\nreturn [{\n  json: {\n    sceneId: data.sceneId,\n    webhookUrl: encodeURIComponent(webhookUrl),\n    falBody: {\n      prompt: prompt,\n      image_url: data.actorImageUrl,\n      aspect_ratio: \"9:16\",\n      duration: \"8s\",\n      resolution: \"720p\",\n      generate_audio: true\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1488,
+        400
+      ],
+      "id": "cf19faf4-d230-47c8-b88e-4e45d735f3bf",
+      "name": "Build Veo Prompt"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://queue.fal.run/fal-ai/veo3.1/image-to-video?fal_webhook={{ $json.webhookUrl }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.falBody }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1696,
+        400
+      ],
+      "id": "d5a2ef56-949e-449f-bd65-6e065f281323",
+      "name": "Call Veo 3.1",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "ofQWkjssOcJBogqH",
+          "name": "FAL AI"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appyUXScDFStwoqXv",
+          "mode": "list",
+          "cachedResultName": "UGC Builder",
+          "cachedResultUrl": "https://airtable.com/appyUXScDFStwoqXv"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblbjImdLQtMFFjXN",
+          "mode": "list",
+          "cachedResultName": "Scenes",
+          "cachedResultUrl": "https://airtable.com/appyUXScDFStwoqXv/tblbjImdLQtMFFjXN"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Build Veo Prompt').item.json.sceneId }}",
+            "Task ID": "={{ $json.request_id }}",
+            "Status": "Running",
+            "Status URL": "={{ $json.status_url }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true
+            },
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Actor",
+              "displayName": "Actor",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Mode",
+              "displayName": "Mode",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Quick",
+                  "value": "Quick"
+                },
+                {
+                  "name": "Extended",
+                  "value": "Extended"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Product",
+              "displayName": "Product",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Scene Preset",
+              "displayName": "Scene Preset",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Bathroom",
+                  "value": "Bathroom"
+                },
+                {
+                  "name": "Kitchen",
+                  "value": "Kitchen"
+                },
+                {
+                  "name": "Car",
+                  "value": "Car"
+                },
+                {
+                  "name": "Bedroom",
+                  "value": "Bedroom"
+                },
+                {
+                  "name": "Living Room",
+                  "value": "Living Room"
+                },
+                {
+                  "name": "Office",
+                  "value": "Office"
+                },
+                {
+                  "name": "Outdoor",
+                  "value": "Outdoor"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Dialogue",
+              "displayName": "Dialogue",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Notes",
+              "displayName": "Notes",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Draft",
+                  "value": "Draft"
+                },
+                {
+                  "name": "Queued",
+                  "value": "Queued"
+                },
+                {
+                  "name": "Running",
+                  "value": "Running"
+                },
+                {
+                  "name": "Success",
+                  "value": "Success"
+                },
+                {
+                  "name": "Fail",
+                  "value": "Fail"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Video",
+              "displayName": "Video",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Task ID",
+              "displayName": "Task ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status URL",
+              "displayName": "Status URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Error",
+              "displayName": "Error",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Version Of",
+              "displayName": "Version Of",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "From field: Version Of",
+              "displayName": "From field: Version Of",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Record ID",
+              "displayName": "Record ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Approved",
+              "displayName": "Approved",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        1920,
+        400
+      ],
+      "id": "2de80631-a772-43fa-8b5d-3a369acefda0",
+      "name": "Update Scene - Veo Running",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "7CWIYitnBJMr6lSU",
+          "name": "Airtable"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "20b28b97-5f8b-4efc-9f5a-71ca06be083d",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -32,
+        1264
+      ],
+      "id": "e3774a49-d163-4c89-9569-cfc38a1ee5b3",
+      "name": "Generate BRoll",
+      "webhookId": "20b28b97-5f8b-4efc-9f5a-71ca06be083d"
+    },
+    {
+      "parameters": {
+        "base": {
+          "__rl": true,
+          "value": "appyUXScDFStwoqXv",
+          "mode": "list",
+          "cachedResultName": "UGC Builder",
+          "cachedResultUrl": "https://airtable.com/appyUXScDFStwoqXv"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblDYT50AFE1Ut02Y",
+          "mode": "list",
+          "cachedResultName": "Products",
+          "cachedResultUrl": "https://airtable.com/appyUXScDFStwoqXv/tblDYT50AFE1Ut02Y"
+        },
+        "id": "={{ $('Fetch B-Roll').item.json.Product[0] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        672,
+        1264
+      ],
+      "id": "e89acffd-f983-435d-99ee-0f28332c22d1",
+      "name": "Fetch Product",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "7CWIYitnBJMr6lSU",
+          "name": "Airtable"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "base": {
+          "__rl": true,
+          "value": "appyUXScDFStwoqXv",
+          "mode": "list",
+          "cachedResultName": "UGC Builder",
+          "cachedResultUrl": "https://airtable.com/appyUXScDFStwoqXv"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblew9pFTLDsj5kTd",
+          "mode": "list",
+          "cachedResultName": "B-Roll",
+          "cachedResultUrl": "https://airtable.com/appyUXScDFStwoqXv/tblew9pFTLDsj5kTd"
+        },
+        "id": "={{ $json.body.id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        192,
+        1264
+      ],
+      "id": "cd8c8c76-494b-4a5b-9ff7-532249785d09",
+      "name": "Fetch B-Roll",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "7CWIYitnBJMr6lSU",
+          "name": "Airtable"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appyUXScDFStwoqXv",
+          "mode": "list",
+          "cachedResultName": "UGC Builder",
+          "cachedResultUrl": "https://airtable.com/appyUXScDFStwoqXv"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblew9pFTLDsj5kTd",
+          "mode": "list",
+          "cachedResultName": "B-Roll",
+          "cachedResultUrl": "https://airtable.com/appyUXScDFStwoqXv/tblew9pFTLDsj5kTd"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Build Veo 3 Request').item.json.id }}",
+            "Task ID": "={{ $json.request_id }}",
+            "Status": "Running",
+            "Status URL": "={{ $json.status_url }}",
+            "Thumbnail": "={{ $('Build Veo 3 Request').item.json.sourceImageUrl }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true
+            },
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Product",
+              "displayName": "Product",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Prompt",
+              "displayName": "Prompt",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Video",
+              "displayName": "Video",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Thumbnail",
+              "displayName": "Thumbnail",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Actor",
+              "displayName": "Actor",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Queued",
+                  "value": "Queued"
+                },
+                {
+                  "name": "Running",
+                  "value": "Running"
+                },
+                {
+                  "name": "Success",
+                  "value": "Success"
+                },
+                {
+                  "name": "Fail",
+                  "value": "Fail"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Task ID",
+              "displayName": "Task ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status URL",
+              "displayName": "Status URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Record ID",
+              "displayName": "Record ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        1456,
+        1264
+      ],
+      "id": "639fefe2-cd19-4aed-a805-de5c8c1e8c60",
+      "name": "Update B-Roll - Running",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "7CWIYitnBJMr6lSU",
+          "name": "Airtable"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "5a6eba9b-520c-4893-b32a-4bdaefb5d6c2",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        64,
+        1712
+      ],
+      "id": "5e7eda60-1cda-4217-8f84-5e1fcf665947",
+      "name": "Video Complete Callback",
+      "webhookId": "5a6eba9b-520c-4893-b32a-4bdaefb5d6c2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const query = $input.first().json.query;\nconst body = $input.first().json.body;\n\nconst type = query.type;\nconst recordId = query.id;\n\n// Check for error status\nconst isError = body?.status === \"ERROR\" || body?.payload?.status === \"ERROR\";\nconst errorMsg = body?.payload?.detail?.[0]?.msg || body?.error || null;\n\n// Try multiple possible paths for video URL\nconst videoUrl = \n  body?.video?.url || \n  body?.payload?.video?.url || \n  body?.data?.video?.url ||\n  body?.result?.video?.url ||\n  null;\n\nconst thumbnailUrl = \n  body?.thumbnail?.url || \n  body?.payload?.thumbnail?.url ||\n  null;\n\nreturn [{\n  json: {\n    type,\n    recordId,\n    videoUrl,\n    thumbnailUrl,\n    isError,\n    errorMsg\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        272,
+        1712
+      ],
+      "id": "804a21b3-dff7-467c-b286-d7a715d078b2",
+      "name": "Parse Callback"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d2f9b1f3-ff56-42bb-a42a-8a931dac0ef9",
+              "leftValue": "={{ $json.type }}",
+              "rightValue": "scene",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        496,
+        1712
+      ],
+      "id": "9a2e5e6f-21c8-41fd-abba-aac8b2d37de1",
+      "name": "Is Scene?"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appyUXScDFStwoqXv",
+          "mode": "list",
+          "cachedResultName": "UGC Builder",
+          "cachedResultUrl": "https://airtable.com/appyUXScDFStwoqXv"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblbjImdLQtMFFjXN",
+          "mode": "list",
+          "cachedResultName": "Scenes",
+          "cachedResultUrl": "https://airtable.com/appyUXScDFStwoqXv/tblbjImdLQtMFFjXN"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.recordId }}",
+            "Status": "Success",
+            "Video": "={{ [{\"url\": $json.videoUrl}] }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true
+            },
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Actor",
+              "displayName": "Actor",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Mode",
+              "displayName": "Mode",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Quick",
+                  "value": "Quick"
+                },
+                {
+                  "name": "Extended",
+                  "value": "Extended"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Product",
+              "displayName": "Product",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Scene Preset",
+              "displayName": "Scene Preset",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Bathroom",
+                  "value": "Bathroom"
+                },
+                {
+                  "name": "Kitchen",
+                  "value": "Kitchen"
+                },
+                {
+                  "name": "Car",
+                  "value": "Car"
+                },
+                {
+                  "name": "Bedroom",
+                  "value": "Bedroom"
+                },
+                {
+                  "name": "Living Room",
+                  "value": "Living Room"
+                },
+                {
+                  "name": "Office",
+                  "value": "Office"
+                },
+                {
+                  "name": "Outdoor",
+                  "value": "Outdoor"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Dialogue",
+              "displayName": "Dialogue",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Notes",
+              "displayName": "Notes",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Draft",
+                  "value": "Draft"
+                },
+                {
+                  "name": "Queued",
+                  "value": "Queued"
+                },
+                {
+                  "name": "Running",
+                  "value": "Running"
+                },
+                {
+                  "name": "Success",
+                  "value": "Success"
+                },
+                {
+                  "name": "Fail",
+                  "value": "Fail"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Video",
+              "displayName": "Video",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Task ID",
+              "displayName": "Task ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Status URL",
+              "displayName": "Status URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Error",
+              "displayName": "Error",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Version Of",
+              "displayName": "Version Of",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "From field: Version Of",
+              "displayName": "From field: Version Of",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Record ID",
+              "displayName": "Record ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Approved",
+              "displayName": "Approved",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        1008,
+        1728
+      ],
+      "id": "f01b1d77-469b-4947-9b2f-f9806f55e7fd",
+      "name": "Update Scene - Success1",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "7CWIYitnBJMr6lSU",
+          "name": "Airtable"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appyUXScDFStwoqXv",
+          "mode": "list",
+          "cachedResultName": "UGC Builder",
+          "cachedResultUrl": "https://airtable.com/appyUXScDFStwoqXv"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblew9pFTLDsj5kTd",
+          "mode": "list",
+          "cachedResultName": "B-Roll",
+          "cachedResultUrl": "https://airtable.com/appyUXScDFStwoqXv/tblew9pFTLDsj5kTd"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.recordId }}",
+            "Status": "Success",
+            "Video": "={{ [{\"url\": $json.videoUrl}] }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true
+            },
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Product",
+              "displayName": "Product",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Prompt",
+              "displayName": "Prompt",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Video",
+              "displayName": "Video",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Thumbnail",
+              "displayName": "Thumbnail",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Queued",
+                  "value": "Queued"
+                },
+                {
+                  "name": "Running",
+                  "value": "Running"
+                },
+                {
+                  "name": "Success",
+                  "value": "Success"
+                },
+                {
+                  "name": "Fail",
+                  "value": "Fail"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Task ID",
+              "displayName": "Task ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Status URL",
+              "displayName": "Status URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Record ID",
+              "displayName": "Record ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        688,
+        1888
+      ],
+      "id": "bc041513-d207-4c4e-921a-f7eb359d7c5d",
+      "name": "Update B-Roll - Success1",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "7CWIYitnBJMr6lSU",
+          "name": "Airtable"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "base": {
+          "__rl": true,
+          "value": "appyUXScDFStwoqXv",
+          "mode": "list",
+          "cachedResultName": "UGC Builder",
+          "cachedResultUrl": "https://airtable.com/appyUXScDFStwoqXv"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblDYT50AFE1Ut02Y",
+          "mode": "list",
+          "cachedResultName": "Products",
+          "cachedResultUrl": "https://airtable.com/appyUXScDFStwoqXv/tblDYT50AFE1Ut02Y"
+        },
+        "id": "={{ $('Fetch Scene').item.json.Product[0] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        720,
+        576
+      ],
+      "id": "3803e947-d1ce-499f-ab63-dfe687d68344",
+      "name": "Fetch Product2",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "7CWIYitnBJMr6lSU",
+          "name": "Airtable"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "958a6466-b740-4275-9fb5-baeb4cb755a0",
+              "leftValue": "={{ $json.isError }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        704,
+        1536
+      ],
+      "id": "b7dbc7f9-7ab9-497a-9def-eec54501fd3f",
+      "name": "Has Error?"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appyUXScDFStwoqXv",
+          "mode": "list",
+          "cachedResultName": "UGC Builder",
+          "cachedResultUrl": "https://airtable.com/appyUXScDFStwoqXv"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblbjImdLQtMFFjXN",
+          "mode": "list",
+          "cachedResultName": "Scenes",
+          "cachedResultUrl": "https://airtable.com/appyUXScDFStwoqXv/tblbjImdLQtMFFjXN"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Approved": false,
+            "id": "={{ $json.recordId }}",
+            "Status": "Fail",
+            "Error": "={{ $json.errorMsg }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true
+            },
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Actor",
+              "displayName": "Actor",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Mode",
+              "displayName": "Mode",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Quick",
+                  "value": "Quick"
+                },
+                {
+                  "name": "Extended",
+                  "value": "Extended"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Product",
+              "displayName": "Product",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Scene Preset",
+              "displayName": "Scene Preset",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Bathroom",
+                  "value": "Bathroom"
+                },
+                {
+                  "name": "Kitchen",
+                  "value": "Kitchen"
+                },
+                {
+                  "name": "Car",
+                  "value": "Car"
+                },
+                {
+                  "name": "Bedroom",
+                  "value": "Bedroom"
+                },
+                {
+                  "name": "Living Room",
+                  "value": "Living Room"
+                },
+                {
+                  "name": "Office",
+                  "value": "Office"
+                },
+                {
+                  "name": "Outdoor",
+                  "value": "Outdoor"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Dialogue",
+              "displayName": "Dialogue",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Notes",
+              "displayName": "Notes",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Draft",
+                  "value": "Draft"
+                },
+                {
+                  "name": "Queued",
+                  "value": "Queued"
+                },
+                {
+                  "name": "Running",
+                  "value": "Running"
+                },
+                {
+                  "name": "Success",
+                  "value": "Success"
+                },
+                {
+                  "name": "Fail",
+                  "value": "Fail"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Video",
+              "displayName": "Video",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Task ID",
+              "displayName": "Task ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Status URL",
+              "displayName": "Status URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Error",
+              "displayName": "Error",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Version Of",
+              "displayName": "Version Of",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "From field: Version Of",
+              "displayName": "From field: Version Of",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Record ID",
+              "displayName": "Record ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Approved",
+              "displayName": "Approved",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        992,
+        1552
+      ],
+      "id": "c1d4f8a8-100b-494d-97fa-b6eef42aa670",
+      "name": "Update Scene - Failed",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "7CWIYitnBJMr6lSU",
+          "name": "Airtable"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\n\nlet imageUrls = [];\nlet context = '';\n\n// Start with parent actor photo if this is a variant\nif (data.ParentActorPhotoUrl) {\n  imageUrls.push(data.ParentActorPhotoUrl);\n  context = data.Description;\n} \n\n// Add product image if provided\nif (data.ProductImageUrl) {\n  imageUrls.push(data.ProductImageUrl);\n  if (data.ParentActorPhotoUrl) {\n    context = `holding the product naturally. ${data.Description}`;\n  } else {\n    context = `holding the product naturally. ${data.Description}`;\n  }\n}\n\nconst prompt = `A vertical 9:16 close-up selfie-style photo captured on an iPhone 16 Pro. This same person ${context}. They stand very close to the lens, filling the frame. Their expression is warm and authentic, eyes looking directly into the lens. Natural soft daylight, realistic skin texture with visible pores. The lighting is unfiltered and true to life. No filters, no retouching, no timestamps, no watermarks, no camera UI, no text overlays — full realistic UGC energy.`;\n\nreturn [{\n  json: {\n    ...data,\n    editBody: {\n      prompt: prompt,\n      image_urls: imageUrls,\n      aspect_ratio: \"9:16\",\n      resolution: \"1K\",\n      output_format: \"png\"\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        848,
+        -128
+      ],
+      "id": "4709882b-28b1-4242-ae59-6d3a56991478",
+      "name": "Build Edit Request"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://fal.run/fal-ai/nano-banana-pro/edit",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.editBody }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1104,
+        -128
+      ],
+      "id": "1c800e62-a103-4040-83de-d49022849151",
+      "name": "Call Nano Banana1",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "ofQWkjssOcJBogqH",
+          "name": "FAL AI"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $('Build Edit Request').first().json;\nconst result = $input.first().json;\n\nconst imageUrl = result.images?.[0]?.url || null;\n\nreturn [{\n  json: {\n    id: input.id,\n    Photo: imageUrl ? [{ url: imageUrl }] : null,\n    Status: imageUrl ? 'Success' : 'Failed',\n    prompt: input.editBody.prompt\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1312,
+        -128
+      ],
+      "id": "757eb158-28e8-4744-9a79-7a36bdfe088b",
+      "name": "Prepare Edit Update"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appyUXScDFStwoqXv",
+          "mode": "list",
+          "cachedResultName": "UGC Builder",
+          "cachedResultUrl": "https://airtable.com/appyUXScDFStwoqXv"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblHZGnzFpq4e16sG",
+          "mode": "list",
+          "cachedResultName": "Actors",
+          "cachedResultUrl": "https://airtable.com/appyUXScDFStwoqXv/tblHZGnzFpq4e16sG"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.id }}",
+            "Photo": "={{ $('Call Nano Banana1').item.json.images[0].url }}",
+            "Generation Prompt": "={{ $json.prompt }}",
+            "Status": "Ready",
+            "Gender": "={{ $json.gender }}",
+            "Ethnicity": "={{ $json.ethnicity }}",
+            "Age Range": "={{ $json.ageRange }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Photo",
+              "displayName": "Photo",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Description",
+              "displayName": "Description",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Generation Prompt",
+              "displayName": "Generation Prompt",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Gender",
+              "displayName": "Gender",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Male",
+                  "value": "Male"
+                },
+                {
+                  "name": "Female",
+                  "value": "Female"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Ethnicity",
+              "displayName": "Ethnicity",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "White",
+                  "value": "White"
+                },
+                {
+                  "name": "Black",
+                  "value": "Black"
+                },
+                {
+                  "name": "Hispanic",
+                  "value": "Hispanic"
+                },
+                {
+                  "name": "Asian",
+                  "value": "Asian"
+                },
+                {
+                  "name": "Middle-Eastern",
+                  "value": "Middle-Eastern"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Age Range",
+              "displayName": "Age Range",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "18-25",
+                  "value": "18-25"
+                },
+                {
+                  "name": "26-35",
+                  "value": "26-35"
+                },
+                {
+                  "name": "36-45",
+                  "value": "36-45"
+                },
+                {
+                  "name": "46-55",
+                  "value": "46-55"
+                },
+                {
+                  "name": "55+",
+                  "value": "55+"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Product Image",
+              "displayName": "Product Image",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Generating",
+                  "value": "Generating"
+                },
+                {
+                  "name": "Ready",
+                  "value": "Ready"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Scenes",
+              "displayName": "Scenes",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Calculation",
+              "displayName": "Calculation",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        2224,
+        -144
+      ],
+      "id": "868bb964-9212-44ba-ac73-f9bb440e9f82",
+      "name": "Update Actor1",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "7CWIYitnBJMr6lSU",
+          "name": "Airtable"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst imageUrl = data.imageUrl || data.Photo?.[0]?.url || null;\n\nreturn [{\n  json: {\n    ...data,\n    visionBody: {\n      model: \"gpt-4o-mini\",\n      messages: [\n        {\n          role: \"user\",\n          content: [\n            {\n              type: \"text\",\n              text: \"Analyze this person's photo. Respond with ONLY a JSON object (no markdown, no explanation) with these fields:\\n- gender: \\\"Male\\\", \\\"Female\\\", or \\\"Non-binary\\\"\\n- ethnicity: \\\"White\\\", \\\"Black\\\", \\\"Latino/Latina\\\", \\\"Asian\\\", \\\"Middle Eastern\\\", \\\"South Asian\\\", or \\\"Mixed\\\"\\n- ageRange: \\\"18-25\\\", \\\"26-35\\\", \\\"36-45\\\", \\\"46-55\\\", or \\\"55+\\\"\"\n            },\n            {\n              type: \"image_url\",\n              image_url: { url: imageUrl }\n            }\n          ]\n        }\n      ],\n      max_tokens: 100\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1328,
+        64
+      ],
+      "id": "92c24dc2-7ab2-49b1-98e7-20a81dd51a41",
+      "name": "Build Vision Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst imageUrl = data.imageUrl || data.Photo?.[0]?.url || null;\n\nreturn [{\n  json: {\n    ...data,\n    visionBody: {\n      model: \"gpt-4o-mini\",\n      messages: [\n        {\n          role: \"user\",\n          content: [\n            {\n              type: \"text\",\n              text: \"Analyze this person's photo. Respond with ONLY a JSON object (no markdown, no explanation) with these fields:\\n- gender: \\\"Male\\\", \\\"Female\\\", or \\\"Non-binary\\\"\\n- ethnicity: \\\"White\\\", \\\"Black\\\", \\\"Latino/Latina\\\", \\\"Asian\\\", \\\"Middle Eastern\\\", \\\"South Asian\\\", or \\\"Mixed\\\"\\n- ageRange: \\\"18-25\\\", \\\"26-35\\\", \\\"36-45\\\", \\\"46-55\\\", or \\\"55+\\\"\"\n            },\n            {\n              type: \"image_url\",\n              image_url: { url: imageUrl }\n            }\n          ]\n        }\n      ],\n      max_tokens: 100\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1520,
+        -128
+      ],
+      "id": "67b60ed3-6b67-49a6-9456-02bd7db03649",
+      "name": "Build Vision Request1"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-pro",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-pro"
+        },
+        "text": "={{ $json.visionBody.messages[0].content[0].text }}",
+        "imageUrls": "={{ $json.imageUrl }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        1760,
+        64
+      ],
+      "id": "bdacb849-4069-45f3-b848-fcdf0575a0a8",
+      "name": "Analyze an image",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "2hrcTEahJIZwFGQp",
+          "name": "Google Gemini"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $('Build Vision Request').first().json;\nconst response = $input.first().json;\n\n// Extract the text content (handle both OpenAI and Gemini formats)\nlet text = response.choices?.[0]?.message?.content || \n           response.content?.parts?.[0]?.text || \n           '';\n\n// Remove markdown code blocks if present\ntext = text.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n\nlet parsed = {};\ntry {\n  parsed = JSON.parse(text);\n} catch (e) {\n  parsed = { gender: null, ethnicity: null, ageRange: null };\n}\n\nreturn [{\n  json: {\n    id: input.id,\n    imageUrl: input.imageUrl,\n    prompt: input.prompt,\n    gender: parsed.gender || null,\n    ethnicity: parsed.ethnicity || null,\n    ageRange: parsed.ageRange || null\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1952,
+        64
+      ],
+      "id": "e783ec5d-43b3-482b-a154-fd7528ab5006",
+      "name": "Parse Vision"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-pro",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-pro"
+        },
+        "text": "={{ $json.visionBody.messages[0].content[0].text }}",
+        "imageUrls": "={{ $json.visionBody.messages[0].content[1].image_url.url }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        1760,
+        -128
+      ],
+      "id": "579fa98c-6180-4f0e-94ac-dcc4bfeed5b1",
+      "name": "Analyze an image1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "2hrcTEahJIZwFGQp",
+          "name": "Google Gemini"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $('Build Vision Request1').first().json;\nconst response = $input.first().json;\n\n// Extract the text content (handle both OpenAI and Gemini formats)\nlet text = response.choices?.[0]?.message?.content || \n           response.content?.parts?.[0]?.text || \n           '';\n\n// Remove markdown code blocks if present\ntext = text.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n\nlet parsed = {};\ntry {\n  parsed = JSON.parse(text);\n} catch (e) {\n  parsed = { gender: null, ethnicity: null, ageRange: null };\n}\n\nreturn [{\n  json: {\n    id: input.id,\n    imageUrl: input.imageUrl,\n    prompt: input.prompt,\n    gender: parsed.gender || null,\n    ethnicity: parsed.ethnicity || null,\n    ageRange: parsed.ageRange || null\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        -128
+      ],
+      "id": "f8c5b639-80c0-48b4-a8ef-485a5f85807e",
+      "name": "Parse Vision1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst body = data.body || data;\n\nconst hasParent = !!body.ParentActorPhotoUrl;\nconst hasProduct = !!body.ProductImageUrl;\nconst needsEdit = hasParent || hasProduct;\n\nreturn [{\n  json: {\n    ...body,\n    hasParent,\n    hasProduct,\n    needsEdit\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "7b6f0836-11f3-4390-a484-112b33353cfd",
+      "name": "Check Edit Mode"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "661d8186-48e6-4500-8000-fdb540b663ee",
+              "leftValue": "={{ $json.needsEdit }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        624,
+        0
+      ],
+      "id": "257bf78f-8d89-4d4a-85c6-8d51613359b0",
+      "name": "Needs Edit?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const broll = $('Fetch B-Roll').first().json;\nconst product = $('Fetch Product').first().json;\nconst actor = $('Fetch Actor1').first().json;\n\n// Use actor image if available, otherwise product image\nconst imageUrl = actor?.Photo?.[0]?.url || product?.['Product Image']?.[0]?.url || null;\n\nconst prompt = `${broll.Prompt}\n\nCinematic B-Roll footage. No dialogue, no speech, no talking. Smooth motion, professional quality.`;\n\nconst webhookUrl = \"https://mikefutia.app.n8n.cloud/webhook/28a54a6d-537f-4d5a-b267-7a9ae0351ab5?type=broll&id=\" + broll.id;\n\nreturn [{\n  json: {\n    id: broll.id,\n    sourceImageUrl: imageUrl,\n    webhookUrl: encodeURIComponent(webhookUrl),\n    falBody: {\n      prompt: prompt,\n      image_url: imageUrl,\n      aspect_ratio: \"9:16\",\n      duration: \"8s\",\n      resolution: \"720p\",\n      generate_audio: false\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        1264
+      ],
+      "id": "20bd82cf-6484-40b3-ab58-3f9aba0a0e6e",
+      "name": "Build Veo 3 Request"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://queue.fal.run/fal-ai/veo3.1/image-to-video?fal_webhook={{ $json.webhookUrl }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.falBody }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1168,
+        1264
+      ],
+      "id": "7ed8d039-54ac-4443-8364-914aaaedfd6e",
+      "name": "Call Veo 3",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "ofQWkjssOcJBogqH",
+          "name": "FAL AI"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "base": {
+          "__rl": true,
+          "value": "appyUXScDFStwoqXv",
+          "mode": "list",
+          "cachedResultName": "UGC Builder",
+          "cachedResultUrl": "https://airtable.com/appyUXScDFStwoqXv"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblHZGnzFpq4e16sG",
+          "mode": "list",
+          "cachedResultName": "Actors",
+          "cachedResultUrl": "https://airtable.com/appyUXScDFStwoqXv/tblHZGnzFpq4e16sG"
+        },
+        "id": "={{ $json.Actor[0] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        432,
+        1264
+      ],
+      "id": "5a3652e8-1097-4b84-af9d-a5832350c0b6",
+      "name": "Fetch Actor1",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "7CWIYitnBJMr6lSU",
+          "name": "Airtable"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        64,
+        2256
+      ],
+      "id": "6f57a1b6-d37a-4d1c-98e5-5e2f94ec9999",
+      "name": "Populate Voices"
+    },
+    {
+      "parameters": {
+        "url": "https://api.elevenlabs.io/v1/voices",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        272,
+        2256
+      ],
+      "id": "30190c2b-efb1-4ce0-85e9-231189e8a31a",
+      "name": "Fetch ElevenLabs Voices",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "5HsSiiu7mDwCPt5L",
+          "name": "ElevenLabs"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nreturn items.map(item => {\n  const voice = item.json;\n  \n  // Capitalize gender\n  let gender = voice.labels?.gender || 'unknown';\n  gender = gender.charAt(0).toUpperCase() + gender.slice(1);\n  \n  // Format age\n  let age = voice.labels?.age || 'unknown';\n  if (age === 'middle_aged') age = 'Middle-aged';\n  else if (age === 'young') age = 'Young';\n  else if (age === 'old') age = 'Old';\n  \n  return {\n    json: {\n      fields: {\n        \"Name\": voice.name,\n        \"Voice ID\": voice.voice_id,\n        \"Preview Audio\": [{ url: voice.preview_url }],\n        \"Gender\": gender,\n        \"Age\": age\n      }\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        688,
+        2256
+      ],
+      "id": "af2f7a3d-465a-4b50-bfce-59e9e8a7b6df",
+      "name": "Format Voice Data"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appyUXScDFStwoqXv",
+          "mode": "list",
+          "cachedResultName": "UGC Builder",
+          "cachedResultUrl": "https://airtable.com/appyUXScDFStwoqXv"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblCyHbQEhkoFRISw",
+          "mode": "list",
+          "cachedResultName": "Voices",
+          "cachedResultUrl": "https://airtable.com/appyUXScDFStwoqXv/tblCyHbQEhkoFRISw"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $json.fields.Name }}",
+            "Voice ID": "={{ $json.fields['Voice ID'] }}",
+            "Preview Audio": "={{ $json.fields['Preview Audio'][0].url }}",
+            "Gender": "={{ $json.fields.Gender }}",
+            "Age": "={{ $json.fields.Age }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Voice ID",
+              "displayName": "Voice ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Preview Audio",
+              "displayName": "Preview Audio",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Gender",
+              "displayName": "Gender",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Male",
+                  "value": "Male"
+                },
+                {
+                  "name": "Female",
+                  "value": "Female"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Age",
+              "displayName": "Age",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Young",
+                  "value": "Young"
+                },
+                {
+                  "name": "Middle-Age",
+                  "value": "Middle-Age"
+                },
+                {
+                  "name": "Old",
+                  "value": "Old"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Scenes",
+              "displayName": "Scenes",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        944,
+        2256
+      ],
+      "id": "14faa308-06a5-40ff-b522-8cb1206a201a",
+      "name": "Create Voice Records",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "7CWIYitnBJMr6lSU",
+          "name": "Airtable"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "voices",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        480,
+        2256
+      ],
+      "id": "7c543548-0ea3-4a94-ac67-d1bb7dc8a082",
+      "name": "Split Voices"
+    }
+  ],
+  "pinData": {
+    "Generate UGC Video": [
+      {
+        "json": {
+          "headers": {
+            "host": "mikefutia.app.n8n.cloud",
+            "user-agent": "Mozilla/5.0 (compatible; AirtableScripting; +https://airtable.com/developers/scripting;)",
+            "content-length": "26",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "3.229.138.204",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "9b12e0b0e1af81a6-IAD",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "x-airtable-source": "appyUXScDFStwoqXv/wflSadWdA74Roxw4X",
+            "x-forwarded-for": "3.229.138.204, 172.70.135.186",
+            "x-forwarded-host": "mikefutia.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-21-5c9df84b57-45vhh",
+            "x-is-trusted": "yes",
+            "x-real-ip": "3.229.138.204"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "id": "recXVWsRTOj4tQHvg"
+          },
+          "webhookUrl": "https://mikefutia.app.n8n.cloud/webhook/b2f17d55-799e-4a05-823f-30fd6677b50c",
+          "executionMode": "production"
+        }
+      }
+    ],
+    "Generate UGC Photo": [
+      {
+        "json": {
+          "headers": {
+            "host": "mikefutia.app.n8n.cloud",
+            "user-agent": "Mozilla/5.0 (compatible; AirtableScripting; +https://airtable.com/developers/scripting;)",
+            "content-length": "171",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "54.196.16.228",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "9b17e451507f289a-IAD",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "x-airtable-source": "appyUXScDFStwoqXv/wflxgW7RhNsNAUDEZ",
+            "x-forwarded-for": "54.196.16.228, 172.71.223.17",
+            "x-forwarded-host": "mikefutia.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-21-5c9df84b57-6d9wb",
+            "x-is-trusted": "yes",
+            "x-real-ip": "54.196.16.228"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "id": "recBz4oYGzXIQWq4G",
+            "Name": "Camila - Casual",
+            "Description": "A 26-year-old Latina woman with medium brown hair, girl-next-door vibe, friendly",
+            "ProductImageUrl": null
+          },
+          "webhookUrl": "https://mikefutia.app.n8n.cloud/webhook/906bba71-38e6-4a98-a16f-0f35d2245056",
+          "executionMode": "production"
+        }
+      }
+    ],
+    "Video Complete Callback": [
+      {
+        "json": {
+          "headers": {
+            "host": "mikefutia.app.n8n.cloud",
+            "user-agent": "Python/3.11 aiohttp/3.13.2",
+            "content-length": "310",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "34.56.20.205",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "9b22dd60866cead0-ORD",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "traceparent": "00-6949be5b000000008d7a43a918859a33-3911f85ce36b0c0f-01",
+            "tracestate": "dd=p:3911f85ce36b0c0f;s:2;t.dm:-3;t.usr.id:Z2l0aHVifGd2MDFha3NvdHM3M2w0NDlzdWwzc3k3Zg~~;t.tid:6949be5b00000000",
+            "x-datadog-parent-id": "4112341012602096655",
+            "x-datadog-sampling-priority": "2",
+            "x-datadog-tags": "_dd.p.usr.id=Z2l0aHVifGd2MDFha3NvdHM3M2w0NDlzdWwzc3k3Zg==,_dd.p.dm=-3,_dd.p.tid=6949be5b00000000",
+            "x-datadog-trace-id": "10194535100046481971",
+            "x-fal-webhook-request-id": "67c5205a-66e7-49ad-8dbb-499dbdbdc771",
+            "x-fal-webhook-signature": "6341c6a7e4cfde1ea508b496dfdfc4c0ff39145f0bd7f9e335d8766782a423679b29f262c18e61fb33c5379f633e231ae0c78bd538ff275c54ca3676ade45f06",
+            "x-fal-webhook-timestamp": "1766440540",
+            "x-fal-webhook-user-id": "github|gv01aksots73l449sul3sy7f",
+            "x-forwarded-for": "34.56.20.205, 172.70.126.45",
+            "x-forwarded-host": "mikefutia.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-21-5c9df84b57-45vhh",
+            "x-is-trusted": "yes",
+            "x-real-ip": "34.56.20.205"
+          },
+          "params": {},
+          "query": {
+            "type": "broll",
+            "id": "recspaOKSrhOHyANY"
+          },
+          "body": {
+            "error": "Unexpected status code: 422",
+            "gateway_request_id": "67c5205a-66e7-49ad-8dbb-499dbdbdc771",
+            "payload": {
+              "detail": [
+                {
+                  "loc": [
+                    "body",
+                    "image_url"
+                  ],
+                  "msg": "none is not an allowed value",
+                  "type": "type_error.none.not_allowed"
+                }
+              ]
+            },
+            "request_id": "67c5205a-66e7-49ad-8dbb-499dbdbdc771",
+            "status": "ERROR"
+          },
+          "webhookUrl": "https://mikefutia.app.n8n.cloud/webhook/28a54a6d-537f-4d5a-b267-7a9ae0351ab5",
+          "executionMode": "production"
+        }
+      }
+    ],
+    "Generate BRoll": [
+      {
+        "json": {
+          "headers": {
+            "host": "mikefutia.app.n8n.cloud",
+            "user-agent": "Mozilla/5.0 (compatible; AirtableScripting; +https://airtable.com/developers/scripting;)",
+            "content-length": "634",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "34.230.42.182",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "9b22dd46464e23d0-IAD",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "x-airtable-source": "appyUXScDFStwoqXv/wflNBbmjxqHQZEh2o",
+            "x-forwarded-for": "34.230.42.182, 104.23.213.61",
+            "x-forwarded-host": "mikefutia.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-21-5c9df84b57-45vhh",
+            "x-is-trusted": "yes",
+            "x-real-ip": "34.230.42.182"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "id": "recspaOKSrhOHyANY",
+            "prompt": "Goli gummy bottle rotating slowly on a clean white marble surface, soft studio lighting with a gentle green color gradient in the background, a few gummies scattered artfully beside the bottle, fresh and premium wellness aesthetic, smooth cinematic motion.",
+            "productImageUrl": "https://v5.airtableusercontent.com/v3/u/48/48/1766448000000/R6GRTV3gIFEmXi09PXx6xQ/kG29y1PtjP9F-Gz-9e6Oq1Be-_Aj97vAH5ik3Jvbq76BwgRE_cYVvG4BN1HdXa2xkAURXJyB_-G8IbT0N7-J19Pg45w7ib2Q9j_t0TbAd-svQ79y2_R8u1J5ti_vJy60zKpc-cubh8pzGfpfjxRK27W9sk5C6aScG7UlO_4aL7w/x_pavKNWqdsT1OiTIOx-1Dy6D9cMogp6hNQ3wbnEXDI",
+            "actorImageUrl": null
+          },
+          "webhookUrl": "https://mikefutia.app.n8n.cloud/webhook/fc00974a-2258-4591-a391-bf171651bd98",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Build Actor Prompt": {
+      "main": [
+        [
+          {
+            "node": "Check Edit Mode",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Nano Banana": {
+      "main": [
+        [
+          {
+            "node": "Prepare Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Update": {
+      "main": [
+        [
+          {
+            "node": "Build Vision Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate UGC Photo": {
+      "main": [
+        [
+          {
+            "node": "Build Actor Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate UGC Video": {
+      "main": [
+        [
+          {
+            "node": "Fetch Scene",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Scene": {
+      "main": [
+        [
+          {
+            "node": "Fetch Actor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Actor": {
+      "main": [
+        [
+          {
+            "node": "Fetch Product2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Data": {
+      "main": [
+        [
+          {
+            "node": "Check Mode",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Audio": {
+      "main": [
+        [
+          {
+            "node": "Prepare Kling",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Kling": {
+      "main": [
+        [
+          {
+            "node": "Generate Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Video": {
+      "main": [
+        [
+          {
+            "node": "Update Scene - Running",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Mode": {
+      "main": [
+        [
+          {
+            "node": "Build Veo Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Generate Audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Veo Prompt": {
+      "main": [
+        [
+          {
+            "node": "Call Veo 3.1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Veo 3.1": {
+      "main": [
+        [
+          {
+            "node": "Update Scene - Veo Running",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate BRoll": {
+      "main": [
+        [
+          {
+            "node": "Fetch B-Roll",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Product": {
+      "main": [
+        [
+          {
+            "node": "Build Veo 3 Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch B-Roll": {
+      "main": [
+        [
+          {
+            "node": "Fetch Actor1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Video Complete Callback": {
+      "main": [
+        [
+          {
+            "node": "Parse Callback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Callback": {
+      "main": [
+        [
+          {
+            "node": "Is Scene?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Scene?": {
+      "main": [
+        [
+          {
+            "node": "Has Error?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update B-Roll - Success1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Product2": {
+      "main": [
+        [
+          {
+            "node": "Merge Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Error?": {
+      "main": [
+        [
+          {
+            "node": "Update Scene - Failed",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Scene - Success1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Edit Request": {
+      "main": [
+        [
+          {
+            "node": "Call Nano Banana1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Nano Banana1": {
+      "main": [
+        [
+          {
+            "node": "Prepare Edit Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Edit Update": {
+      "main": [
+        [
+          {
+            "node": "Build Vision Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Vision Request": {
+      "main": [
+        [
+          {
+            "node": "Analyze an image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze an image": {
+      "main": [
+        [
+          {
+            "node": "Parse Vision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Vision": {
+      "main": [
+        [
+          {
+            "node": "Update Actor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Vision Request1": {
+      "main": [
+        [
+          {
+            "node": "Analyze an image1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze an image1": {
+      "main": [
+        [
+          {
+            "node": "Parse Vision1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Vision1": {
+      "main": [
+        [
+          {
+            "node": "Update Actor1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Edit Mode": {
+      "main": [
+        [
+          {
+            "node": "Needs Edit?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Needs Edit?": {
+      "main": [
+        [
+          {
+            "node": "Build Edit Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Call Nano Banana",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Veo 3 Request": {
+      "main": [
+        [
+          {
+            "node": "Call Veo 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Veo 3": {
+      "main": [
+        [
+          {
+            "node": "Update B-Roll - Running",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Actor1": {
+      "main": [
+        [
+          {
+            "node": "Fetch Product",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Populate Voices": {
+      "main": [
+        [
+          {
+            "node": "Fetch ElevenLabs Voices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch ElevenLabs Voices": {
+      "main": [
+        [
+          {
+            "node": "Split Voices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Voice Data": {
+      "main": [
+        [
+          {
+            "node": "Create Voice Records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Voices": {
+      "main": [
+        [
+          {
+            "node": "Format Voice Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "558fde64-86af-461a-8f36-2daff0fd9737",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "21c5d06e9a2e9af0bdfc9c1e8f894c404d4db78a60c6a307fd7ef94634692e0f"
+  },
+  "id": "j1juCoX0xCn4YYWl",
+  "tags": []
+}
