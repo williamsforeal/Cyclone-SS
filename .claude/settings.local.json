@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/Jake/.cursor/worktrees/Cyclone-SS/**)"
+    ]
+  }
+}
