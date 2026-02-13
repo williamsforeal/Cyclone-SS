@@ -1,0 +1,118 @@
+---
+title: "Bomb Ecom OS — n8n Workflow Architecture"
+---
+flowchart TB
+    subgraph TRIGGERS["TRIGGERS — Replit UI Webhooks"]
+        T1["POST /research-product\n{productUrl, name}"]
+        T2["POST /generate-ads\n{productId, avatarId,\nangleId, format}"]
+        T3["POST /generate-images\n{adCopyRecordId}"]
+        T4["POST /ad-concept\n{productId, direction,\naspectRatio, count}"]
+        T5["POST /ad-clone\n{productId, refImage,\ntextOverrides}"]
+    end
+
+    subgraph WF1["WF1: Research Pipeline"]
+        RP1["Validate Input"]
+        RP2["Perplexity Deep Research\n— Pain points\n— Competitors\n— Customer language\n— Market positioning"]
+        RP3["Claude Sonnet 4\nExtract Structured JSON\n— 4 Avatars\n— 5 Angles\n— 10 Hooks\n— Product highlights"]
+        RP4["Batch Write Airtable\n— Products\n— Avatars\n— Angles\n— Hooks"]
+        RP5["Respond w/ Summary"]
+    end
+
+    subgraph WF2["WF2: Ad Copy Generator"]
+        AG1["Fetch Context\n— Product\n— Avatar\n— Angle"]
+        AG2["Claude Sonnet 4\nGenerate Ad Copy\n— Headline + Body + CTA\n— A/B Variant\n— StoryBrand optional"]
+        AG3["Classify Ad Type\nLifestyle | Testimonial |\nComparison | Hero |\nBefore-After | Benefits"]
+        AG4["Write Ad Copy\nto Airtable"]
+        AG5["Respond w/ Copy"]
+    end
+
+    subgraph WF3["WF3: Image Generation Pipeline"]
+        IG1["Fetch Ad Copy +\nProduct from Airtable"]
+        IG2["GPT-4o: Generate\n3 Image Prompts\nA=Control B=Angle C=Story"]
+        IG3["Get Product Image\nfrom S3"]
+        IG4["fal.ai / Higgsfield\nGenerate 3 Scenes\nw/ product reference"]
+        IG5["Poll Completion\n30s wait loop"]
+        IG6["Aggregate 3 URLs"]
+        IG7["Write Images\nto Airtable"]
+        IG8["BannerBear\nText Overlay\nheadline + CTA"]
+        IG9["Respond w/ Finals"]
+    end
+
+    subgraph WF4["WF4: Ad Concept — Shopify Style"]
+        AC1["Fetch Product +\nImages"]
+        AC2["Claude Vision\nAnalyze Product Photo\n— Highlights\n— Ideal Customer\n— Pain Points"]
+        AC3["Claude Sonnet 4\nGenerate N Concepts\nper Direction:\nBold | Story | Proof |\nProblem | Compare"]
+        AC4["Generate Image\nPrompt per Concept"]
+        AC5["fal.ai Batch\nGenerate Creatives"]
+        AC6["BannerBear\nComposite Finals"]
+        AC7["Write All +\nRespond to UI"]
+    end
+
+    subgraph WF5["WF5: Ad Clone"]
+        CL1["Upload Reference Ad\nto S3"]
+        CL2["Claude Vision\nAnalyze Reference\n— Layout\n— Colors\n— Text placement\n— Style elements"]
+        CL3["Claude Sonnet 4\nAdapt Copy\nheadline/body/CTA\nmapped to your product"]
+        CL4["Generate Styled\nImage Prompt\nmatching ref aesthetic"]
+        CL5["fal.ai Generate\nStyled Scene"]
+        CL6["BannerBear\nOverlay w/ ref layout"]
+        CL7["Write + Respond"]
+    end
+
+    subgraph DB["AIRTABLE — appvPrfjiuXIhdNuW"]
+        AT1[("Products")]
+        AT2[("Avatars")]
+        AT3[("Angles")]
+        AT4[("Hooks")]
+        AT5[("Ad Copy")]
+        AT6[("Images")]
+    end
+
+    subgraph EXT["EXTERNAL SERVICES"]
+        S1["Perplexity API"]
+        S2["Claude Sonnet 4\nAnthropic API"]
+        S3["GPT-4o\nOpenAI API"]
+        S4["fal.ai Flux Dev\nHiggsfield Soul"]
+        S5["BannerBear"]
+        S6["AWS S3\nstatic-scaler-v2"]
+    end
+
+    %% WF1 Flow
+    T1 --> RP1 --> RP2 --> RP3 --> RP4 --> RP5
+    RP2 -.-> S1
+    RP3 -.-> S2
+
+    %% WF2 Flow
+    T2 --> AG1 --> AG2 --> AG3 --> AG4 --> AG5
+    AG1 -.-> AT1 & AT2 & AT3
+    AG2 -.-> S2
+    AG4 -.-> AT5
+
+    %% WF3 Flow
+    T3 --> IG1 --> IG2 --> IG3 --> IG4 --> IG5 --> IG6 --> IG7 --> IG8 --> IG9
+    IG1 -.-> AT5
+    IG2 -.-> S3
+    IG3 -.-> S6
+    IG4 -.-> S4
+    IG7 -.-> AT6
+    IG8 -.-> S5
+
+    %% WF4 Flow
+    T4 --> AC1 --> AC2 --> AC3 --> AC4 --> AC5 --> AC6 --> AC7
+    AC1 -.-> AT1
+    AC2 -.-> S2
+    AC3 -.-> S2
+    AC5 -.-> S4
+    AC6 -.-> S5
+    AC7 -.-> AT5 & AT6
+
+    %% WF5 Flow
+    T5 --> CL1 --> CL2 --> CL3 --> CL4 --> CL5 --> CL6 --> CL7
+    CL1 -.-> S6
+    CL2 -.-> S2
+    CL3 -.-> S2
+    CL5 -.-> S4
+    CL6 -.-> S5
+    CL7 -.-> AT5 & AT6
+
+    %% Airtable cross-links
+    RP4 -.-> AT1 & AT2 & AT3 & AT4
