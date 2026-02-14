@@ -98,6 +98,14 @@ services:
       - NOTION_DATABASE_ID=${NOTION_DATABASE_ID}
       # Session
       - SESSION_SECRET=${SESSION_SECRET:-change_this_to_a_random_secret_at_least_32_characters_long}
+      # Meta App API (Graph API for Ad Library direct access)
+      - META_APP_API_KEY=${META_APP_API_KEY}
+      # Apify (Meta Ad Library scraping)
+      - APIFY_TOKEN=${APIFY_TOKEN}
+      # Gemini AI (ad creative analysis)
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      # SerpAPI (Google Search / Shopping / Trends)
+      - SERP_API_KEY=${SERP_API_KEY}
     volumes:
       - ./bom-ecom/uploads:/app/uploads
     networks:
