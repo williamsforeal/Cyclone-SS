@@ -1,0 +1,223 @@
+{
+  "name": "WF6: Consumer Intelligence Scraper",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bomb-consumer-intel-scrape",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [180, 300],
+      "id": "wf6-webhook",
+      "name": "Webhook: Consumer Intel Scrape"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract input parameters from webhook\nconst input = $input.first().json;\n\nconst candidateId = input.candidateId;\nconst productName = input.productName || '';\nconst keywords = input.keywords || [];\nconst subreddits = input.subreddits || ['r/health', 'r/wellness', 'r/fitness'];\nconst amazonAsins = input.amazonAsins || [];\nconst jobId = input.jobId;\n\n// Build Reddit search queries\nconst redditQueries = keywords.length > 0\n  ? keywords.map(k => `${k} problem OR issue OR hate OR frustrated OR wish`)\n  : [`${productName} problem OR issue OR frustrated`];\n\nreturn [{\n  json: {\n    candidateId,\n    productName,\n    keywords,\n    subreddits,\n    amazonAsins,\n    jobId,\n    redditQueries,\n    redditSearchUrl: subreddits.map(s => `https://www.reddit.com/${s}/search.json`)\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [400, 300],
+      "id": "wf6-parse-input",
+      "name": "Parse Input & Build Queries"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/apify~reddit-scraper/runs",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "token", "value": "={{ $env.APIFY_TOKEN }}" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"startUrls\": {{ JSON.stringify($json.subreddits.map(s => ({ \"url\": `https://www.reddit.com/${s}` }))) }},\n  \"searchKeywords\": {{ JSON.stringify($json.redditQueries) }},\n  \"maxItems\": 200,\n  \"sort\": \"relevance\",\n  \"time\": \"year\",\n  \"includeComments\": true,\n  \"maxComments\": 10,\n  \"proxy\": {\n    \"useApifyProxy\": true\n  }\n}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [640, 180],
+      "id": "wf6-reddit-scrape",
+      "name": "Apify: Reddit Scraper"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/ZebkvH3nVOrafqr5T/runs",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "token", "value": "={{ $env.APIFY_TOKEN }}" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"asins\": {{ JSON.stringify($json.amazonAsins) }},\n  \"maxReviews\": 150,\n  \"sortBy\": \"recent\",\n  \"filterByRating\": \"1-3\",\n  \"proxy\": {\n    \"useApifyProxy\": true\n  }\n}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [640, 420],
+      "id": "wf6-amazon-scrape",
+      "name": "Apify: Amazon Reviews"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Wait for both scrape results and combine\nconst redditResult = $('Apify: Reddit Scraper').first().json;\nconst amazonResult = $('Apify: Amazon Reviews').first().json;\nconst input = $('Parse Input & Build Queries').first().json;\n\n// Get run IDs to poll for results\nconst redditRunId = redditResult?.data?.id || '';\nconst amazonRunId = amazonResult?.data?.id || '';\n\nreturn [{\n  json: {\n    ...input,\n    redditRunId,\n    amazonRunId,\n    status: 'scraping'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, 300],
+      "id": "wf6-combine-runs",
+      "name": "Combine Run IDs"
+    },
+    {
+      "parameters": {
+        "amount": 30,
+        "unit": "seconds"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1080, 300],
+      "id": "wf6-wait",
+      "name": "Wait 30s for Apify"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.apify.com/v2/actor-runs/{{ $json.redditRunId }}/dataset/items",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "token", "value": "={{ $env.APIFY_TOKEN }}" },
+            { "name": "format", "value": "json" },
+            { "name": "limit", "value": "200" }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1280, 180],
+      "id": "wf6-fetch-reddit",
+      "name": "Fetch Reddit Results"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.apify.com/v2/actor-runs/{{ $json.amazonRunId }}/dataset/items",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "token", "value": "={{ $env.APIFY_TOKEN }}" },
+            { "name": "format", "value": "json" },
+            { "name": "limit", "value": "150" }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1280, 420],
+      "id": "wf6-fetch-amazon",
+      "name": "Fetch Amazon Results"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Combine Reddit + Amazon results and post to backend\nconst redditItems = $('Fetch Reddit Results').first().json || [];\nconst amazonItems = $('Fetch Amazon Results').first().json || [];\nconst input = $('Parse Input & Build Queries').first().json;\n\nconst allItems = [\n  ...((Array.isArray(redditItems) ? redditItems : [redditItems]).map(item => ({\n    ...item,\n    _source: 'reddit'\n  }))),\n  ...((Array.isArray(amazonItems) ? amazonItems : [amazonItems]).map(item => ({\n    ...item,\n    _source: 'amazon'\n  })))\n];\n\nreturn [{\n  json: {\n    candidateId: input.candidateId,\n    jobId: input.jobId,\n    platform: 'mixed',\n    items: allItems,\n    redditCount: Array.isArray(redditItems) ? redditItems.length : 1,\n    amazonCount: Array.isArray(amazonItems) ? amazonItems.length : 1\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1520, 300],
+      "id": "wf6-combine-results",
+      "name": "Combine All Results"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BOM_ECOM_URL || 'http://bom-ecom:5000' }}/api/webhook/consumer-intel/raw-data",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"jobId\": {{ $json.jobId }},\n  \"candidateId\": {{ $json.candidateId }},\n  \"platform\": \"{{ $json.platform }}\",\n  \"items\": {{ JSON.stringify($json.items) }}\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1760, 300],
+      "id": "wf6-callback",
+      "name": "POST Raw Data to Backend"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"redditCount\": {{ $('Combine All Results').first().json.redditCount }},\n  \"amazonCount\": {{ $('Combine All Results').first().json.amazonCount }}\n}"
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1960, 300],
+      "id": "wf6-respond",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "connections": {
+    "Webhook: Consumer Intel Scrape": {
+      "main": [[{ "node": "Parse Input & Build Queries", "type": "main", "index": 0 }]]
+    },
+    "Parse Input & Build Queries": {
+      "main": [
+        [
+          { "node": "Apify: Reddit Scraper", "type": "main", "index": 0 },
+          { "node": "Apify: Amazon Reviews", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Apify: Reddit Scraper": {
+      "main": [[{ "node": "Combine Run IDs", "type": "main", "index": 0 }]]
+    },
+    "Apify: Amazon Reviews": {
+      "main": [[{ "node": "Combine Run IDs", "type": "main", "index": 0 }]]
+    },
+    "Combine Run IDs": {
+      "main": [[{ "node": "Wait 30s for Apify", "type": "main", "index": 0 }]]
+    },
+    "Wait 30s for Apify": {
+      "main": [
+        [
+          { "node": "Fetch Reddit Results", "type": "main", "index": 0 },
+          { "node": "Fetch Amazon Results", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Fetch Reddit Results": {
+      "main": [[{ "node": "Combine All Results", "type": "main", "index": 0 }]]
+    },
+    "Fetch Amazon Results": {
+      "main": [[{ "node": "Combine All Results", "type": "main", "index": 0 }]]
+    },
+    "Combine All Results": {
+      "main": [[{ "node": "POST Raw Data to Backend", "type": "main", "index": 0 }]]
+    },
+    "POST Raw Data to Backend": {
+      "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [{ "name": "consumer-intelligence" }]
+}

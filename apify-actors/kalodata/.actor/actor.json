@@ -1,0 +1,9 @@
+{
+  "actorSpecification": 1,
+  "name": "kalodata-scraper",
+  "title": "KaLoData Product Analytics Scraper",
+  "description": "Scrapes TikTok product analytics from KaLoData.com including revenue, orders, growth, AOV, and category data. Uses session cookie authentication and Playwright for dynamic content.",
+  "version": "1.0.0",
+  "input": "../INPUT_SCHEMA.json",
+  "dockerfile": "../Dockerfile"
+}

@@ -1,0 +1,48 @@
+{
+  "title": "KaLoData Scraper Input",
+  "description": "Scrapes product analytics from KaLoData.com using session cookie authentication.",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+    "targetUrl": {
+      "title": "Target URL",
+      "type": "string",
+      "description": "Direct KaLoData product URL to scrape (e.g. https://www.kalodata.com/product/12345). If provided, the actor scrapes this single product page.",
+      "editor": "textfield",
+      "nullable": true
+    },
+    "keyword": {
+      "title": "Search Keyword",
+      "type": "string",
+      "description": "Search keyword to find products on KaLoData (e.g. 'water bottle'). The actor will navigate to the search results and scrape product cards.",
+      "editor": "textfield",
+      "nullable": true
+    },
+    "sessionCookie": {
+      "title": "Session Cookie",
+      "type": "string",
+      "description": "KaLoData session cookie value for authentication. Log in to kalodata.com in your browser, copy the 'sessionid' cookie value from DevTools > Application > Cookies.",
+      "editor": "textfield",
+      "isSecret": true
+    },
+    "maxProducts": {
+      "title": "Max Products",
+      "type": "integer",
+      "description": "Maximum number of products to scrape from search results.",
+      "default": 20,
+      "minimum": 1,
+      "maximum": 200
+    },
+    "proxyConfiguration": {
+      "title": "Proxy Configuration",
+      "type": "object",
+      "description": "Apify proxy configuration. Residential proxies recommended for KaLoData.",
+      "editor": "proxy",
+      "default": {
+        "useApifyProxy": true,
+        "apifyProxyGroups": ["RESIDENTIAL"]
+      }
+    }
+  },
+  "required": ["sessionCookie"]
+}

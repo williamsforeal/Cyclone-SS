@@ -1,0 +1,31 @@
+{
+  "title": "SimilarWeb Scraper Input",
+  "description": "Scrape public SimilarWeb analytics data for one or more website domains.",
+  "type": "object",
+  "schemaVersion": 1,
+  "required": ["domains"],
+  "properties": {
+    "domains": {
+      "title": "Domains",
+      "description": "List of website domains to analyze (e.g., gymshark.com, allbirds.com). Do NOT include https:// or www.",
+      "type": "array",
+      "editor": "stringList",
+      "items": {
+        "type": "string"
+      },
+      "example": ["gymshark.com", "allbirds.com"]
+    },
+    "proxyConfiguration": {
+      "title": "Proxy Configuration",
+      "description": "Apify proxy configuration. Residential proxies are strongly recommended — SimilarWeb blocks datacenter IPs.",
+      "type": "object",
+      "editor": "proxy",
+      "default": {
+        "useApifyProxy": true,
+        "apifyProxyGroups": ["RESIDENTIAL"]
+      },
+      "sectionCaption": "Proxy settings",
+      "sectionDescription": "SimilarWeb requires residential proxies. Datacenter IPs will be blocked."
+    }
+  }
+}
