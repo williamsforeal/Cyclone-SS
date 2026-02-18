@@ -98,15 +98,17 @@ async function extractMetricByLabel(page, label) {
                     // Also check children of the parent container
                     const children = container.parentElement?.children;
                     if (children) {
-                        let foundLabel = false;
-                        for (const child of children) {
+                        const childArray = Array.from(children);
+                        for (let i = 0; i < childArray.length; i++) {
+                            const child = childArray[i];
                             if (child.textContent.includes(lbl)) {
-                                foundLabel = true;
-                                continue;
-                            }
-                            if (foundLabel) {
-                                const val = child.textContent.trim();
-                                if (val && val.length < 50) return val;
+                                // Found the label - check the immediate next sibling
+                                const nextChild = childArray[i + 1];
+                                if (nextChild) {
+                                    const val = nextChild.textContent.trim();
+                                    if (val && val.length < 50) return val;
+                                }
+                                break; // Stop after finding the label and checking its next sibling
                             }
                         }
                     }
