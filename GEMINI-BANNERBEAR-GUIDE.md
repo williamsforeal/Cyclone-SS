@@ -68,9 +68,9 @@ Add BannerBear node to your workflow and use the template!
 Already configured in your `.env`:
 
 ```bash
-GEMINI_API_KEY=AIzaSyD5_fa4RrJQT7i3QJhFk6L0unlzSGlRCcA
-BANNERBEAR_API_KEY=bb_ma_ea728c8132f84bcb32263f8b895416
-BANNERBEAR_PROJECT_ID=4njglk1qlwwJMQde92
+GEMINI_API_KEY=your_gemini_api_key        # Get from https://aistudio.google.com/app/api-keys
+BANNERBEAR_API_KEY=your_bannerbear_key    # Get from BannerBear dashboard
+BANNERBEAR_PROJECT_ID=your_project_id     # Get from BannerBear project URL
 ```
 
 ## Example n8n Workflow

@@ -1,0 +1,187 @@
+You are my senior full-stack engineer + data architect. Audit and refactor this Replit app into an end-to-end “AI Com OS” that embeds market/product/competition research upstream of creative generation and closes the loop with experiments + performance + automation.
+
+GOALS
+1) Eliminate waste: stop “dropdown-first” prompting, stop orphaned concepts (Creative Lab filters showing 0), add real observability (why jobs fail, retries, idempotency).
+2) Make research first-class: Market, Product, Competitor, Ad Swipe File ingestion, Angle/Hook extraction.
+3) Make generation research-backed: after selecting Product + Avatar, the app recommends Top Angles / Top Hooks / Top Objections / Proof types ranked by evidence. Dropdowns become optional overrides.
+4) Add experiment layer: Concepts -> Experiment -> Launch mapping -> Metrics -> Winner rules -> Learnings -> back into Angle/Hook scores.
+5) Keep it simple: Airtable as the database, n8n for automation triggers. UI should remain mobile-friendly like current screenshots.
+
+CURRENT APP (from screenshots)
+- Pages: /settings (Airtable + n8n webhook), /ad-generator (dropdown-driven copy gen + StoryBrand + Visual Direction toggles), /creative-lab (filters + concept list), /campaigns (campaign builder + details modal + budgets + KPIs), /ops (jobs list with statuses), overview dashboard (Spend/ROAS/CAC/CTR/CVR, winners, pipeline health).
+- Existing: jobs run for image-generation, copy-generation, audience-sync; one failed job type exists; metrics tiles show “Connect Later”.
+
+REQUIRED CHANGES
+
+A) DATA MODEL (Airtable Tables + Key Fields)
+Create/ensure these Airtable tables exist (use a prefix like AICOM_ if needed). Add all fields; use linked records where appropriate.
+
+1. Markets
+   - market_id (primary or formula), name, status (draft/approved/rejected)
+   - problem_map (long text), year_round (checkbox), verdict (single select)
+   - primary_avatars (linked to Avatars), notes
+
+2. Products
+   - product_id, name, market (link Markets), status (draft/approved/rejected)
+   - offer_stack (long text), margin_est, ship_feasibility, evidence_links (url)
+   - verdict, notes
+
+3. Avatars
+   - avatar_id, name, demographics, psychographics, pains, desired_outcomes
+   - objections, trigger_moments, language_bank (long text)
+   - product (link Products)
+
+4. Competitors
+   - competitor_id, brand, domain, offer_type, pricing, promise, proof_stack
+   - traffic_proxy, channels, notes, product (link Products)
+
+5. Ads_Swipe
+   - ad_id, competitor (link), platform (FB/TikTok/etc), creative_type
+   - hook_text, primary_text, headline, CTA, offer, landing_url
+   - tags: avatar, angle, emotion, stage, objection (multi-select)
+   - media_asset_url, captured_at
+
+6. Claims_Proof
+   - claim_id, product (link), claim_text, proof_type, evidence_url, priority_score
+
+7. Angles
+   - angle_id, product (link), avatar (link)
+   - angle_type (condition/benefit/anti-alternative/psychological/storybrand)
+   - angle_statement, evidence_refs (links to Ads_Swipe/Claims_Proof), score (number), last_updated
+
+8. Hooks
+   - hook_id, product (link), avatar (link)
+   - hook_text, pattern (multi-select), evidence_refs, score, last_updated
+
+9. Concepts
+   - concept_id, product, avatar, angle (link Angles), hook (link Hooks)
+   - format/ad_type, visual_direction (bool + notes), storybrand_mode (bool)
+   - generated_copy (long text), generated_assets (link Assets)
+   - status (draft/approved/rejected/launched), tags, created_at
+
+10. Assets
+   - asset_id, type (image/video/copy), url/path, prompt_used, model_used, concept (link)
+
+11. Experiments
+   - experiment_id, product, hypothesis, objective (CTR/CVR/ROAS)
+   - concept_set (link Concepts), start/end, decision (scale/iterate/kill)
+   - learning_notes, winning_pattern_tags
+
+12. Campaigns (existing)
+   - ensure link to Experiments and Concepts where possible
+
+13. Metrics_Daily
+   - date, platform, campaign_id/adset_id/ad_id, spend, revenue, roas, ctr, cvr, cac
+   - concept (link), experiment (link), angle (link), hook (link)
+
+14. Jobs
+   - job_id, job_type, status, created_at, started_at, finished_at
+   - input_payload (json text), input_hash, attempts, max_attempts
+   - error_message, error_stack, artifact_links, cost_est, duration_ms
+   - trigger_source (manual/scheduled/webhook), idempotency_key
+
+B) UI CHANGES
+
+1) /settings
+- Keep Airtable Base ID + API Key + “Test Connection”.
+- Add: “Airtable Schema Setup” button
+  - Creates tables/fields if missing (idempotent).
+  - Shows progress + success/fail per table.
+- Keep n8n webhook base URL + test connection.
+- Add: “Health Check” that verifies required tables exist + required fields exist.
+
+2) /ad-generator (Convert to research-backed generator)
+- Step 1: Select Product (required), Avatar (required)
+- Step 2: Show Recommendations (auto-ranked lists)
+  - Top Angles (10) with angle_type + score + evidence count
+  - Top Hooks (10) with score + pattern tags
+  - Top Objections (from Avatar objections)
+  - Recommended Proof types (from Claims_Proof and competitor ads)
+- Step 3: Optional Overrides (dropdowns remain but prefilled)
+  - Condition/Benefit/Anti-alt/Psych angle (linked to Angles table)
+  - Format/Ad type
+  - StoryBrand mode toggle
+  - Visual direction toggle
+- Step 4: Generate
+  - Generates 1 concept OR batch (10/25/50)
+  - Writes to Concepts table, creates Job records, and triggers n8n webhook(s)
+  - Each concept stores traceability: which Angle/Hook IDs were used + evidence_refs.
+
+3) /creative-lab
+- Fix “0 concepts match filters” issue:
+  - Default view = “All concepts for selected product”
+  - Add “Reset filters”
+  - Ensure filters use canonical values from linked tables (Avatars/Angles/Hooks), not free-text.
+- Add bulk actions:
+  - Approve / Reject
+  - Add to Experiment (create or select)
+  - Generate Variants (same hook new visual; same visual new hook; same angle new hook)
+
+4) /campaigns
+- Add Experiment linking:
+  - Each campaign can be associated with one Experiment
+  - Show “source concepts” used
+- Keep budgets + modal but add “winner rules” summary if metrics connected.
+
+5) Overview dashboard
+- Replace “Connect Later” with actual connection states
+- Show top winners by:
+  - Concept, Angle, Hook, Avatar
+- Add fatigue alert counts (simple heuristic: CTR drop x% over N days or ROAS drop).
+
+6) /ops
+- Make failures actionable:
+  - Tap job -> show error_message + error_stack + payload snapshot + retry button
+  - Retries respect idempotency_key + input_hash to avoid duplicates
+- Add filtering by job_type/status/stage.
+
+C) AUTOMATION / WORKFLOWS (n8n integration points)
+Implement webhook triggers (POST) to n8n:
+- /webhook/concept.generate (payload: concept_id(s), product_id, avatar_id)
+- /webhook/assets.generate (payload: concept_id(s), visual_direction)
+- /webhook/research.ingest.ads (payload: product_id, competitor list)
+- /webhook/metrics.ingest.daily (payload: date range)
+
+If n8n webhook is not configured, the app should still create Concepts/Jobs with status “pending_external”.
+
+D) RESEARCH INGESTION + EXTRACTION (inside app or via n8n)
+- Add “Research” page or section (if fastest, add new route /research):
+  - Buttons: “Ingest Competitor Ads”, “Extract Angles/Hooks”, “Seed 25 Concepts”
+  - Show counts: ads ingested, angles extracted, hooks extracted, concepts generated.
+- Extraction logic:
+  - Parse Ads_Swipe hook_text/primary_text/headline into candidate Hooks and Angles
+  - Store in Hooks/Angles with evidence_refs linking back to Ads_Swipe
+  - Score formula (simple v1):
+    - score = (evidence_count * 2) + (recency_weight) + (if offer mention +1) + (if clear pain +1)
+  - Avoid duplicates via normalized text hashing.
+
+E) WINNER LOOP (learning feedback)
+- Add a scheduled task conceptually (can be manual button if no scheduler):
+  - “Compute Winners”
+  - Aggregates Metrics_Daily -> updates:
+    - Concepts: status winner/loser
+    - Angles/Hooks: score adjustments based on performance
+    - Experiments: decision suggestions (scale/iterate/kill)
+
+F) ENGINEERING REQUIREMENTS
+- Keep code clean and modular. Add a /lib/airtable client wrapper with:
+  - schema validation
+  - CRUD helpers
+  - rate limit handling + retries
+- Add strict typing if TS is used.
+- Add environment variables for Airtable and n8n; never expose secrets in UI beyond masked.
+- All writes must be idempotent where possible (use input_hash/idempotency_key).
+
+DELIVERABLES
+1) Implement schema setup + health check.
+2) Update ad generator to be research-backed + batch generation.
+3) Fix Creative Lab filtering + add bulk actions.
+4) Implement Jobs observability + retries.
+5) Add Research ingestion/extraction page + seeding.
+6) Add Experiment entity linking from Creative -> Campaign -> Metrics.
+7) Replace “Connect Later” with connection states and wiring for metrics ingestion (even if mocked until real platform is connected).
+
+START NOW
+- Inspect current codebase routes/components and Airtable integration.
+- Implement schema setup first, then refactor generator and Creative Lab.
+- Ensure existing UI style remains consistent (dark mode, green accents).

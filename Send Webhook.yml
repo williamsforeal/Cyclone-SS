@@ -1,0 +1,9 @@
+- name: Webhook Action
+  uses: joelwmale/webhook-action@2.4.1
+
+ 
+  with:
+    url: ${{ secrets.WEBHOOK_URL }}
+    headers: '{"repository": "joelwmale/webhook-action"}'
+    body: '{"event": "deployment", "repository": "joelwmale/webhook-action"}'
+    github_event_payload: true
