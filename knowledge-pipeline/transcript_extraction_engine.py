@@ -250,10 +250,15 @@ def deduplicate_insights(insights: list[dict]) -> list[dict]:
 # BIGQUERY LOADING
 # ════════════════════════════════════════════════════════════════
 
-def load_to_bigquery(insights: list[dict], source_filename: str, call_date: str = None):
+def load_to_bigquery(insights: list[dict], source_filename: str, call_date: str = None, source_type: str = None):
     """
     Load extracted insights into BigQuery coaching_insights table.
     Adds metadata columns (source file, processing timestamp, call date).
+
+    source_type: explicit data source bucket. One of:
+        discord_ai_com | product_market_research | brand_intelligence |
+        creative_ad_intelligence | visual_os | apify_scrape
+    If not provided, inferred from filename.
     """
     table_ref = f"{PROJECT_ID}.{DATASET_ID}.{TABLE_ID}"
 
@@ -265,7 +270,7 @@ def load_to_bigquery(insights: list[dict], source_filename: str, call_date: str 
             "source_file": source_filename,
             "call_date": call_date or datetime.now().strftime("%Y-%m-%d"),
             "processed_at": datetime.now().isoformat(),
-            "call_topic": _infer_topic(source_filename),
+            "call_topic": source_type or _infer_topic(source_filename),
 
             # Core extraction fields
             "insight_text": insight.get("insight_text", ""),
