@@ -199,7 +199,7 @@ def _call_gemini(model: GenerativeModel, text: str) -> list[dict]:
         full_prompt,
         generation_config={
             "temperature": 0.2,          # Low temp = precise extraction
-            "max_output_tokens": 32768,  # Enough for 50+ insights with all fields
+            "max_output_tokens": 8192,   # Max supported by gemini-2.0-flash-001
             "response_mime_type": "application/json"  # Force JSON output
         }
     )
