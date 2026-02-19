@@ -123,11 +123,14 @@ def main():
         files = [Path(args.file)]
     elif args.folder:
         folder = Path(args.folder)
-        files = sorted(folder.glob("*.txt"))
+        files = sorted([
+            f for ext in ("*.txt", "*.md")
+            for f in folder.glob(ext)
+        ])
         if not files:
-            print(f"No .txt files found in {folder}")
+            print(f"No .txt or .md files found in {folder}")
             sys.exit(1)
-        print(f"Found {len(files)} transcript files in {folder}")
+        print(f"Found {len(files)} files in {folder}")
 
     if source_type:
         print(f"  Source type: {source_type}")
