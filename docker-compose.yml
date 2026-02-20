@@ -1,131 +1,56 @@
+version: '3.8'
+
 services:
-  # PostgreSQL Database
-  postgres:
-    image: postgres:16-alpine
-    container_name: postgres
+  comfyui:
+    image: ghcr.io/ai-dock/comfyui:latest-cuda
+    container_name: comfyui
     restart: unless-stopped
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
-      - POSTGRES_DB=${POSTGRES_DB:-bomb_ecom}
     ports:
-      - "5432:5432"
+      - "8188:8188"
+    environment:
+      - COMFYUI_ARGS=--listen 0.0.0.0
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - comfyui_models:/workspace/ComfyUI/models
+      - comfyui_output:/workspace/ComfyUI/output
+      - ./comfyui-workflows:/workspace/ComfyUI/workflows
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
     networks:
       - n8n-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+    profiles:
+      - comfyui
 
-  # n8n Workflow Automation
   n8n:
     image: n8nio/n8n:latest
     container_name: n8n
     restart: unless-stopped
-    env_file:
-      - .env
     ports:
       - "5678:5678"
     environment:
-      # N8N Core
-      - N8N_BASIC_AUTH_ACTIVE=${N8N_BASIC_AUTH_ACTIVE}
-      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER}
-      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
-      - N8N_HOST=${N8N_HOST}
-      - N8N_PORT=${N8N_PORT}
-      - N8N_PROTOCOL=${N8N_PROTOCOL}
-      - WEBHOOK_URL=${WEBHOOK_URL}
-      - GENERIC_TIMEZONE=${TIMEZONE}
-      # Service API Keys (available to n8n nodes via expressions)
-      - N8N_API_KEY=${N8N_API_KEY}
-      - GITHUB_PERSONAL_ACCESS_TOKEN=${GITHUB_PERSONAL_ACCESS_TOKEN}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - AIRTABLE_API_KEY=${AIRTABLE_API_KEY}
-      - AIRTABLE_BASE_ID=${AIRTABLE_BASE_ID}
-      - HIGGSFIELD_CLIENT_ID=${HIGGSFIELD_CLIENT_ID}
-      - HIGGSFIELD_CLIENT_SECRET=${HIGGSFIELD_CLIENT_SECRET}
-      - GUMLOOP_API_KEY=${GUMLOOP_API_KEY}
-      - GUMLOOP_USER_ID=${GUMLOOP_USER_ID}
-      - GUMLOOP_SAVED_ITEM_ID=${GUMLOOP_SAVED_ITEM_ID}
-      - GUMLOOP_WEBHOOK_URL=${GUMLOOP_WEBHOOK_URL}
-      - BANNERBEAR_API_KEY=${BANNERBEAR_API_KEY}
-      - FAL_AI_API_KEY=${FAL_AI_API_KEY}
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=changeme
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5678/
+      - GENERIC_TIMEZONE=UTC
     volumes:
       - n8n_data:/home/node/.n8n
       - ./workflows:/data/workflows
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     networks:
       - n8n-network
-    depends_on:
-      postgres:
-        condition: service_healthy
-
-  # Bomb Ecom OS - Frontend/Backend
-  bom-ecom:
-    build:
-      context: ./bom-ecom
-      dockerfile: Dockerfile
-    container_name: bom-ecom
-    restart: unless-stopped
-    ports:
-      - "5000:5000"
-    environment:
-      - NODE_ENV=production
-      - PORT=5000
-      # Database
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-bomb_ecom}
-      # Airtable
-      - AIRTABLE_BASE_ID=${AIRTABLE_BASE_ID}
-      - AIRTABLE_API_KEY=${AIRTABLE_API_KEY}
-      # n8n (internal Docker network)
-      - N8N_WEBHOOK_URL=http://n8n:5678/webhook
-      # AWS
-      - AWS_REGION=${AWS_REGION:-us-east-1}
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - S3_BUCKET=${S3_BUCKET}
-      - CLOUDFRONT_DOMAIN=${CLOUDFRONT_DOMAIN}
-      # OpenAI (optional, if not using Bedrock)
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      # Notion (optional)
-      - NOTION_API_KEY=${NOTION_API_KEY}
-      - NOTION_DATABASE_ID=${NOTION_DATABASE_ID}
-      # Session
-      - SESSION_SECRET=${SESSION_SECRET:-change_this_to_a_random_secret_at_least_32_characters_long}
-      # Meta App API (Graph API for Ad Library direct access)
-      - META_APP_API_KEY=${META_APP_API_KEY}
-      # Apify (Meta Ad Library scraping)
-      - APIFY_TOKEN=${APIFY_TOKEN}
-      # Gemini AI (ad creative analysis)
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
-      # SerpAPI (Google Search / Shopping / Trends)
-      - SERP_API_KEY=${SERP_API_KEY}
-    volumes:
-      - ./bom-ecom/uploads:/app/uploads
-    networks:
-      - n8n-network
-    depends_on:
-      postgres:
-        condition: service_healthy
-      n8n:
-        condition: service_started
-    healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:5000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
 
 volumes:
   n8n_data:
     driver: local
-  postgres_data:
+  comfyui_models:
+    driver: local
+  comfyui_output:
     driver: local
 
 networks:

@@ -1,0 +1,66 @@
+{
+  "name": "ComfyUI txt2img Trigger",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "comfyui-txt2img",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "id": "webhook",
+      "name": "Webhook",
+      "webhookId": "comfyui-txt2img"
+    },
+    {
+      "parameters": {
+        "jsCode": "const promptText = $input.first().json.body?.prompt_text || 'a beautiful landscape, sunset, highly detailed';\nconst workflow = {\n  \"4\": { \"class_type\": \"CheckpointLoaderSimple\", \"inputs\": { \"ckpt_name\": \"v1-5-pruned-emaonly.safetensors\" } },\n  \"5\": { \"class_type\": \"EmptyLatentImage\", \"inputs\": { \"batch_size\": 1, \"height\": 512, \"width\": 512 } },\n  \"6\": { \"class_type\": \"CLIPTextEncode\", \"inputs\": { \"clip\": [\"4\", 1], \"text\": promptText } },\n  \"7\": { \"class_type\": \"CLIPTextEncode\", \"inputs\": { \"clip\": [\"4\", 1], \"text\": \"blurry, low quality\" } },\n  \"3\": { \"class_type\": \"KSampler\", \"inputs\": { \"cfg\": 7, \"denoise\": 1, \"latent_image\": [\"5\", 0], \"model\": [\"4\", 0], \"negative\": [\"7\", 0], \"positive\": [\"6\", 0], \"sampler_name\": \"euler\", \"scheduler\": \"normal\", \"seed\": Math.floor(Math.random()*1e9), \"steps\": 20 } },\n  \"8\": { \"class_type\": \"VAEDecode\", \"inputs\": { \"samples\": [\"3\", 0], \"vae\": [\"4\", 2] } },\n  \"9\": { \"class_type\": \"SaveImage\", \"inputs\": { \"filename_prefix\": \"ComfyUI\", \"images\": [\"8\", 0] } }\n};\nreturn [{ json: { prompt: workflow } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0],
+      "id": "build-prompt",
+      "name": "Build ComfyUI Prompt"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://comfyui:8188/prompt",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ prompt: $json.prompt, client_id: 'n8n-' + $runId }) }}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [440, 0],
+      "id": "comfyui-api",
+      "name": "ComfyUI API"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [660, 0],
+      "id": "respond",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{ "node": "Build ComfyUI Prompt", "type": "main", "index": 0 }]]
+    },
+    "Build ComfyUI Prompt": {
+      "main": [[{ "node": "ComfyUI API", "type": "main", "index": 0 }]]
+    },
+    "ComfyUI API": {
+      "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {},
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}
