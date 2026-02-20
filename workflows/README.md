@@ -12,4 +12,4 @@ This directory contains n8n workflow JSON files that can be imported into your n
 
 ## Available Workflows
 
-- Place your workflow JSON files here
+- **comfyui-trigger.json** – Submits a txt2img workflow to ComfyUI. Import and run manually. Requires ComfyUI container on `n8n-network` at `http://comfyui:8188`.

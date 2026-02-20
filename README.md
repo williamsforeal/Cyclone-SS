@@ -11,15 +11,8 @@ This project uses Docker Compose to run n8n workflow automation.
 
 ### Quick Start
 
-<<<<<<< Current (Your changes)
 1. **Start n8n with Docker Compose:**
    docker-compose up -d
-=======
-1. **Start n8n (and optionally ComfyUI):**
-   ```bash
-   docker-compose up -d                    # n8n only
-   docker-compose --profile comfyui up -d  # n8n + ComfyUI (NVIDIA GPU)
->>>>>>> Incoming (Background Agent changes)
    ```
 
 2. **Access n8n Web Interface:**
@@ -56,11 +49,4 @@ Then edit `.env` with your preferred settings.
 
 ### Workflows
 
-- **n8n**: Place workflow JSON files in `workflows/`. Import via n8n web interface (Workflows → Import from File).
-- **ComfyUI**: Place workflow JSON in `comfyui-workflows/`. Load in ComfyUI (File → Load) or send via API to `http://localhost:8188/prompt`.
-
-### ComfyUI
-
-- **URL**: http://localhost:8188 (when running with `--profile comfyui`)
-- **GPU**: Uses NVIDIA GPU by default. For CPU-only, switch image to `ghcr.io/ai-dock/comfyui:latest-cpu` and remove the `deploy.resources` section in `docker-compose.yml`.
-- **Workflows**: See `comfyui-workflows/README.md` for API format and examples.
+Place your n8n workflow JSON files in the `workflows/` directory. You can import them through the n8n web interface.
