@@ -1,0 +1,230 @@
+{
+  "name": "Gate Validation Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bomb-validate-candidate",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [180, 300],
+      "id": "gate-webhook",
+      "name": "Webhook: Validate Candidate"
+    },
+    {
+      "parameters": {
+        "jsCode": "const { candidateId, candidateName, startAtGate, singleGate } = $input.item.json;\n\nif (!candidateId) throw new Error('candidateId is required');\n\n// Define gate order\nconst gates = [\n  { name: 'kalodata', order: 1, label: 'KaloData Trend Discovery' },\n  { name: 'amazon', order: 2, label: 'Amazon Demand Proof' },\n  { name: 'aliexpress', order: 3, label: 'AliExpress Economics' },\n  { name: 'meta_ads', order: 4, label: 'Meta Ads Competition' },\n];\n\nlet gatesToRun = gates;\nif (singleGate) {\n  gatesToRun = gates.filter(g => g.name === singleGate);\n} else if (startAtGate && startAtGate > 1) {\n  gatesToRun = gates.filter(g => g.order >= startAtGate);\n}\n\nreturn [{\n  json: {\n    candidateId,\n    candidateName: candidateName || `Candidate #${candidateId}`,\n    gatesToRun,\n    currentGateIndex: 0,\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [400, 300],
+      "id": "gate-setup",
+      "name": "Setup Gate Pipeline"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Run the current gate\nconst data = $input.item.json;\nconst gate = data.gatesToRun[data.currentGateIndex];\n\nif (!gate) {\n  return [{ json: { ...data, _done: true, message: 'All gates completed' } }];\n}\n\n// Gate-specific scrape configurations\nconst gateConfigs = {\n  kalodata: {\n    searchQuery: data.candidateName,\n    criteria: [\n      { name: 'revenue_30d', threshold: 10000, operator: 'gte', label: '30d revenue >= $10k' },\n      { name: 'revenue_30d', threshold: 90000, operator: 'lte', label: '30d revenue <= $90k' },\n      { name: 'launch_age_days', threshold: 30, operator: 'lte', label: 'Launched within 30 days' },\n    ]\n  },\n  amazon: {\n    searchQuery: data.candidateName,\n    criteria: [\n      { name: 'monthly_sales', threshold: 1000, operator: 'gte', label: '1,000+ monthly sales' },\n      { name: 'listing_count', threshold: 2, operator: 'gte', label: 'Multiple listings' },\n    ]\n  },\n  aliexpress: {\n    searchQuery: data.candidateName,\n    criteria: [\n      { name: 'profit_margin', threshold: 20, operator: 'gte', label: 'Margin >= $20' },\n      { name: 'weight_kg', threshold: 2, operator: 'lte', label: 'Under 2kg' },\n    ]\n  },\n  meta_ads: {\n    searchQuery: data.candidateName,\n    criteria: [\n      { name: 'active_ads_count', threshold: 1, operator: 'gte', label: 'Has active ads' },\n    ]\n  },\n};\n\nreturn [{\n  json: {\n    ...data,\n    currentGate: gate,\n    gateConfig: gateConfigs[gate.name] || {},\n    _done: false,\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [620, 300],
+      "id": "gate-prepare",
+      "name": "Prepare Current Gate"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json._done }}",
+              "value2": true,
+              "operation": "notEqual"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [840, 300],
+      "id": "gate-check-done",
+      "name": "More Gates?"
+    },
+    {
+      "parameters": {
+        "jsCode": "// STUB: This is where the actual scraper would run.\n// In production, this node would be replaced with an Apify actor call\n// or a sub-workflow that runs the appropriate scraper.\n//\n// For now, we simulate the gate check with placeholder data.\n// Each gate should return rawData + pass/fail based on criteria.\n\nconst data = $input.item.json;\nconst gate = data.currentGate;\nconst config = data.gateConfig;\n\n// TODO: Replace with actual Apify actor calls per gate:\n// - kalodata: Run KaloData custom actor\n// - amazon: Run Amazon product scraper actor\n// - aliexpress: Run AliExpress product scraper actor  \n// - meta_ads: Use existing Ad Vault scrape infrastructure\n\n// Placeholder: mark as needing manual data for now\nconst rawData = {\n  gate: gate.name,\n  status: 'stub_needs_actor',\n  message: `Scraper for ${gate.label} not yet connected. Wire Apify actor here.`,\n  candidateName: data.candidateName,\n  searchQuery: config.searchQuery,\n  timestamp: new Date().toISOString(),\n};\n\n// For now, we don't auto-pass/fail — mark as null (not evaluated)\nreturn [{\n  json: {\n    ...data,\n    scrapeResult: rawData,\n    gatePassed: null,  // null = not yet evaluated, true = pass, false = fail\n    criteriaResults: config.criteria.map(c => ({\n      ...c,\n      actualValue: null,\n      passed: null,\n    })),\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1060, 200],
+      "id": "gate-run-scraper",
+      "name": "Run Gate Scraper (STUB)",
+      "notes": "REPLACE THIS with actual Apify actor calls per gate type. This is a placeholder that records the gate attempt without real data."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:5000/api/ingest/gate-result",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"candidateId\": {{ $json.candidateId }},\n  \"gateName\": \"{{ $json.currentGate.name }}\",\n  \"gateOrder\": {{ $json.currentGate.order }},\n  \"passed\": {{ $json.gatePassed }},\n  \"rawData\": {{ JSON.stringify($json.scrapeResult) }},\n  \"criteriaChecked\": {{ JSON.stringify($json.criteriaResults) }},\n  \"errorMessage\": null\n}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1280, 200],
+      "id": "gate-save-result",
+      "name": "Save Gate Result to Express"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Check if gate passed and decide whether to continue\nconst prevData = $('Run Gate Scraper (STUB)').item.json;\nconst saveResponse = $input.item.json;\n\n// If gate explicitly failed, stop the pipeline\nif (prevData.gatePassed === false) {\n  return [{\n    json: {\n      ...prevData,\n      _done: true,\n      _stoppedAt: prevData.currentGate.name,\n      message: `Pipeline stopped: ${prevData.currentGate.label} gate failed`,\n    }\n  }];\n}\n\n// Move to next gate\nconst nextIndex = prevData.currentGateIndex + 1;\nreturn [{\n  json: {\n    candidateId: prevData.candidateId,\n    candidateName: prevData.candidateName,\n    gatesToRun: prevData.gatesToRun,\n    currentGateIndex: nextIndex,\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1500, 200],
+      "id": "gate-advance",
+      "name": "Advance to Next Gate"
+    },
+    {
+      "parameters": {
+        "jsCode": "// All gates completed — trigger scoring\nconst data = $input.item.json;\nreturn [{\n  json: {\n    candidateId: data.candidateId,\n    candidateName: data.candidateName,\n    message: data._stoppedAt\n      ? `Pipeline stopped at ${data._stoppedAt} gate`\n      : 'All gates completed successfully',\n    completedAt: new Date().toISOString(),\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1060, 500],
+      "id": "gate-complete",
+      "name": "Pipeline Complete"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://host.docker.internal:5000/api/product-candidates/{{ $json.candidateId }}/score",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"trigger\": \"gate-pipeline\"\n}",
+        "options": {
+          "timeout": 30000,
+          "allowUnauthorizedCerts": false
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1280, 500],
+      "id": "gate-trigger-scoring",
+      "name": "Trigger Scoring Engine",
+      "notes": "Calls the scoring endpoint to recompute the candidate's 0-100 score based on gate results."
+    }
+  ],
+  "connections": {
+    "Webhook: Validate Candidate": {
+      "main": [
+        [
+          {
+            "node": "Setup Gate Pipeline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Setup Gate Pipeline": {
+      "main": [
+        [
+          {
+            "node": "Prepare Current Gate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Current Gate": {
+      "main": [
+        [
+          {
+            "node": "More Gates?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "More Gates?": {
+      "main": [
+        [
+          {
+            "node": "Run Gate Scraper (STUB)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Pipeline Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Gate Scraper (STUB)": {
+      "main": [
+        [
+          {
+            "node": "Save Gate Result to Express",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Gate Result to Express": {
+      "main": [
+        [
+          {
+            "node": "Advance to Next Gate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Advance to Next Gate": {
+      "main": [
+        [
+          {
+            "node": "Prepare Current Gate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pipeline Complete": {
+      "main": [
+        [
+          {
+            "node": "Trigger Scoring Engine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "gate-pipeline-v1",
+  "meta": {
+    "instanceId": "cyclone-ss-local"
+  },
+  "id": "wf-gate-pipeline",
+  "tags": ["validation", "gates", "scoring", "pipeline"]
+}

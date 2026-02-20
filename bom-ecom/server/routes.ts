@@ -11,12 +11,14 @@ import {
   scrapeSources, scrapeRuns, rawScrapeData, filteredInsights, weeklyRollups,
   nichePainPoints, consumerPhrases, competitorMessaging, creativeOutputs, consumerIntelJobs,
   adVaultBrands, adVault, adVaultScrapeJobs, adVaultSnapshots,
+  transcriptProducts, gateResults,
 } from "@shared/schema";
 import { eq, desc, and, sql, count, avg, inArray, gte, lte, isNull } from "drizzle-orm";
 import { z } from "zod";
 import * as competitorAirtable from "./lib/competitor-airtable";
 import { scoreFromCandidateRow, evaluateProduct, type ScoringResult } from "./lib/scoring-engine";
 import { generateNarrative } from "./lib/vertex-narrative";
+import { scrapeTikTokByKeyword, scrapeTikTokComments } from "./lib/tiktok-scraper";
 
 const uploadsDir = path.resolve("uploads");
 if (!fs.existsSync(uploadsDir)) {
@@ -2777,6 +2779,415 @@ Return ONLY valid JSON with these 5 keys.`;
     try {
       const [result] = await db.select({ count: count() }).from(adVault).where(isNull(adVault.aiAssetType));
       res.json({ count: result?.count || 0 });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // ============================================================
+  // TRANSCRIPT PRODUCTS — Google Drive extraction pipeline
+  // ============================================================
+
+  // List extracted transcript products with optional assessment filter
+  app.get("/api/transcripts/products", async (req: Request, res: Response) => {
+    try {
+      const { assessment } = req.query;
+      let query = db.select().from(transcriptProducts).orderBy(desc(transcriptProducts.createdAt));
+      if (assessment && typeof assessment === "string") {
+        query = query.where(eq(transcriptProducts.assessment, assessment)) as any;
+      }
+      const rows = await query;
+      res.json(rows);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Return already-processed Google Doc IDs (for n8n dedup)
+  app.get("/api/transcripts/processed-ids", async (_req: Request, res: Response) => {
+    try {
+      const rows = await db.select({ docId: transcriptProducts.docId }).from(transcriptProducts);
+      res.json(rows.map(r => r.docId));
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // n8n posts extracted products from a transcript (multi-product)
+  app.post("/api/transcripts/ingest", async (req: Request, res: Response) => {
+    try {
+      const { docId, docTitle, docUrl, products } = req.body;
+      if (!docId || !Array.isArray(products)) {
+        res.status(400).json({ error: "docId and products[] are required" });
+        return;
+      }
+
+      const results = [];
+      for (const p of products) {
+        // Check if this doc+product combo already exists
+        const existing = await db.select().from(transcriptProducts)
+          .where(and(
+            eq(transcriptProducts.docId, `${docId}__${p.productName}`),
+          )).limit(1);
+
+        if (existing.length > 0) {
+          results.push({ productName: p.productName, status: "skipped_duplicate" });
+          continue;
+        }
+
+        // Insert transcript product
+        const [tp] = await db.insert(transcriptProducts).values({
+          docId: `${docId}__${p.productName}`,  // Unique per doc+product combo
+          docTitle,
+          docUrl,
+          productName: p.productName,
+          mentionContext: p.mentionContext,
+          extractionConfidence: p.confidence,
+          assessment: p.assessment || "watch",
+          reasoning: p.reasoning,
+        }).returning();
+
+        // Auto-promote "investigate" products to product_candidates
+        if (p.assessment === "investigate") {
+          const [candidate] = await db.insert(productCandidates).values({
+            name: p.productName,
+            sourceUrl: docUrl,
+            notes: `Extracted from transcript: ${docTitle}. ${p.reasoning || ""}`,
+            status: "evaluating",
+          }).returning();
+
+          await db.update(transcriptProducts)
+            .set({ candidateId: candidate.id })
+            .where(eq(transcriptProducts.id, tp.id));
+
+          results.push({ productName: p.productName, status: "promoted", candidateId: candidate.id });
+        } else {
+          results.push({ productName: p.productName, status: "recorded", assessment: p.assessment });
+        }
+      }
+
+      res.json({ success: true, docId, results });
+    } catch (error: any) {
+      console.error("[transcripts/ingest] Error:", error.message);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Manually promote a transcript product to a candidate
+  app.patch("/api/transcripts/products/:id/promote", async (req: Request, res: Response) => {
+    try {
+      const tpId = Number(req.params.id);
+      const [tp] = await db.select().from(transcriptProducts).where(eq(transcriptProducts.id, tpId));
+      if (!tp) { res.status(404).json({ error: "Transcript product not found" }); return; }
+      if (tp.candidateId) { res.json({ success: true, candidateId: tp.candidateId, message: "Already promoted" }); return; }
+
+      const [candidate] = await db.insert(productCandidates).values({
+        name: tp.productName,
+        sourceUrl: tp.docUrl,
+        notes: `Promoted from transcript: ${tp.docTitle}. ${tp.reasoning || ""}`,
+        status: "evaluating",
+      }).returning();
+
+      await db.update(transcriptProducts)
+        .set({ candidateId: candidate.id, assessment: "investigate" })
+        .where(eq(transcriptProducts.id, tpId));
+
+      res.json({ success: true, candidateId: candidate.id });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Trigger n8n to re-scan Google Drive folder
+  app.post("/api/transcripts/reprocess", async (_req: Request, res: Response) => {
+    try {
+      const result = await triggerN8nWebhook("bomb-import-from-drive", {});
+      res.json({ success: true, ...result });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // ============================================================
+  // GATE VALIDATION PIPELINE
+  // ============================================================
+
+  // Get gate results for a candidate
+  app.get("/api/candidates/:id/gates", async (req: Request, res: Response) => {
+    try {
+      const candidateId = Number(req.params.id);
+      const gates = await db.select().from(gateResults)
+        .where(eq(gateResults.candidateId, candidateId))
+        .orderBy(gateResults.gateOrder);
+      res.json(gates);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Trigger full gate validation pipeline for a candidate
+  app.post("/api/candidates/:id/validate", async (req: Request, res: Response) => {
+    try {
+      const candidateId = Number(req.params.id);
+      const { startAtGate } = req.body || {};
+
+      const [candidate] = await db.select().from(productCandidates)
+        .where(eq(productCandidates.id, candidateId));
+      if (!candidate) { res.status(404).json({ error: "Candidate not found" }); return; }
+
+      const result = await triggerN8nWebhook("bomb-validate-candidate", {
+        candidateId,
+        candidateName: candidate.name,
+        startAtGate: startAtGate || 1,
+      });
+
+      res.json({ success: true, candidateId, ...result });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Trigger a single gate for a candidate
+  app.post("/api/candidates/:id/gate/:gateName", async (req: Request, res: Response) => {
+    try {
+      const candidateId = Number(req.params.id);
+      const { gateName } = req.params;
+      const validGates = ["kalodata", "amazon", "aliexpress", "meta_ads"];
+      if (!validGates.includes(gateName)) {
+        res.status(400).json({ error: `Invalid gate: ${gateName}. Valid: ${validGates.join(", ")}` });
+        return;
+      }
+
+      const [candidate] = await db.select().from(productCandidates)
+        .where(eq(productCandidates.id, candidateId));
+      if (!candidate) { res.status(404).json({ error: "Candidate not found" }); return; }
+
+      const result = await triggerN8nWebhook("bomb-validate-candidate", {
+        candidateId,
+        candidateName: candidate.name,
+        singleGate: gateName,
+      });
+
+      res.json({ success: true, candidateId, gate: gateName, ...result });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // n8n posts gate results back after validation
+  app.post("/api/ingest/gate-result", async (req: Request, res: Response) => {
+    try {
+      const { candidateId, gateName, gateOrder, passed, rawData, criteriaChecked, errorMessage, runId } = req.body;
+
+      if (!candidateId || !gateName || gateOrder == null) {
+        res.status(400).json({ error: "candidateId, gateName, gateOrder are required" });
+        return;
+      }
+
+      // Upsert: replace if same candidate+gate already exists
+      const existing = await db.select().from(gateResults)
+        .where(and(
+          eq(gateResults.candidateId, Number(candidateId)),
+          eq(gateResults.gateName, gateName),
+        )).limit(1);
+
+      let result;
+      if (existing.length > 0) {
+        [result] = await db.update(gateResults)
+          .set({ passed, rawData, criteriaChecked, errorMessage, runId, createdAt: new Date() })
+          .where(eq(gateResults.id, existing[0].id))
+          .returning();
+      } else {
+        [result] = await db.insert(gateResults).values({
+          candidateId: Number(candidateId),
+          gateName,
+          gateOrder: Number(gateOrder),
+          passed,
+          rawData,
+          criteriaChecked,
+          errorMessage,
+          runId,
+        }).returning();
+      }
+
+      // Update candidate jsonb fields based on gate
+      const dataFieldMap: Record<string, string> = {
+        kalodata: "kalodataData",
+        amazon: "amazonData",
+        aliexpress: "economicsData",
+        meta_ads: "metaAdsData",
+      };
+      const field = dataFieldMap[gateName];
+      if (field && rawData) {
+        await db.update(productCandidates)
+          .set({ [field]: rawData } as any)
+          .where(eq(productCandidates.id, Number(candidateId)));
+      }
+
+      // If gate failed, update candidate decision
+      if (passed === false) {
+        const allGates = await db.select().from(gateResults)
+          .where(eq(gateResults.candidateId, Number(candidateId)));
+        const failedAt = gateOrder;
+        await db.update(productCandidates)
+          .set({
+            decision: failedAt <= 2 ? "REJECT" : "WATCHLIST",
+            hardGateResults: allGates.map(g => ({ gate: g.gateName, passed: g.passed })),
+          })
+          .where(eq(productCandidates.id, Number(candidateId)));
+      }
+
+      res.json({ success: true, gateResultId: result.id, passed });
+    } catch (error: any) {
+      console.error("[ingest/gate-result] Error:", error.message);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // ============================================================
+  // TIKTOK SCRAPER (from bev4/tiktok-scraper)
+  // ============================================================
+
+  // Scrape TikTok videos by keyword
+  app.post("/api/tiktok/scrape", async (req: Request, res: Response) => {
+    try {
+      const { keyword, maxResults = 20, candidateId } = req.body;
+      if (!keyword) { res.status(400).json({ error: "keyword is required" }); return; }
+
+      // Create a scrape run record
+      const [tiktokSource] = await db.select().from(scrapeSources)
+        .where(eq(scrapeSources.platform, "tiktok")).limit(1);
+
+      let sourceId = tiktokSource?.id;
+      if (!sourceId) {
+        // Auto-create the TikTok scrape source
+        const [newSource] = await db.insert(scrapeSources).values({
+          actorId: "clockworks/tiktok-scraper",
+          name: "TikTok Trend Scraper",
+          platform: "tiktok",
+          category: "social",
+          defaultInput: { resultsPerPage: 20 },
+        }).returning();
+        sourceId = newSource.id;
+      }
+
+      const [run] = await db.insert(scrapeRuns).values({
+        sourceId,
+        candidateId: candidateId || null,
+        status: "running",
+        startedAt: new Date(),
+      }).returning();
+
+      // Run the scrape (async — respond immediately, update DB when done)
+      res.json({ success: true, runId: run.id, message: "TikTok scrape started" });
+
+      try {
+        const videos = await scrapeTikTokByKeyword(keyword, maxResults);
+
+        // Store raw results
+        for (const video of videos) {
+          await db.insert(rawScrapeData).values({
+            runId: run.id,
+            sourceId,
+            platform: "tiktok",
+            rawJson: video,
+          });
+        }
+
+        // Also create trend items from top videos
+        for (const video of videos.slice(0, 10)) {
+          const existing = await db.select().from(trendItems)
+            .where(eq(trendItems.url, video.videoUrl)).limit(1);
+          if (existing.length === 0) {
+            await db.insert(trendItems).values({
+              platform: "tiktok",
+              title: video.description.slice(0, 200) || `TikTok by ${video.author}`,
+              url: video.videoUrl,
+              notes: `${video.views.toLocaleString()} views, ${video.likes.toLocaleString()} likes`,
+              sourceActorId: "clockworks/tiktok-scraper",
+              rawRunId: run.id,
+              trendVelocity: video.views > 0 ? video.likes / video.views : 0,
+            });
+          }
+        }
+
+        await db.update(scrapeRuns).set({
+          status: "complete",
+          itemsCount: videos.length,
+          completedAt: new Date(),
+        }).where(eq(scrapeRuns.id, run.id));
+      } catch (err: any) {
+        await db.update(scrapeRuns).set({
+          status: "failed",
+          errorMessage: err.message,
+          completedAt: new Date(),
+        }).where(eq(scrapeRuns.id, run.id));
+      }
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Scrape comments from a TikTok video
+  app.post("/api/tiktok/comments", async (req: Request, res: Response) => {
+    try {
+      const { videoUrl, candidateId, maxComments = 50 } = req.body;
+      if (!videoUrl) { res.status(400).json({ error: "videoUrl is required" }); return; }
+
+      const comments = await scrapeTikTokComments(videoUrl, maxComments);
+
+      // If candidateId provided, store as consumer phrases
+      if (candidateId) {
+        for (const comment of comments) {
+          await db.insert(consumerPhrases).values({
+            candidateId: Number(candidateId),
+            source: "tiktok",
+            sourceUrl: videoUrl,
+            phrase: comment.text,
+            frequency: 1,
+            phraseType: "complaint", // Will be refined by AI later
+            emotionalValence: "neutral",
+          });
+        }
+      }
+
+      res.json({ success: true, count: comments.length, comments });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Pipeline summary — counts at each stage for funnel visualization
+  app.get("/api/pipeline/summary", async (_req: Request, res: Response) => {
+    try {
+      const [transcriptCount] = await db.select({ count: count() }).from(transcriptProducts);
+      const [extractedCount] = await db.select({ count: count() }).from(transcriptProducts)
+        .where(eq(transcriptProducts.assessment, "investigate"));
+      const [candidateCount] = await db.select({ count: count() }).from(productCandidates);
+
+      // Gate pass counts
+      const gateCounts: Record<string, number> = {};
+      for (const gate of ["kalodata", "amazon", "aliexpress", "meta_ads"]) {
+        const [result] = await db.select({ count: count() }).from(gateResults)
+          .where(and(eq(gateResults.gateName, gate), eq(gateResults.passed, true)));
+        gateCounts[gate] = result?.count || 0;
+      }
+
+      // Decision distribution
+      const decisions = await db.select({
+        decision: productCandidates.decision,
+        count: count(),
+      }).from(productCandidates)
+        .where(sql`${productCandidates.decision} IS NOT NULL`)
+        .groupBy(productCandidates.decision);
+
+      res.json({
+        transcripts: transcriptCount?.count || 0,
+        extracted: extractedCount?.count || 0,
+        candidates: candidateCount?.count || 0,
+        gates: gateCounts,
+        decisions: Object.fromEntries(decisions.map(d => [d.decision, d.count])),
+      });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }

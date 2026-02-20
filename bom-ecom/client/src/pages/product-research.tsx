@@ -1124,6 +1124,46 @@ export default function ProductResearch() {
     },
   });
 
+  // --- Transcript & Gate Pipeline ---
+
+  const { data: transcriptProducts } = useQuery<any[]>({
+    queryKey: ["/api/transcripts/products"],
+  });
+
+  const scanDriveMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/transcripts/reprocess", {});
+      return res.json();
+    },
+    onSuccess: (data: any) => {
+      toast({ title: "Drive scan triggered", description: "Checking for new transcripts in AI Com Product Research folder." });
+      setTimeout(() => queryClient.invalidateQueries({ queryKey: ["/api/transcripts/products"] }), 10000);
+    },
+  });
+
+  const promoteMutation = useMutation({
+    mutationFn: async (tpId: number) => {
+      const res = await apiRequest("PATCH", `/api/transcripts/products/${tpId}/promote`, {});
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/transcripts/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/product-candidates"] });
+      toast({ title: "Product promoted to candidate" });
+    },
+  });
+
+  const validateMutation = useMutation({
+    mutationFn: async (candidateId: number) => {
+      const res = await apiRequest("POST", `/api/candidates/${candidateId}/validate`, {});
+      return res.json();
+    },
+    onSuccess: (data: any) => {
+      toast({ title: "Gate validation started", description: "Running KaloData → Amazon → AliExpress → Meta Ads pipeline." });
+      setTimeout(() => queryClient.invalidateQueries({ queryKey: ["/api/product-candidates"] }), 15000);
+    },
+  });
+
   const filteredCandidates = useMemo(() => {
     if (!candidates) return [];
     if (filterStatus === "all") return candidates;
@@ -1201,7 +1241,19 @@ export default function ProductResearch() {
             <Cpu className="h-4 w-4 text-primary" />
             <h2 className="text-sm font-bold uppercase tracking-wider">Scraping / Mining Actions</h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+            <Card className="hover-elevate border-primary/30">
+              <CardContent className="p-4 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium">Scan Drive Folder</span>
+                </div>
+                <p className="text-xs text-muted-foreground">Extract products from AI Com transcripts in Google Drive.</p>
+                <Button size="sm" variant="outline" onClick={() => scanDriveMutation.mutate()} disabled={scanDriveMutation.isPending} data-testid="button-scan-drive">
+                  <Globe className="h-3 w-3 mr-1" /> {scanDriveMutation.isPending ? "Scanning..." : "Scan Now"}
+                </Button>
+              </CardContent>
+            </Card>
             <Card className="hover-elevate">
               <CardContent className="p-4 space-y-2">
                 <div className="flex items-center gap-2">
@@ -1266,6 +1318,67 @@ export default function ProductResearch() {
         </div>
 
         <TrendScrapingSection />
+
+        {/* Transcript Products Section */}
+        {transcriptProducts && transcriptProducts.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Brain className="h-4 w-4 text-primary" />
+              <h2 className="text-sm font-bold uppercase tracking-wider">Transcript Extractions</h2>
+              <Badge variant="outline" className="ml-auto font-mono text-xs">
+                {transcriptProducts.length} products found
+              </Badge>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {transcriptProducts.map((tp: any) => (
+                <Card key={tp.id} className="hover-elevate">
+                  <CardContent className="p-4 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="text-sm font-medium truncate">{tp.productName}</h3>
+                      <Badge variant="outline" className={`text-xs no-default-hover-elevate ${
+                        tp.assessment === "investigate" ? "bg-green-500/10 text-green-500 border-green-500/20" :
+                        tp.assessment === "skip" ? "bg-red-500/10 text-red-500 border-red-500/20" :
+                        "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                      }`}>
+                        {tp.assessment}
+                      </Badge>
+                    </div>
+                    {tp.mentionContext && (
+                      <p className="text-xs text-muted-foreground line-clamp-2 italic">"{tp.mentionContext}"</p>
+                    )}
+                    {tp.reasoning && (
+                      <p className="text-xs text-muted-foreground line-clamp-2">{tp.reasoning}</p>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs no-default-hover-elevate font-mono">
+                        {tp.docTitle}
+                      </Badge>
+                      {tp.extractionConfidence != null && (
+                        <span className="text-xs text-muted-foreground">{Math.round(tp.extractionConfidence * 100)}% conf</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      {!tp.candidateId ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => promoteMutation.mutate(tp.id)}
+                          disabled={promoteMutation.isPending || tp.assessment === "skip"}
+                        >
+                          <Plus className="h-3 w-3 mr-1" /> Promote to Candidate
+                        </Button>
+                      ) : (
+                        <Badge variant="default" className="text-xs no-default-hover-elevate">
+                          <CheckCircle className="h-3 w-3 mr-1" /> Candidate #{tp.candidateId}
+                        </Badge>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-2">
@@ -1365,6 +1478,16 @@ export default function ProductResearch() {
                 <Separator />
 
                 <div className="flex items-center gap-1.5 flex-wrap">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-primary/30"
+                    onClick={(e) => { e.stopPropagation(); validateMutation.mutate(candidate.id); }}
+                    disabled={validateMutation.isPending}
+                    data-testid={`button-validate-${candidate.id}`}
+                  >
+                    <ShieldCheck className="h-3 w-3 mr-1" /> Validate
+                  </Button>
                   <Button
                     size="sm"
                     variant="outline"

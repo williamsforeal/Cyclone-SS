@@ -19,6 +19,8 @@ import {
   Brain,
   TrendingUp,
   Sparkles,
+  ArrowRight,
+  Filter,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -148,6 +150,82 @@ const WORKFLOWS: WorkflowDef[] = [
   },
 ];
 
+// ─── Pipeline Funnel ──────────────────────────────────────────────────────────
+
+interface PipelineSummary {
+  transcripts: number;
+  extracted: number;
+  candidates: number;
+  gates: Record<string, number>;
+  decisions: Record<string, number>;
+}
+
+function PipelineFunnel() {
+  const { data: summary } = useQuery<PipelineSummary>({
+    queryKey: ["/api/pipeline/summary"],
+    refetchInterval: 10000,
+  });
+
+  if (!summary) return <Skeleton className="h-24 w-full" />;
+
+  const stages = [
+    { label: "Transcripts", count: summary.transcripts, color: "bg-blue-500" },
+    { label: "Extracted", count: summary.extracted, color: "bg-cyan-500" },
+    { label: "Candidates", count: summary.candidates, color: "bg-indigo-500" },
+    { label: "Gate 1: KaloData", count: summary.gates.kalodata || 0, color: "bg-green-500" },
+    { label: "Gate 2: Amazon", count: summary.gates.amazon || 0, color: "bg-emerald-500" },
+    { label: "Gate 3: AliExpress", count: summary.gates.aliexpress || 0, color: "bg-teal-500" },
+    { label: "Gate 4: Meta Ads", count: summary.gates.meta_ads || 0, color: "bg-purple-500" },
+  ];
+
+  const decisions = summary.decisions || {};
+  const decisionColors: Record<string, string> = {
+    APPROVE: "text-green-500",
+    TEST: "text-amber-500",
+    WATCHLIST: "text-slate-400",
+    REJECT: "text-red-500",
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <Filter className="h-4 w-4 text-primary" />
+        <h2 className="text-sm font-bold uppercase tracking-wider">Pipeline Funnel</h2>
+      </div>
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-center gap-1 overflow-x-auto pb-2">
+            {stages.map((stage, i) => (
+              <div key={stage.label} className="flex items-center gap-1 shrink-0">
+                <div className="text-center min-w-[80px]">
+                  <div className={`text-xl font-bold font-heading ${stage.count > 0 ? "text-foreground" : "text-muted-foreground/40"}`}>
+                    {stage.count}
+                  </div>
+                  <div className="text-[10px] text-muted-foreground leading-tight">{stage.label}</div>
+                  <div className={`h-1 rounded-full mt-1 ${stage.count > 0 ? stage.color : "bg-muted"}`} />
+                </div>
+                {i < stages.length - 1 && (
+                  <ArrowRight className="h-3 w-3 text-muted-foreground/40 shrink-0" />
+                )}
+              </div>
+            ))}
+          </div>
+          {Object.keys(decisions).length > 0 && (
+            <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border/50">
+              <span className="text-xs text-muted-foreground">Decisions:</span>
+              {Object.entries(decisions).map(([decision, count]) => (
+                <span key={decision} className={`text-xs font-mono font-bold ${decisionColors[decision] || "text-muted-foreground"}`}>
+                  {decision}: {count as number}
+                </span>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function Pipeline() {
@@ -224,6 +302,9 @@ export default function Pipeline() {
             </p>
           </div>
         </div>
+
+        {/* ── Pipeline Funnel ───────────────────────────────────────────── */}
+        <PipelineFunnel />
 
         {/* ── Run Pipeline ───────────────────────────────────────────────── */}
         <div className="space-y-4">

@@ -709,4 +709,47 @@ export const insertAdVaultSnapshotSchema = createInsertSchema(adVaultSnapshots).
 export type InsertAdVaultSnapshot = z.infer<typeof insertAdVaultSnapshotSchema>;
 export type AdVaultSnapshot = typeof adVaultSnapshots.$inferSelect;
 
+// ============================================================
+// TRANSCRIPT PRODUCT EXTRACTION TABLES
+// ============================================================
+
+export const transcriptProducts = pgTable("transcript_products", {
+  id: serial("id").primaryKey(),
+  docId: text("doc_id").notNull().unique(),               // Google Doc ID — unique constraint for dedup
+  docTitle: text("doc_title").notNull(),
+  docUrl: text("doc_url"),
+  productName: text("product_name").notNull(),
+  mentionContext: text("mention_context"),                  // Quote from transcript where product was discussed
+  extractionConfidence: real("extraction_confidence"),      // 0-1 confidence score from Gemini
+  assessment: text("assessment").default("watch"),          // "investigate" | "skip" | "watch"
+  reasoning: text("reasoning"),                            // AI explanation for assessment
+  candidateId: integer("candidate_id"),                     // FK to productCandidates — set when promoted
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const insertTranscriptProductSchema = createInsertSchema(transcriptProducts).omit({ id: true, createdAt: true });
+export type InsertTranscriptProduct = z.infer<typeof insertTranscriptProductSchema>;
+export type TranscriptProduct = typeof transcriptProducts.$inferSelect;
+
+// ============================================================
+// GATE VALIDATION PIPELINE TABLES
+// ============================================================
+
+export const gateResults = pgTable("gate_results", {
+  id: serial("id").primaryKey(),
+  candidateId: integer("candidate_id").notNull(),          // FK to productCandidates
+  gateName: text("gate_name").notNull(),                   // "kalodata" | "amazon" | "aliexpress" | "meta_ads"
+  gateOrder: integer("gate_order").notNull(),              // 1-4
+  passed: boolean("passed"),                               // null = not run, true = passed, false = failed
+  rawData: jsonb("raw_data"),                              // Full scraper response
+  criteriaChecked: jsonb("criteria_checked"),               // { criterion: value, threshold: value, passed: bool }[]
+  errorMessage: text("error_message"),
+  runId: integer("run_id"),                                // FK to scrapeRuns (optional)
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const insertGateResultSchema = createInsertSchema(gateResults).omit({ id: true, createdAt: true });
+export type InsertGateResult = z.infer<typeof insertGateResultSchema>;
+export type GateResult = typeof gateResults.$inferSelect;
+
 export * from "./models/chat";
