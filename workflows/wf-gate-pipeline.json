@@ -1,0 +1,230 @@
+{
+  "name": "Gate Validation Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bomb-validate-candidate",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [180, 300],
+      "id": "gate-webhook",
+      "name": "Webhook: Validate Candidate"
+    },
+    {
+      "parameters": {
+        "jsCode": "const { candidateId, candidateName, startAtGate, singleGate } = $input.item.json;\n\nif (!candidateId) throw new Error('candidateId is required');\n\n// Define gate order\nconst gates = [\n  { name: 'kalodata', order: 1, label: 'KaloData Trend Discovery' },\n  { name: 'amazon', order: 2, label: 'Amazon Demand Proof' },\n  { name: 'aliexpress', order: 3, label: 'AliExpress Economics' },\n  { name: 'meta_ads', order: 4, label: 'Meta Ads Competition' },\n];\n\nlet gatesToRun = gates;\nif (singleGate) {\n  gatesToRun = gates.filter(g => g.name === singleGate);\n} else if (startAtGate && startAtGate > 1) {\n  gatesToRun = gates.filter(g => g.order >= startAtGate);\n}\n\nreturn [{\n  json: {\n    candidateId,\n    candidateName: candidateName || `Candidate #${candidateId}`,\n    gatesToRun,\n    currentGateIndex: 0,\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [400, 300],
+      "id": "gate-setup",
+      "name": "Setup Gate Pipeline"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Run the current gate\nconst data = $input.item.json;\nconst gate = data.gatesToRun[data.currentGateIndex];\n\nif (!gate) {\n  return [{ json: { ...data, _done: true, message: 'All gates completed' } }];\n}\n\n// Gate-specific scrape configurations\nconst gateConfigs = {\n  kalodata: {\n    searchQuery: data.candidateName,\n    criteria: [\n      { name: 'revenue_30d', threshold: 10000, operator: 'gte', label: '30d revenue >= $10k' },\n      { name: 'revenue_30d', threshold: 90000, operator: 'lte', label: '30d revenue <= $90k' },\n      { name: 'launch_age_days', threshold: 30, operator: 'lte', label: 'Launched within 30 days' },\n    ]\n  },\n  amazon: {\n    searchQuery: data.candidateName,\n    criteria: [\n      { name: 'monthly_sales', threshold: 1000, operator: 'gte', label: '1,000+ monthly sales' },\n      { name: 'listing_count', threshold: 2, operator: 'gte', label: 'Multiple listings' },\n    ]\n  },\n  aliexpress: {\n    searchQuery: data.candidateName,\n    criteria: [\n      { name: 'profit_margin', threshold: 20, operator: 'gte', label: 'Margin >= $20' },\n      { name: 'weight_kg', threshold: 2, operator: 'lte', label: 'Under 2kg' },\n    ]\n  },\n  meta_ads: {\n    searchQuery: data.candidateName,\n    criteria: [\n      { name: 'active_ads_count', threshold: 1, operator: 'gte', label: 'Has active ads' },\n    ]\n  },\n};\n\nreturn [{\n  json: {\n    ...data,\n    currentGate: gate,\n    gateConfig: gateConfigs[gate.name] || {},\n    _done: false,\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [620, 300],
+      "id": "gate-prepare",
+      "name": "Prepare Current Gate"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json._done }}",
+              "value2": true,
+              "operation": "notEqual"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [840, 300],
+      "id": "gate-check-done",
+      "name": "More Gates?"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ═══════════════════════════════════════════════════════════\n// GATE SCRAPER — Real Apify Actor Calls\n// Triggers the correct Apify actor per gate, waits for results,\n// evaluates pass/fail criteria against actual scraped data.\n// ═══════════════════════════════════════════════════════════\n\nconst data = $input.item.json;\nconst gate = data.currentGate;\nconst config = data.gateConfig;\nconst APIFY_TOKEN = $env.APIFY_TOKEN;\n\nif (!APIFY_TOKEN) throw new Error('APIFY_TOKEN env var is required');\n\n// ── Actor configs per gate ──────────────────────────────────\nconst actorConfigs = {\n  kalodata: {\n    actorId: $env.KALODATA_ACTOR_ID || null,\n    waitSeconds: 45,\n    buildInput: (name) => ({\n      keyword: name,\n      sessionCookie: $env.KALODATA_SESSION_ID || '',\n      maxProducts: 5,\n      proxyConfiguration: { useApifyProxy: true, apifyProxyGroups: ['RESIDENTIAL'] },\n    }),\n    mapOutput: (items) => {\n      const best = items.sort((a, b) => (b.revenue_30d || 0) - (a.revenue_30d || 0))[0] || {};\n      return {\n        revenue_30d: best.revenue_30d || 0,\n        launch_age_days: best.launch_age_days || 999,\n      };\n    },\n  },\n  amazon: {\n    actorId: 'junglee~free-amazon-product-scraper',\n    waitSeconds: 40,\n    buildInput: (name) => ({\n      queries: [name],\n      countryCode: 'US',\n      maxItems: 10,\n    }),\n    mapOutput: (items) => ({\n      monthly_sales: items.reduce((sum, i) => sum + (i.monthlySales || i.monthlyRevenue || 0), 0),\n      listing_count: items.length,\n    }),\n  },\n  aliexpress: {\n    actorId: null,\n    waitSeconds: 40,\n    buildInput: (name) => ({ query: name, maxItems: 5 }),\n    mapOutput: (items) => {\n      const best = items[0] || {};\n      const price = best.price || best.salePrice || 0;\n      return {\n        profit_margin: price > 0 ? Math.round(price * 0.6) : null,\n        weight_kg: best.weight || null,\n      };\n    },\n  },\n  meta_ads: {\n    actorId: 'apify~facebook-ads-scraper',\n    waitSeconds: 45,\n    buildInput: (name) => ({\n      startUrls: [{\n        url: `https://www.facebook.com/ads/library/?active_status=active&ad_type=all&q=${encodeURIComponent(name)}&country=US&media_type=all`\n      }],\n      resultsLimit: 30,\n    }),\n    mapOutput: (items) => ({\n      active_ads_count: items.filter(i => i.isActive !== false).length,\n    }),\n  },\n};\n\n// ── Evaluate criteria ───────────────────────────────────────\nfunction evaluateCriteria(criteria, actualData) {\n  return criteria.map(c => {\n    const actual = actualData[c.name];\n    let passed = null;\n    if (actual !== null && actual !== undefined) {\n      if (c.operator === 'gte') passed = actual >= c.threshold;\n      else if (c.operator === 'lte') passed = actual <= c.threshold;\n      else if (c.operator === 'eq') passed = actual === c.threshold;\n    }\n    return { ...c, actualValue: actual, passed };\n  });\n}\n\n// ── Main execution ──────────────────────────────────────────\nconst actorConfig = actorConfigs[gate.name];\n\nif (!actorConfig || !actorConfig.actorId) {\n  // Actor not deployed — skip this gate with null (not evaluated)\n  return [{\n    json: {\n      ...data,\n      scrapeResult: {\n        gate: gate.name,\n        status: 'actor_not_deployed',\n        message: `Actor for ${gate.label} not configured. Set ${gate.name === 'kalodata' ? 'KALODATA_ACTOR_ID' : 'actorId'} to enable.`,\n        timestamp: new Date().toISOString(),\n      },\n      gatePassed: null,\n      criteriaResults: config.criteria.map(c => ({ ...c, actualValue: null, passed: null })),\n    },\n  }];\n}\n\ntry {\n  // 1. Trigger actor run\n  const runResponse = await fetch(\n    `https://api.apify.com/v2/acts/${actorConfig.actorId}/runs?token=${APIFY_TOKEN}`,\n    {\n      method: 'POST',\n      headers: { 'Content-Type': 'application/json' },\n      body: JSON.stringify(actorConfig.buildInput(config.searchQuery)),\n    }\n  );\n  const runData = await runResponse.json();\n  const runId = runData?.data?.id;\n\n  if (!runId) throw new Error(`Failed to start actor: ${JSON.stringify(runData)}`);\n\n  // 2. Wait for actor to finish\n  const waitMs = (actorConfig.waitSeconds || 30) * 1000;\n  await new Promise(resolve => setTimeout(resolve, waitMs));\n\n  // 3. Poll until finished (max 3 retries)\n  let items = [];\n  for (let attempt = 0; attempt < 3; attempt++) {\n    const statusRes = await fetch(\n      `https://api.apify.com/v2/actor-runs/${runId}?token=${APIFY_TOKEN}`\n    );\n    const statusData = await statusRes.json();\n    const status = statusData?.data?.status;\n\n    if (status === 'SUCCEEDED' || status === 'FAILED' || status === 'ABORTED' || status === 'TIMED-OUT') {\n      if (status !== 'SUCCEEDED') {\n        throw new Error(`Actor run ${status}: ${gate.label}`);\n      }\n      // Fetch dataset items\n      const itemsRes = await fetch(\n        `https://api.apify.com/v2/actor-runs/${runId}/dataset/items?token=${APIFY_TOKEN}&format=json&limit=50`\n      );\n      items = await itemsRes.json();\n      if (!Array.isArray(items)) items = [items];\n      break;\n    }\n    // Still running — wait another 15s\n    await new Promise(resolve => setTimeout(resolve, 15000));\n  }\n\n  // 4. Map actor output to gate criteria fields\n  const mappedData = actorConfig.mapOutput(items);\n\n  // 5. Evaluate criteria\n  const criteriaResults = evaluateCriteria(config.criteria, mappedData);\n  const allEvaluated = criteriaResults.filter(c => c.passed !== null);\n  const gatePassed = allEvaluated.length > 0\n    ? allEvaluated.every(c => c.passed === true)\n    : null;\n\n  return [{\n    json: {\n      ...data,\n      scrapeResult: {\n        gate: gate.name,\n        status: 'success',\n        runId,\n        itemCount: items.length,\n        mappedData,\n        timestamp: new Date().toISOString(),\n      },\n      gatePassed,\n      criteriaResults,\n    },\n  }];\n\n} catch (error) {\n  return [{\n    json: {\n      ...data,\n      scrapeResult: {\n        gate: gate.name,\n        status: 'error',\n        error: error.message,\n        timestamp: new Date().toISOString(),\n      },\n      gatePassed: null,\n      criteriaResults: config.criteria.map(c => ({ ...c, actualValue: null, passed: null })),\n    },\n  }];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1060, 200],
+      "id": "gate-run-scraper",
+      "name": "Run Gate Scraper",
+      "notes": "Triggers the correct Apify actor per gate, waits for completion, fetches results, evaluates pass/fail criteria. Requires APIFY_TOKEN env var. KaloData gate also requires KALODATA_ACTOR_ID and KALODATA_SESSION_ID."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:5000/api/ingest/gate-result",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"candidateId\": {{ $json.candidateId }},\n  \"gateName\": \"{{ $json.currentGate.name }}\",\n  \"gateOrder\": {{ $json.currentGate.order }},\n  \"passed\": {{ $json.gatePassed }},\n  \"rawData\": {{ JSON.stringify($json.scrapeResult) }},\n  \"criteriaChecked\": {{ JSON.stringify($json.criteriaResults) }},\n  \"errorMessage\": null\n}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1280, 200],
+      "id": "gate-save-result",
+      "name": "Save Gate Result to Express"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Check if gate passed and decide whether to continue\nconst prevData = $('Run Gate Scraper').item.json;\nconst saveResponse = $input.item.json;\n\n// If gate explicitly failed, stop the pipeline\nif (prevData.gatePassed === false) {\n  return [{\n    json: {\n      ...prevData,\n      _done: true,\n      _stoppedAt: prevData.currentGate.name,\n      message: `Pipeline stopped: ${prevData.currentGate.label} gate failed`,\n    }\n  }];\n}\n\n// If gate was null (actor not deployed or error), continue to next gate\n// Move to next gate\nconst nextIndex = prevData.currentGateIndex + 1;\nreturn [{\n  json: {\n    candidateId: prevData.candidateId,\n    candidateName: prevData.candidateName,\n    gatesToRun: prevData.gatesToRun,\n    currentGateIndex: nextIndex,\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1500, 200],
+      "id": "gate-advance",
+      "name": "Advance to Next Gate"
+    },
+    {
+      "parameters": {
+        "jsCode": "// All gates completed — trigger scoring\nconst data = $input.item.json;\nreturn [{\n  json: {\n    candidateId: data.candidateId,\n    candidateName: data.candidateName,\n    message: data._stoppedAt\n      ? `Pipeline stopped at ${data._stoppedAt} gate`\n      : 'All gates completed successfully',\n    completedAt: new Date().toISOString(),\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1060, 500],
+      "id": "gate-complete",
+      "name": "Pipeline Complete"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://host.docker.internal:5000/api/product-candidates/{{ $json.candidateId }}/score",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"trigger\": \"gate-pipeline\"\n}",
+        "options": {
+          "timeout": 30000,
+          "allowUnauthorizedCerts": false
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1280, 500],
+      "id": "gate-trigger-scoring",
+      "name": "Trigger Scoring Engine",
+      "notes": "Calls the scoring endpoint to recompute the candidate's 0-100 score based on gate results."
+    }
+  ],
+  "connections": {
+    "Webhook: Validate Candidate": {
+      "main": [
+        [
+          {
+            "node": "Setup Gate Pipeline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Setup Gate Pipeline": {
+      "main": [
+        [
+          {
+            "node": "Prepare Current Gate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Current Gate": {
+      "main": [
+        [
+          {
+            "node": "More Gates?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "More Gates?": {
+      "main": [
+        [
+          {
+            "node": "Run Gate Scraper",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Pipeline Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Gate Scraper": {
+      "main": [
+        [
+          {
+            "node": "Save Gate Result to Express",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Gate Result to Express": {
+      "main": [
+        [
+          {
+            "node": "Advance to Next Gate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Advance to Next Gate": {
+      "main": [
+        [
+          {
+            "node": "Prepare Current Gate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pipeline Complete": {
+      "main": [
+        [
+          {
+            "node": "Trigger Scoring Engine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "gate-pipeline-v1",
+  "meta": {
+    "instanceId": "cyclone-ss-local"
+  },
+  "id": "wf-gate-pipeline",
+  "tags": ["validation", "gates", "scoring", "pipeline"]
+}

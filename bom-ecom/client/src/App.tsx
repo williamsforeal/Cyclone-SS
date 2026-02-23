@@ -37,6 +37,9 @@ import ServiceCatalog from "@/pages/service-catalog";
 import Templates from "@/pages/templates";
 import SupplierPerformance from "@/pages/supplier-performance";
 import CaseStudies from "@/pages/case-studies";
+import CompetitorAds from "@/pages/competitor-ads";
+import ScraperHub from "@/pages/scraper-hub";
+import Pipeline from "@/pages/pipeline";
 
 function Router() {
   return (
@@ -55,6 +58,10 @@ function Router() {
       <Route path="/operations/support" component={Support} />
       <Route path="/operations/inventory" component={Inventory} />
       <Route path="/operations/suppliers" component={SupplierPerformance} />
+      <Route path="/research/competitor-ads" component={CompetitorAds} />
+      <Route path="/research/scraper-hub" component={ScraperHub} />
+      <Route path="/research/signal-engine" component={ScraperHub} />
+      <Route path="/research/pipeline" component={Pipeline} />
       <Route path="/analytics/financial" component={AnalyticsFinancial} />
       <Route path="/analytics/creative" component={AnalyticsCreative} />
       <Route path="/analytics/product" component={AnalyticsProduct} />

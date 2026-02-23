@@ -1,0 +1,137 @@
+{
+  "name": "Generated Template",
+  "width": 1080,
+  "height": 1080,
+  "layers": [
+    {
+      "type": "rectangle",
+      "name": "background",
+      "color": "#D4C5B0",
+      "x": 0,
+      "y": 0,
+      "width": 1080,
+      "height": 1080
+    },
+    {
+      "type": "text",
+      "name": "brand_logo",
+      "text": "{{brand_name}}",
+      "font_size": 48,
+      "font_weight": "bold",
+      "color": "#000000",
+      "x": 540,
+      "y": 100,
+      "alignment": "center"
+    },
+    {
+      "type": "text",
+      "name": "benefit_1_icon",
+      "text": "⚡",
+      "font_size": 40,
+      "x": 200,
+      "y": 220
+    },
+    {
+      "type": "text",
+      "name": "benefit_1_text",
+      "text": "{{benefit_1}}",
+      "font_size": 28,
+      "color": "#000000",
+      "x": 260,
+      "y": 230
+    },
+    {
+      "type": "text",
+      "name": "benefit_2_icon",
+      "text": "🛡️",
+      "font_size": 40,
+      "x": 620,
+      "y": 220
+    },
+    {
+      "type": "text",
+      "name": "benefit_2_text",
+      "text": "{{benefit_2}}",
+      "font_size": 28,
+      "color": "#000000",
+      "x": 680,
+      "y": 230
+    },
+    {
+      "type": "text",
+      "name": "benefit_3_icon",
+      "text": "👁️",
+      "font_size": 40,
+      "x": 200,
+      "y": 320
+    },
+    {
+      "type": "text",
+      "name": "benefit_3_text",
+      "text": "{{benefit_3}}",
+      "font_size": 28,
+      "color": "#000000",
+      "x": 260,
+      "y": 330
+    },
+    {
+      "type": "text",
+      "name": "benefit_4_icon",
+      "text": "🌙",
+      "font_size": 40,
+      "x": 620,
+      "y": 320
+    },
+    {
+      "type": "text",
+      "name": "benefit_4_text",
+      "text": "{{benefit_4}}",
+      "font_size": 28,
+      "color": "#000000",
+      "x": 680,
+      "y": 330
+    },
+    {
+      "type": "image",
+      "name": "product_image",
+      "image_url": "{{product_image_url}}",
+      "x": 340,
+      "y": 450,
+      "width": 400,
+      "height": 400
+    },
+    {
+      "type": "text",
+      "name": "social_proof",
+      "text": "★★★★★\n{{review_count}} 5-star Reviews",
+      "font_size": 24,
+      "font_weight": "bold",
+      "color": "#000000",
+      "x": 800,
+      "y": 550,
+      "alignment": "center"
+    },
+    {
+      "type": "text",
+      "name": "cta_message",
+      "text": "{{cta_text}}",
+      "font_size": 20,
+      "color": "#FFFFFF",
+      "background_color": "#000000",
+      "padding": 20,
+      "x": 540,
+      "y": 950,
+      "alignment": "center"
+    }
+  ],
+  "modifications": [
+    "brand_name",
+    "benefit_1",
+    "benefit_2",
+    "benefit_3",
+    "benefit_4",
+    "product_image_url",
+    "review_count",
+    "cta_text"
+  ]
+}

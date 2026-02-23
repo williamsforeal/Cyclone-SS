@@ -1,0 +1,199 @@
+{
+  "version": "2026-02-14",
+  "marketsAllowed": ["health", "wellness", "fitness"],
+  "exclusions": {
+    "categories": ["apparel", "toys", "electronics"],
+    "flags": ["copyright_brand", "hazmat", "fragile_high", "medical_claims_high_risk"]
+  },
+
+  "stages": {
+    "candidate": {
+      "requiredFields": [
+        "kalodata.launchAgeDays",
+        "kalodata.revenue7d",
+        "kalodata.orders7d",
+        "kalodata.growthRev7dPct"
+      ],
+      "kalodataFilters": {
+        "launchAgeDaysMax": 45,
+        "revenue7dMin": 10000,
+        "orders7dMin": 80,
+        "growthRev7dPctMin": 20,
+        "aovMin": 25,
+        "aovMax": 120
+      }
+    },
+
+    "approved": {
+      "hardGates": [
+        {
+          "id": "market_allowed",
+          "field": "market",
+          "op": "in",
+          "value": ["health", "wellness", "fitness"],
+          "missingAction": "needs_enrichment",
+          "failAction": "reject",
+          "message": "Market not allowed (Health/Wellness/Fitness only)."
+        },
+        {
+          "id": "pain_strong",
+          "field": "manual.painTotal20",
+          "op": "gte",
+          "value": 14,
+          "missingAction": "needs_enrichment",
+          "failAction": "reject",
+          "message": "Pain score too low (need strong pain)."
+        },
+        {
+          "id": "unique_mechanism",
+          "field": "manual.mechanismUniqueness5",
+          "op": "gte",
+          "value": 3,
+          "missingAction": "needs_enrichment",
+          "failAction": "reject",
+          "message": "Not unique/new enough."
+        },
+        {
+          "id": "selling_on_facebook",
+          "field": "metaAds.activeAdsTotal",
+          "op": "gte",
+          "value": 10,
+          "missingAction": "needs_enrichment",
+          "failAction": "reject",
+          "message": "No real proof of selling on Facebook (need active competitor ads)."
+        },
+        {
+          "id": "similarweb_traffic",
+          "field": "similarweb.monthlyVisits",
+          "op": "gte",
+          "value": 150000,
+          "missingAction": "needs_enrichment",
+          "failAction": "reject",
+          "message": "SimilarWeb traffic < 150k (fails demand proof)."
+        },
+        {
+          "id": "unit_profit",
+          "field": "economics.unitProfit",
+          "op": "gte",
+          "value": 20,
+          "missingAction": "needs_enrichment",
+          "failAction": "reject",
+          "message": "Unit profit < $20."
+        },
+        {
+          "id": "easy_to_ship",
+          "field": "shipping.easyToShip",
+          "op": "eq",
+          "value": true,
+          "missingAction": "needs_enrichment",
+          "failAction": "reject",
+          "message": "Shipping too complex / risky."
+        },
+        {
+          "id": "improve_and_adapt",
+          "field": "manual.improveAndAdapt",
+          "op": "eq",
+          "value": true,
+          "missingAction": "needs_enrichment",
+          "failAction": "reject",
+          "message": "Must have room for improvement AND adaptation."
+        }
+      ]
+    }
+  },
+
+  "scoring": {
+    "decisionThresholds": {
+      "approveMin": 80,
+      "testMin": 65,
+      "watchMin": 50
+    },
+
+    "big3": {
+      "painMin": 14,
+      "painMax": 25,
+      "proofMin": 15,
+      "proofMax": 25,
+      "economicsMin": 10,
+      "economicsMax": 20
+    },
+
+    "components": [
+      { "id": "pain_frequency", "label": "Reddit Pain Frequency", "maxPoints": 8, "method": "step", "field": "painFrequency",
+        "steps": [
+          { "gte": 51, "points": 8 },
+          { "gte": 31, "points": 6 },
+          { "gte": 16, "points": 5 },
+          { "gte": 6, "points": 3 },
+          { "gte": 1, "points": 1 },
+          { "gte": 0, "points": 0 }
+        ]
+      },
+      { "id": "emotional_intensity", "label": "Emotional Intensity", "maxPoints": 7, "method": "step", "field": "emotionalIntensity",
+        "steps": [
+          { "gte": 8, "points": 7 },
+          { "gte": 6, "points": 5 },
+          { "gte": 4, "points": 3 },
+          { "gte": 2, "points": 1 },
+          { "gte": 0, "points": 0 }
+        ]
+      },
+      { "id": "amazon_pain_density", "label": "Amazon Pain Density", "maxPoints": 5, "method": "linear", "field": "amazonPainDensity", "min": 0, "max": 5 },
+      { "id": "search_demand_problem", "label": "Search Demand for Problem", "maxPoints": 5, "method": "linear", "field": "searchDemandProblem", "min": 0, "max": 5 },
+
+      { "id": "competitor_ad_activity", "label": "Competitor Ad Activity", "maxPoints": 8, "method": "step", "field": "competitorAdActivity",
+        "steps": [
+          { "gte": 31, "points": 8 },
+          { "gte": 16, "points": 6 },
+          { "gte": 6, "points": 4 },
+          { "gte": 1, "points": 2 },
+          { "gte": 0, "points": 0 }
+        ]
+      },
+      { "id": "traffic_validation", "label": "Traffic Validation", "maxPoints": 7, "method": "linear", "field": "trafficValidation", "min": 0, "max": 7 },
+      { "id": "amazon_review_volume", "label": "Amazon Review Volume", "maxPoints": 5, "method": "linear", "field": "amazonReviewVolume", "min": 0, "max": 5 },
+      { "id": "trend_momentum", "label": "Trend Momentum", "maxPoints": 5, "method": "linear", "field": "trendMomentum", "min": 0, "max": 5 },
+
+      { "id": "profit_margin_score", "label": "Profit Margin", "maxPoints": 7, "method": "linear", "field": "profitMarginScore", "min": 0, "max": 7 },
+      { "id": "shipping_feasibility", "label": "Shipping Feasibility", "maxPoints": 5, "method": "linear", "field": "shippingFeasibility", "min": 0, "max": 5 },
+      { "id": "upsell_potential", "label": "Upsell Potential", "maxPoints": 4, "method": "linear", "field": "upsellPotential", "min": 0, "max": 4 },
+      { "id": "aov_expansion_potential", "label": "AOV Expansion Potential", "maxPoints": 4, "method": "linear", "field": "aovExpansionPotential", "min": 0, "max": 4 },
+
+      { "id": "uniqueness_factor", "label": "Uniqueness Factor", "maxPoints": 5, "method": "linear", "field": "uniquenessFactor", "min": 0, "max": 5 },
+      { "id": "improvement_opportunity", "label": "Improvement Opportunity", "maxPoints": 5, "method": "linear", "field": "improvementOpportunity", "min": 0, "max": 5 },
+      { "id": "brandability_score", "label": "Brandability Score", "maxPoints": 5, "method": "linear", "field": "brandabilityScore", "min": 0, "max": 5 },
+
+      { "id": "ugc_content_availability", "label": "UGC Content Availability", "maxPoints": 5, "method": "linear", "field": "ugcContentAvailability", "min": 0, "max": 5 },
+      { "id": "demonstrability_score", "label": "Demonstrability", "maxPoints": 5, "method": "linear", "field": "demonstrabilityScore", "min": 0, "max": 5 },
+      { "id": "consumer_language_richness", "label": "Consumer Language Richness", "maxPoints": 5, "method": "linear", "field": "consumerLanguageRichness", "min": 0, "max": 5 }
+    ],
+
+    "categories": {
+      "painIntensity": {
+        "label": "Pain Intensity",
+        "maxPoints": 25,
+        "componentIds": ["pain_frequency", "emotional_intensity", "amazon_pain_density", "search_demand_problem"]
+      },
+      "marketProof": {
+        "label": "Market Proof",
+        "maxPoints": 25,
+        "componentIds": ["competitor_ad_activity", "traffic_validation", "amazon_review_volume", "trend_momentum"]
+      },
+      "economics": {
+        "label": "Economics & Logistics",
+        "maxPoints": 20,
+        "componentIds": ["profit_margin_score", "shipping_feasibility", "upsell_potential", "aov_expansion_potential"]
+      },
+      "competitiveMoat": {
+        "label": "Competitive Moat",
+        "maxPoints": 15,
+        "componentIds": ["uniqueness_factor", "improvement_opportunity", "brandability_score"]
+      },
+      "contentPotential": {
+        "label": "Content & Creative",
+        "maxPoints": 15,
+        "componentIds": ["ugc_content_availability", "demonstrability_score", "consumer_language_richness"]
+      }
+    }
+  }
+}

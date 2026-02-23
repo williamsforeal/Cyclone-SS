@@ -1,0 +1,134 @@
+{
+  "name": "WF7: Consumer Intelligence Analyzer",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bomb-consumer-intel-analyze",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [180, 300],
+      "id": "wf7-webhook",
+      "name": "Webhook: Analyze Consumer Intel"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Fetch raw scrape data from backend for this candidate\nconst input = $input.first().json;\nconst candidateId = input.candidateId;\nconst backendUrl = $env.BOM_ECOM_URL || 'http://bom-ecom:5000';\n\n// We'll need the raw data — for now pass through\nreturn [{\n  json: {\n    candidateId,\n    itemCount: input.itemCount || 0,\n    backendUrl\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [400, 300],
+      "id": "wf7-parse",
+      "name": "Parse Input"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.backendUrl }}/api/product-candidates/{{ $json.candidateId }}/pain-points",
+        "options": { "timeout": 15000 }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [620, 180],
+      "id": "wf7-fetch-existing",
+      "name": "Fetch Existing Pain Points"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build the Vertex AI prompt for Reddit pain extraction\n// Load the raw items that were stored by WF6\nconst input = $('Parse Input').first().json;\nconst existingPainPoints = $('Fetch Existing Pain Points').first().json || [];\n\n// Build the prompt from reddit-pain-extractor.md system prompt\nconst systemPrompt = `You are a consumer psychology analyst trained in Schwartz's 5 awareness levels and Cialdini's 6 principles of influence. Your job is to extract ACTIONABLE advertising intelligence from consumer data — not academic summaries.\n\nExtract: painPoints, consumerPhrases, objections, emotionalClusters, competitorMentions, categoryGaps.\n\nRules:\n1. Extract EXACT quotes — never paraphrase\n2. Rate emotional intensity honestly 1-10\n3. Focus on ACTIONABLE pain\n4. Tag which ad creative element each maps to\n5. Cluster related phrases\n6. Identify gaps\n7. For competitor mentions, focus on WEAKNESSES\n\nReturn ONLY valid JSON with these keys: painPoints[], consumerPhrases[], objections[], emotionalClusters[], competitorMentions[], categoryGaps[]`;\n\nreturn [{\n  json: {\n    ...input,\n    systemPrompt,\n    existingCount: Array.isArray(existingPainPoints) ? existingPainPoints.length : 0\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [840, 300],
+      "id": "wf7-build-prompt",
+      "name": "Build Analysis Prompt"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://us-central1-aiplatform.googleapis.com/v1/projects/gen-lang-client-0234791928/locations/us-central1/publishers/google/models/gemini-2.0-flash:generateContent",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [\n    {\n      \"role\": \"user\",\n      \"parts\": [\n        {\n          \"text\": \"{{ $json.systemPrompt }}\\n\\nAnalyze the consumer data for candidate ID {{ $json.candidateId }}. There are {{ $json.itemCount }} raw items to process. Extract all pain points, consumer phrases, objections, and competitor messaging patterns.\\n\\nReturn ONLY valid JSON.\"\n        }\n      ]\n    }\n  ],\n  \"generationConfig\": {\n    \"temperature\": 0.4,\n    \"maxOutputTokens\": 4096,\n    \"responseMimeType\": \"application/json\"\n  }\n}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1080, 300],
+      "id": "wf7-vertex-analyze",
+      "name": "Vertex AI: Pain Analysis"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Vertex AI response and structure for backend\nconst vertexResponse = $input.first().json;\nconst input = $('Parse Input').first().json;\n\n// Extract text from Gemini response\nconst text = vertexResponse?.candidates?.[0]?.content?.parts?.[0]?.text || '{}';\nlet analysis;\ntry {\n  analysis = JSON.parse(text);\n} catch (e) {\n  // Try to extract JSON from markdown code blocks\n  const match = text.match(/```json?\\s*([\\s\\S]*?)```/);\n  if (match) {\n    analysis = JSON.parse(match[1]);\n  } else {\n    analysis = { painPoints: [], consumerPhrases: [], objections: [], competitorMentions: [] };\n  }\n}\n\n// Map to backend format\nconst painPoints = (analysis.painPoints || []).map(p => ({\n  painPointText: p.painPointText || p.text || p.pain,\n  rawQuote: (p.rawQuotes || [])[0] || null,\n  source: 'reddit',\n  frequency: p.frequency || 1,\n  painCategory: p.painCategory || null,\n  motivationType: p.motivationType || null,\n  emotionalIntensity: p.emotionalIntensity || 5,\n  urgencyLevel: p.urgencyLevel || null,\n  triggerTypes: p.triggerTypes || null,\n  adAngleRelevance: p.adAngleRelevance || null\n}));\n\nconst phrases = (analysis.consumerPhrases || []).map(p => ({\n  phrase: p.phrase,\n  source: 'reddit',\n  context: p.context || null,\n  frequency: p.frequency || 1,\n  phraseType: p.phraseType || 'complaint',\n  emotionalValence: p.emotionalValence || null,\n  emotionalIntensity: p.emotionalIntensity || 5,\n  useableAs: p.useableAs || null,\n  clusterLabel: p.clusterLabel || null\n}));\n\nconst competitorMessages = (analysis.competitorMentions || []).map(c => ({\n  source: 'reddit',\n  headline: c.brand || null,\n  primaryClaim: null,\n  weaknessIdentified: c.identifiedWeakness || null,\n  gapOpportunity: (analysis.categoryGaps || [])[0]?.opportunity || null,\n  messagingAngle: null,\n  awarenessLevel: null\n}));\n\nconst objections = (analysis.objections || []).map(o => ({\n  objection: o.objection || o.text,\n  source: 'reddit',\n  rawQuote: (o.rawQuotes || [])[0] || null,\n  frequency: o.frequency || 1,\n  emotionalIntensity: 5\n}));\n\nreturn [{\n  json: {\n    candidateId: input.candidateId,\n    painPoints,\n    phrases,\n    competitorMessages,\n    objections\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1320, 300],
+      "id": "wf7-parse-response",
+      "name": "Parse Vertex AI Response"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BOM_ECOM_URL || 'http://bom-ecom:5000' }}/api/webhook/consumer-intel/analyzed",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"candidateId\": {{ $json.candidateId }},\n  \"painPoints\": {{ JSON.stringify($json.painPoints) }},\n  \"phrases\": {{ JSON.stringify($json.phrases) }},\n  \"competitorMessages\": {{ JSON.stringify($json.competitorMessages) }},\n  \"objections\": {{ JSON.stringify($json.objections) }}\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1560, 300],
+      "id": "wf7-callback",
+      "name": "POST Analyzed Data to Backend"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"painPointsCount\": {{ $('Parse Vertex AI Response').first().json.painPoints.length }},\n  \"phrasesCount\": {{ $('Parse Vertex AI Response').first().json.phrases.length }}\n}"
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1760, 300],
+      "id": "wf7-respond",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "connections": {
+    "Webhook: Analyze Consumer Intel": {
+      "main": [[{ "node": "Parse Input", "type": "main", "index": 0 }]]
+    },
+    "Parse Input": {
+      "main": [[{ "node": "Fetch Existing Pain Points", "type": "main", "index": 0 }]]
+    },
+    "Fetch Existing Pain Points": {
+      "main": [[{ "node": "Build Analysis Prompt", "type": "main", "index": 0 }]]
+    },
+    "Build Analysis Prompt": {
+      "main": [[{ "node": "Vertex AI: Pain Analysis", "type": "main", "index": 0 }]]
+    },
+    "Vertex AI: Pain Analysis": {
+      "main": [[{ "node": "Parse Vertex AI Response", "type": "main", "index": 0 }]]
+    },
+    "Parse Vertex AI Response": {
+      "main": [[{ "node": "POST Analyzed Data to Backend", "type": "main", "index": 0 }]]
+    },
+    "POST Analyzed Data to Backend": {
+      "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [{ "name": "consumer-intelligence" }]
+}

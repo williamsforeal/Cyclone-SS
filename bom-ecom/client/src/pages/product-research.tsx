@@ -34,6 +34,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import type { ProductCandidate, CompetitorIntel, TrendItem, ProductCriteriaCheck } from "@shared/schema";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Plus,
   Trash2,
@@ -59,6 +60,13 @@ import {
   ClipboardCheck,
   Cpu,
   PackageSearch,
+  Brain,
+  Sparkles,
+  Copy,
+  ThumbsUp,
+  ThumbsDown,
+  Zap,
+  Activity,
 } from "lucide-react";
 import { SiInstagram, SiReddit, SiX } from "react-icons/si";
 
@@ -80,7 +88,20 @@ const BIG3_CRITERIA = [
   { key: "notSaturated", label: "Not Saturated", description: "Room to compete, not overly common" },
 ] as const;
 
-function ScoreBar({ score, max = 90 }: { score: number; max?: number }) {
+const DECISION_COLORS: Record<string, string> = {
+  APPROVE: "bg-green-500/10 text-green-500 border-green-500/20",
+  TEST: "bg-amber-500/10 text-amber-500 border-amber-500/20",
+  WATCHLIST: "bg-slate-500/10 text-slate-400 border-slate-500/20",
+  REJECT: "bg-red-500/10 text-red-500 border-red-500/20",
+};
+
+function DecisionBadge({ decision }: { decision: string | null | undefined }) {
+  if (!decision) return null;
+  const cls = DECISION_COLORS[decision] || DECISION_COLORS.WATCHLIST;
+  return <Badge className={`no-default-hover-elevate font-mono text-xs border ${cls}`}>{decision}</Badge>;
+}
+
+function ScoreBar({ score, max = 100 }: { score: number; max?: number }) {
   const pct = Math.round((score / max) * 100);
   return (
     <div className="flex items-center gap-2">
@@ -89,11 +110,26 @@ function ScoreBar({ score, max = 90 }: { score: number; max?: number }) {
           className="h-full rounded-full transition-all"
           style={{
             width: `${pct}%`,
-            backgroundColor: pct >= 70 ? "hsl(var(--primary))" : pct >= 40 ? "hsl(var(--chart-4))" : "hsl(var(--destructive))",
+            backgroundColor: pct >= 80 ? "hsl(142, 76%, 36%)" : pct >= 65 ? "hsl(var(--primary))" : pct >= 50 ? "hsl(var(--chart-4))" : "hsl(var(--destructive))",
           }}
         />
       </div>
-      <span className="font-mono text-xs text-muted-foreground w-10 text-right">{score}/{max}</span>
+      <span className="font-mono text-xs text-muted-foreground w-12 text-right">{score}/{max}</span>
+    </div>
+  );
+}
+
+function CategoryBar({ label, points, maxPoints }: { label: string; points: number; maxPoints: number }) {
+  const pct = maxPoints > 0 ? Math.round((points / maxPoints) * 100) : 0;
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between text-xs">
+        <span className="text-muted-foreground">{label}</span>
+        <span className="font-mono font-medium">{points}/{maxPoints}</span>
+      </div>
+      <div className="h-1.5 rounded-full bg-muted">
+        <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${pct}%` }} />
+      </div>
     </div>
   );
 }
@@ -444,6 +480,313 @@ function CompetitorPanel({ candidate }: { candidate: ProductCandidate }) {
   );
 }
 
+// ─── Consumer Intelligence Panel ─────────────────────────────────────────────
+
+interface PainPoint { id: number; painPointText: string; rawQuote: string | null; source: string; frequency: number; emotionalIntensity: number | null; painCategory: string | null; triggerTypes: string[] | null; }
+interface ConsumerPhrase { id: number; phrase: string; phraseType: string; emotionalIntensity: number | null; useableAs: string[] | null; frequency: number; }
+interface CompetitorMsg { id: number; headline: string | null; primaryClaim: string | null; messagingAngle: string | null; weaknessIdentified: string | null; gapOpportunity: string | null; }
+
+function ConsumerIntelPanel({ candidate }: { candidate: ProductCandidate }) {
+  const { toast } = useToast();
+
+  const { data: painPoints, isLoading: painLoading } = useQuery<PainPoint[]>({
+    queryKey: ["/api/product-candidates", candidate.id, "pain-points"],
+  });
+
+  const { data: phrases, isLoading: phrasesLoading } = useQuery<ConsumerPhrase[]>({
+    queryKey: ["/api/product-candidates", candidate.id, "phrases"],
+  });
+
+  const { data: messaging, isLoading: msgLoading } = useQuery<CompetitorMsg[]>({
+    queryKey: ["/api/product-candidates", candidate.id, "competitor-messaging"],
+  });
+
+  const runIntelMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/webhook/consumer-intel/scrape", {
+        candidateId: candidate.id,
+        productName: candidate.name,
+        keywords: [candidate.name, candidate.category].filter(Boolean),
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Consumer intel pipeline triggered", description: "Reddit + Amazon scrape started. Results in ~2 minutes." });
+    },
+  });
+
+  const intensityColor = (i: number | null) => {
+    if (!i) return "text-muted-foreground";
+    if (i >= 8) return "text-red-500";
+    if (i >= 6) return "text-orange-500";
+    if (i >= 4) return "text-amber-500";
+    return "text-muted-foreground";
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Consumer Intelligence</h4>
+        <Button size="sm" variant="outline" onClick={() => runIntelMutation.mutate()} disabled={runIntelMutation.isPending}>
+          <Brain className="h-3 w-3 mr-1" /> {runIntelMutation.isPending ? "Running..." : "Run Intel Pipeline"}
+        </Button>
+      </div>
+
+      <Tabs defaultValue="pain-points" className="w-full">
+        <TabsList className="grid w-full grid-cols-3 h-8">
+          <TabsTrigger value="pain-points" className="text-xs">Pain Points ({painPoints?.length ?? 0})</TabsTrigger>
+          <TabsTrigger value="phrases" className="text-xs">Phrases ({phrases?.length ?? 0})</TabsTrigger>
+          <TabsTrigger value="messaging" className="text-xs">Competitors ({messaging?.length ?? 0})</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="pain-points" className="space-y-2 mt-3">
+          {painLoading && <Skeleton className="h-20" />}
+          {painPoints?.length === 0 && <p className="text-xs text-muted-foreground">No pain points yet. Run the intel pipeline to extract them.</p>}
+          {painPoints?.map((p) => (
+            <Card key={p.id}>
+              <CardContent className="p-3 space-y-1">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-sm font-medium">{p.painPointText}</p>
+                  <span className={`font-mono text-xs font-bold ${intensityColor(p.emotionalIntensity)}`}>{p.emotionalIntensity}/10</span>
+                </div>
+                {p.rawQuote && <p className="text-xs italic text-muted-foreground">"{p.rawQuote}"</p>}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge variant="outline" className="text-xs">{p.source}</Badge>
+                  {p.painCategory && <Badge variant="outline" className="text-xs">{p.painCategory}</Badge>}
+                  <span className="text-xs text-muted-foreground">freq: {p.frequency}</span>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </TabsContent>
+
+        <TabsContent value="phrases" className="space-y-2 mt-3">
+          {phrasesLoading && <Skeleton className="h-20" />}
+          {phrases?.length === 0 && <p className="text-xs text-muted-foreground">No phrases extracted yet.</p>}
+          {phrases?.map((p) => (
+            <Card key={p.id}>
+              <CardContent className="p-3 space-y-1">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-sm font-medium">"{p.phrase}"</p>
+                  <Badge variant="outline" className="text-xs">{p.phraseType}</Badge>
+                </div>
+                {p.useableAs && p.useableAs.length > 0 && (
+                  <div className="flex gap-1 flex-wrap">
+                    {p.useableAs.map((u) => <Badge key={u} variant="secondary" className="text-xs">{u}</Badge>)}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </TabsContent>
+
+        <TabsContent value="messaging" className="space-y-2 mt-3">
+          {msgLoading && <Skeleton className="h-20" />}
+          {messaging?.length === 0 && <p className="text-xs text-muted-foreground">No competitor messaging analyzed yet.</p>}
+          {messaging?.map((m) => (
+            <Card key={m.id}>
+              <CardContent className="p-3 space-y-1">
+                {m.headline && <p className="text-sm font-medium">{m.headline}</p>}
+                {m.primaryClaim && <p className="text-xs text-muted-foreground">{m.primaryClaim}</p>}
+                <div className="flex gap-2 flex-wrap">
+                  {m.messagingAngle && <Badge variant="outline" className="text-xs">{m.messagingAngle}</Badge>}
+                </div>
+                {m.weaknessIdentified && (
+                  <p className="text-xs"><span className="text-red-500 font-medium">Weakness:</span> {m.weaknessIdentified}</p>
+                )}
+                {m.gapOpportunity && (
+                  <p className="text-xs"><span className="text-green-500 font-medium">Opportunity:</span> {m.gapOpportunity}</p>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+// ─── Creative Outputs Panel ──────────────────────────────────────────────────
+
+interface CreativeOutput { id: number; outputType: string; content: string; contentStructured: any; targetEmotion: string | null; persuasionPrinciple: string | null; awarenessLevel: string | null; qualityScore: number | null; isApproved: boolean; }
+
+function CreativeOutputsPanel({ candidate }: { candidate: ProductCandidate }) {
+  const { toast } = useToast();
+
+  const { data: outputs, isLoading } = useQuery<CreativeOutput[]>({
+    queryKey: ["/api/product-candidates", candidate.id, "creative-outputs"],
+  });
+
+  const generateMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/webhook/consumer-intel/generate-creative", { candidateId: candidate.id });
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Creative generation triggered", description: "Taglines, hooks, and frameworks generating..." });
+    },
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: async (outputId: number) => {
+      const res = await apiRequest("POST", `/api/product-candidates/${candidate.id}/creative-outputs/${outputId}/approve`, {});
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/product-candidates", candidate.id, "creative-outputs"] });
+    },
+  });
+
+  const typeLabels: Record<string, string> = {
+    tagline: "Taglines", hook: "Hooks", sound_byte: "Sound Bytes",
+    pas_framework: "PAS Frameworks", before_after: "Before/After",
+    objection_crusher: "Objection Crushers", mirror_phrase: "Mirror Phrases",
+  };
+
+  const grouped = (outputs || []).reduce((acc, o) => {
+    const key = o.outputType;
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(o);
+    return acc;
+  }, {} as Record<string, CreativeOutput[]>);
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({ title: "Copied to clipboard" });
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Creative Outputs</h4>
+        <Button size="sm" variant="outline" onClick={() => generateMutation.mutate()} disabled={generateMutation.isPending}>
+          <Sparkles className="h-3 w-3 mr-1" /> {generateMutation.isPending ? "Generating..." : "Generate Creative"}
+        </Button>
+      </div>
+
+      {isLoading && <Skeleton className="h-40" />}
+
+      {!isLoading && Object.keys(grouped).length === 0 && (
+        <p className="text-xs text-muted-foreground">No creative outputs yet. Run consumer intel first, then generate creative.</p>
+      )}
+
+      {Object.entries(grouped).map(([type, items]) => (
+        <div key={type} className="space-y-2">
+          <h5 className="text-xs font-bold text-muted-foreground uppercase">{typeLabels[type] || type} ({items.length})</h5>
+          {items.map((o) => (
+            <Card key={o.id} className={o.isApproved ? "border-green-500/30" : ""}>
+              <CardContent className="p-3 space-y-2">
+                <p className="text-sm whitespace-pre-wrap">{o.content}</p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {o.awarenessLevel && <Badge variant="outline" className="text-xs">{o.awarenessLevel}</Badge>}
+                  {o.targetEmotion && <Badge variant="outline" className="text-xs">{o.targetEmotion}</Badge>}
+                  {o.persuasionPrinciple && <Badge variant="secondary" className="text-xs">{o.persuasionPrinciple}</Badge>}
+                  {o.qualityScore && <span className="text-xs text-muted-foreground font-mono">Q:{o.qualityScore}/10</span>}
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button size="sm" variant="ghost" className="h-6 text-xs" onClick={() => copyToClipboard(o.content)}>
+                    <Copy className="h-3 w-3 mr-1" /> Copy
+                  </Button>
+                  {!o.isApproved && (
+                    <Button size="sm" variant="ghost" className="h-6 text-xs text-green-500" onClick={() => approveMutation.mutate(o.id)}>
+                      <ThumbsUp className="h-3 w-3 mr-1" /> Approve
+                    </Button>
+                  )}
+                  {o.isApproved && <Badge className="no-default-hover-elevate bg-green-500/10 text-green-500 text-xs">Approved</Badge>}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Score Breakdown Panel ────────────────────────────────────────────────────
+
+interface ScoreBreakdownData {
+  score: number; scoringVersion: number; decision: string | null; big3Pass: boolean;
+  primaryAngle: string | null; aiReasoning: string | null;
+  categories: Array<{ key: string; label: string; points: number; maxPoints: number }>;
+  breakdown: any; hardGates: any; lastScoredAt: string | null;
+}
+
+function EnhancedScoringPanel({ candidate, onClose }: { candidate: ProductCandidate; onClose: () => void }) {
+  const { toast } = useToast();
+
+  const { data: scoreData, isLoading } = useQuery<ScoreBreakdownData>({
+    queryKey: ["/api/product-candidates", candidate.id, "score-breakdown"],
+  });
+
+  const scoreMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", `/api/product-candidates/${candidate.id}/score`, {});
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/product-candidates"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/product-candidates", candidate.id, "score-breakdown"] });
+      toast({ title: "Product scored", description: "100-point evaluation complete." });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Scoring failed", description: err.message, variant: "destructive" });
+    },
+  });
+
+  return (
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-bold">{candidate.name}</h3>
+          {scoreData?.decision && <DecisionBadge decision={scoreData.decision} />}
+        </div>
+        <ScoreBar score={scoreData?.score ?? candidate.totalScore ?? 0} max={100} />
+        {scoreData?.big3Pass != null && (
+          <Badge variant={scoreData.big3Pass ? "default" : "outline"} className="no-default-hover-elevate font-mono text-xs">
+            Big-3 {scoreData.big3Pass ? "PASS" : "FAIL"}
+          </Badge>
+        )}
+      </div>
+
+      {scoreData?.primaryAngle && (
+        <Card>
+          <CardContent className="p-3 space-y-1">
+            <p className="text-xs font-bold text-muted-foreground uppercase">AI Angle</p>
+            <p className="text-sm font-medium">{scoreData.primaryAngle}</p>
+            {scoreData.aiReasoning && <p className="text-xs text-muted-foreground">{scoreData.aiReasoning}</p>}
+          </CardContent>
+        </Card>
+      )}
+
+      <Separator />
+
+      {isLoading && <Skeleton className="h-40" />}
+
+      {scoreData?.categories && (
+        <div className="space-y-3">
+          <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Category Breakdown</h4>
+          {scoreData.categories.map((cat) => (
+            <CategoryBar key={cat.key} label={cat.label} points={cat.points} maxPoints={cat.maxPoints} />
+          ))}
+        </div>
+      )}
+
+      <Separator />
+
+      <Button onClick={() => scoreMutation.mutate()} disabled={scoreMutation.isPending} className="w-full">
+        <Zap className="h-4 w-4 mr-1" /> {scoreMutation.isPending ? "Scoring..." : "Run 100-Point Scoring"}
+      </Button>
+
+      {scoreData?.lastScoredAt && (
+        <p className="text-xs text-muted-foreground text-center">
+          Last scored: {new Date(scoreData.lastScoredAt).toLocaleString()}
+        </p>
+      )}
+    </div>
+  );
+}
+
 const WINNING_CRITERIA = [
   { key: "solves_painful_problem", label: "Solves A Painful Problem" },
   { key: "new_unique_solution", label: "New/Unique Solution" },
@@ -691,7 +1034,7 @@ export default function ProductResearch() {
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState<ProductCandidate | null>(null);
-  const [sheetMode, setSheetMode] = useState<"scoring" | "competitors" | "criteria" | null>(null);
+  const [sheetMode, setSheetMode] = useState<"scoring" | "enhanced-scoring" | "competitors" | "criteria" | "consumer-intel" | "creative-outputs" | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>("all");
 
   const { data: candidates, isLoading } = useQuery<ProductCandidate[]>({
@@ -781,6 +1124,46 @@ export default function ProductResearch() {
     },
   });
 
+  // --- Transcript & Gate Pipeline ---
+
+  const { data: transcriptProducts } = useQuery<any[]>({
+    queryKey: ["/api/transcripts/products"],
+  });
+
+  const scanDriveMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/transcripts/reprocess", {});
+      return res.json();
+    },
+    onSuccess: (data: any) => {
+      toast({ title: "Drive scan triggered", description: "Checking for new transcripts in AI Com Product Research folder." });
+      setTimeout(() => queryClient.invalidateQueries({ queryKey: ["/api/transcripts/products"] }), 10000);
+    },
+  });
+
+  const promoteMutation = useMutation({
+    mutationFn: async (tpId: number) => {
+      const res = await apiRequest("PATCH", `/api/transcripts/products/${tpId}/promote`, {});
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/transcripts/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/product-candidates"] });
+      toast({ title: "Product promoted to candidate" });
+    },
+  });
+
+  const validateMutation = useMutation({
+    mutationFn: async (candidateId: number) => {
+      const res = await apiRequest("POST", `/api/candidates/${candidateId}/validate`, {});
+      return res.json();
+    },
+    onSuccess: (data: any) => {
+      toast({ title: "Gate validation started", description: "Running KaloData → Amazon → AliExpress → Meta Ads pipeline." });
+      setTimeout(() => queryClient.invalidateQueries({ queryKey: ["/api/product-candidates"] }), 15000);
+    },
+  });
+
   const filteredCandidates = useMemo(() => {
     if (!candidates) return [];
     if (filterStatus === "all") return candidates;
@@ -858,7 +1241,19 @@ export default function ProductResearch() {
             <Cpu className="h-4 w-4 text-primary" />
             <h2 className="text-sm font-bold uppercase tracking-wider">Scraping / Mining Actions</h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+            <Card className="hover-elevate border-primary/30">
+              <CardContent className="p-4 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium">Scan Drive Folder</span>
+                </div>
+                <p className="text-xs text-muted-foreground">Extract products from AI Com transcripts in Google Drive.</p>
+                <Button size="sm" variant="outline" onClick={() => scanDriveMutation.mutate()} disabled={scanDriveMutation.isPending} data-testid="button-scan-drive">
+                  <Globe className="h-3 w-3 mr-1" /> {scanDriveMutation.isPending ? "Scanning..." : "Scan Now"}
+                </Button>
+              </CardContent>
+            </Card>
             <Card className="hover-elevate">
               <CardContent className="p-4 space-y-2">
                 <div className="flex items-center gap-2">
@@ -924,6 +1319,67 @@ export default function ProductResearch() {
 
         <TrendScrapingSection />
 
+        {/* Transcript Products Section */}
+        {transcriptProducts && transcriptProducts.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Brain className="h-4 w-4 text-primary" />
+              <h2 className="text-sm font-bold uppercase tracking-wider">Transcript Extractions</h2>
+              <Badge variant="outline" className="ml-auto font-mono text-xs">
+                {transcriptProducts.length} products found
+              </Badge>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {transcriptProducts.map((tp: any) => (
+                <Card key={tp.id} className="hover-elevate">
+                  <CardContent className="p-4 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="text-sm font-medium truncate">{tp.productName}</h3>
+                      <Badge variant="outline" className={`text-xs no-default-hover-elevate ${
+                        tp.assessment === "investigate" ? "bg-green-500/10 text-green-500 border-green-500/20" :
+                        tp.assessment === "skip" ? "bg-red-500/10 text-red-500 border-red-500/20" :
+                        "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                      }`}>
+                        {tp.assessment}
+                      </Badge>
+                    </div>
+                    {tp.mentionContext && (
+                      <p className="text-xs text-muted-foreground line-clamp-2 italic">"{tp.mentionContext}"</p>
+                    )}
+                    {tp.reasoning && (
+                      <p className="text-xs text-muted-foreground line-clamp-2">{tp.reasoning}</p>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs no-default-hover-elevate font-mono">
+                        {tp.docTitle}
+                      </Badge>
+                      {tp.extractionConfidence != null && (
+                        <span className="text-xs text-muted-foreground">{Math.round(tp.extractionConfidence * 100)}% conf</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      {!tp.candidateId ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => promoteMutation.mutate(tp.id)}
+                          disabled={promoteMutation.isPending || tp.assessment === "skip"}
+                        >
+                          <Plus className="h-3 w-3 mr-1" /> Promote to Candidate
+                        </Button>
+                      ) : (
+                        <Badge variant="default" className="text-xs no-default-hover-elevate">
+                          <CheckCircle className="h-3 w-3 mr-1" /> Candidate #{tp.candidateId}
+                        </Badge>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-2">
             <PackageSearch className="h-4 w-4 text-primary" />
@@ -976,16 +1432,29 @@ export default function ProductResearch() {
                   </div>
                 </div>
 
-                <ScoreBar score={candidate.totalScore ?? 0} />
+                <ScoreBar score={candidate.totalScore ?? 0} max={candidate.scoringVersion === 2 ? 100 : 90} />
 
                 <div className="flex items-center gap-2 flex-wrap">
-                  <Big3Badge isViral={candidate.isViral ?? false} solvesProblem={candidate.solvesProblem ?? false} notSaturated={candidate.notSaturated ?? false} />
+                  {candidate.scoringVersion === 2 && candidate.decision ? (
+                    <DecisionBadge decision={candidate.decision} />
+                  ) : (
+                    <Big3Badge isViral={candidate.isViral ?? false} solvesProblem={candidate.solvesProblem ?? false} notSaturated={candidate.notSaturated ?? false} />
+                  )}
+                  {candidate.big3Pass != null && candidate.scoringVersion === 2 && (
+                    <Badge variant={candidate.big3Pass ? "default" : "outline"} className="no-default-hover-elevate font-mono text-xs">
+                      Big-3 {candidate.big3Pass ? "PASS" : "FAIL"}
+                    </Badge>
+                  )}
                   {candidate.margin != null && candidate.margin > 0 && (
                     <Badge variant="outline" className="no-default-hover-elevate font-mono text-xs">
                       <Percent className="h-3 w-3 mr-0.5" />{Math.round(candidate.margin)}% margin
                     </Badge>
                   )}
                 </div>
+
+                {candidate.primaryAngle && (
+                  <p className="text-xs text-primary italic line-clamp-1">{candidate.primaryAngle}</p>
+                )}
 
                 {(candidate.supplierCost != null || candidate.sellingPrice != null) && (
                   <div className="flex items-center gap-3 text-xs text-muted-foreground">
@@ -1012,10 +1481,36 @@ export default function ProductResearch() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={(e) => { e.stopPropagation(); setSelectedCandidate(candidate); setSheetMode("scoring"); }}
+                    className="border-primary/30"
+                    onClick={(e) => { e.stopPropagation(); validateMutation.mutate(candidate.id); }}
+                    disabled={validateMutation.isPending}
+                    data-testid={`button-validate-${candidate.id}`}
+                  >
+                    <ShieldCheck className="h-3 w-3 mr-1" /> Validate
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={(e) => { e.stopPropagation(); setSelectedCandidate(candidate); setSheetMode("enhanced-scoring"); }}
                     data-testid={`button-score-${candidate.id}`}
                   >
-                    <ShieldCheck className="h-3 w-3 mr-1" /> Score
+                    <Zap className="h-3 w-3 mr-1" /> Score
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={(e) => { e.stopPropagation(); setSelectedCandidate(candidate); setSheetMode("consumer-intel"); }}
+                    data-testid={`button-intel-${candidate.id}`}
+                  >
+                    <Brain className="h-3 w-3 mr-1" /> Intel
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={(e) => { e.stopPropagation(); setSelectedCandidate(candidate); setSheetMode("creative-outputs"); }}
+                    data-testid={`button-creative-${candidate.id}`}
+                  >
+                    <Sparkles className="h-3 w-3 mr-1" /> Creative
                   </Button>
                   <Button
                     size="sm"
@@ -1023,15 +1518,7 @@ export default function ProductResearch() {
                     onClick={(e) => { e.stopPropagation(); setSelectedCandidate(candidate); setSheetMode("competitors"); }}
                     data-testid={`button-competitors-${candidate.id}`}
                   >
-                    <Swords className="h-3 w-3 mr-1" /> Competitors
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={(e) => { e.stopPropagation(); setSelectedCandidate(candidate); setSheetMode("criteria"); }}
-                    data-testid={`button-criteria-${candidate.id}`}
-                  >
-                    <ClipboardCheck className="h-3 w-3 mr-1" /> Checklist
+                    <Swords className="h-3 w-3 mr-1" /> Comp
                   </Button>
                   <Button
                     size="icon"
@@ -1051,12 +1538,25 @@ export default function ProductResearch() {
           <SheetContent className="overflow-y-auto" data-testid="sheet-detail">
             <SheetHeader>
               <SheetTitle className="font-heading text-sm">
-                {sheetMode === "scoring" ? "Score Product" : sheetMode === "criteria" ? "Winning Criteria" : "Competitor Intel"} - {selectedCandidate?.name}
+                {sheetMode === "enhanced-scoring" ? "100-Point Scoring" :
+                 sheetMode === "scoring" ? "Legacy Scoring" :
+                 sheetMode === "consumer-intel" ? "Consumer Intelligence" :
+                 sheetMode === "creative-outputs" ? "Creative Outputs" :
+                 sheetMode === "criteria" ? "Winning Criteria" : "Competitor Intel"} - {selectedCandidate?.name}
               </SheetTitle>
             </SheetHeader>
             <div className="mt-6">
+              {sheetMode === "enhanced-scoring" && selectedCandidate && (
+                <EnhancedScoringPanel candidate={selectedCandidate} onClose={() => { setSheetMode(null); setSelectedCandidate(null); }} />
+              )}
               {sheetMode === "scoring" && selectedCandidate && (
                 <ScoringPanel candidate={selectedCandidate} onClose={() => { setSheetMode(null); setSelectedCandidate(null); }} />
+              )}
+              {sheetMode === "consumer-intel" && selectedCandidate && (
+                <ConsumerIntelPanel candidate={selectedCandidate} />
+              )}
+              {sheetMode === "creative-outputs" && selectedCandidate && (
+                <CreativeOutputsPanel candidate={selectedCandidate} />
               )}
               {sheetMode === "competitors" && selectedCandidate && (
                 <CompetitorPanel candidate={selectedCandidate} />

@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+*.egg-info/
+
+# Virtual envs
+.venv/
+venv/
+env/
+
+# Local dev
+.env
+*.local
+
+# SQL files (not needed in image)
+*.sql
+
+# Git
+.git/
+.gitignore
+
+# Docs
+*.md

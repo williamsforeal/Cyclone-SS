@@ -12,7 +12,6 @@ This project uses Docker Compose to run n8n workflow automation.
 ### Quick Start
 
 1. **Start n8n with Docker Compose:**
-   ```bash
    docker-compose up -d
    ```
 

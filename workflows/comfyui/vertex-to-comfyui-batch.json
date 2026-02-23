@@ -1,0 +1,269 @@
+{
+  "last_node_id": 15,
+  "last_link_id": 20,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "CheckpointLoaderSimple",
+      "pos": [50, 50],
+      "size": {"0": 315, "1": 98},
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "outputs": [
+        {"name": "MODEL", "type": "MODEL", "links": [1], "slot_index": 0},
+        {"name": "CLIP", "type": "CLIP", "links": [2, 3], "slot_index": 1},
+        {"name": "VAE", "type": "VAE", "links": [11], "slot_index": 2}
+      ],
+      "properties": {"Node name for S&R": "CheckpointLoaderSimple"},
+      "widgets_values": ["flux/flux1-dev-fp8.safetensors"]
+    },
+    {
+      "id": 2,
+      "type": "CLIPTextEncode",
+      "pos": [400, 50],
+      "size": {"0": 450, "1": 250},
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {"name": "clip", "type": "CLIP", "link": 2}
+      ],
+      "outputs": [
+        {"name": "CONDITIONING", "type": "CONDITIONING", "links": [4], "slot_index": 0}
+      ],
+      "properties": {"Node name for S&R": "CLIPTextEncode"},
+      "widgets_values": ["{{ASSET_A_SCENE_DESCRIPTION}}\n\nA split-screen composition. On the left, a man in his 30s at an office desk, clutching his head, with an anxious expression; a generic coffee cup sits beside him. On the right, the same man, now looking calm and focused, holding a branded mug. Left side features harsh, cool-toned fluorescent light creating deep shadows. Right side is illuminated by warm, natural window light. A clean vertical line divides the frame. The left half is desaturated and cool; the right half is warm and vibrant."],
+      "color": "#232",
+      "bgcolor": "#353"
+    },
+    {
+      "id": 3,
+      "type": "CLIPTextEncode",
+      "pos": [400, 350],
+      "size": {"0": 450, "1": 150},
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {"name": "clip", "type": "CLIP", "link": 3}
+      ],
+      "outputs": [
+        {"name": "CONDITIONING", "type": "CONDITIONING", "links": [5], "slot_index": 0}
+      ],
+      "properties": {"Node name for S&R": "CLIPTextEncode"},
+      "widgets_values": ["lowres, bad anatomy, bad hands, cropped, worst quality, multiple people, extra limbs, text, watermark, logo, branding, professional studio lighting, overly polished, filters, heavy retouching, artificial, fake"],
+      "color": "#322",
+      "bgcolor": "#533"
+    },
+    {
+      "id": 4,
+      "type": "EmptyLatentImage",
+      "pos": [50, 200],
+      "size": {"0": 315, "1": 106},
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "outputs": [
+        {"name": "LATENT", "type": "LATENT", "links": [6], "slot_index": 0}
+      ],
+      "properties": {"Node name for S&R": "EmptyLatentImage"},
+      "widgets_values": [1024, 1280, 5],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 5,
+      "type": "KSampler",
+      "pos": [900, 50],
+      "size": {"0": 315, "1": 262},
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {"name": "model", "type": "MODEL", "link": 1},
+        {"name": "positive", "type": "CONDITIONING", "link": 4},
+        {"name": "negative", "type": "CONDITIONING", "link": 5},
+        {"name": "latent_image", "type": "LATENT", "link": 6}
+      ],
+      "outputs": [
+        {"name": "LATENT", "type": "LATENT", "links": [7], "slot_index": 0}
+      ],
+      "properties": {"Node name for S&R": "KSampler"},
+      "widgets_values": [42, "increment", 25, 7.5, "euler", "normal", 1],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 6,
+      "type": "VAEDecode",
+      "pos": [1250, 50],
+      "size": {"0": 210, "1": 46},
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {"name": "samples", "type": "LATENT", "link": 7},
+        {"name": "vae", "type": "VAE", "link": 11}
+      ],
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "links": [8, 12, 15], "slot_index": 0}
+      ],
+      "properties": {"Node name for S&R": "VAEDecode"}
+    },
+    {
+      "id": 7,
+      "type": "SaveImage",
+      "pos": [1500, 50],
+      "size": {"0": 315, "1": 270},
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {"name": "images", "type": "IMAGE", "link": 8}
+      ],
+      "properties": {},
+      "widgets_values": ["vertex_ai_batch"]
+    },
+    {
+      "id": 8,
+      "type": "Note",
+      "pos": [50, 350],
+      "size": {"0": 315, "1": 180},
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "properties": {"text": ""},
+      "widgets_values": ["BATCH GENERATION WORKFLOW\n\nGenerates 5 variants of each scene description automatically.\n\nHOW TO USE:\n1. Paste Vertex AI scene description in Positive Prompt (node 2)\n2. Batch size is set to 5 (node 4)\n3. Seed mode: 'increment' (seeds 42, 43, 44, 45, 46)\n4. Run once → get 5 variants\n\nADJUST BATCH SIZE:\nChange the last number in node 4 (currently 5)"],
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 9,
+      "type": "PreviewImage",
+      "pos": [1500, 350],
+      "size": {"0": 315, "1": 400},
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {"name": "images", "type": "IMAGE", "link": 12}
+      ],
+      "properties": {"Node name for S&R": "PreviewImage"}
+    },
+    {
+      "id": 10,
+      "type": "Note",
+      "pos": [400, 550],
+      "size": {"0": 450, "1": 200},
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "properties": {"text": ""},
+      "widgets_values": ["3 ASSETS FROM VERTEX AI:\n\nAsset A (Visceral): Paste scene_description from Asset A here\nAsset B (Intellectual): Run workflow, then paste Asset B scene description\nAsset C (Aspirational): Run workflow, then paste Asset C scene description\n\nEACH RUN GENERATES 5 VARIANTS (15 total images for A/B/C testing)\n\nTIP: Use 'Queue Prompt' 3 times (once per asset) or manually change prompts between runs"],
+      "color": "#233",
+      "bgcolor": "#355"
+    },
+    {
+      "id": 11,
+      "type": "Note",
+      "pos": [900, 350],
+      "size": {"0": 315, "1": 220},
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "properties": {"text": ""},
+      "widgets_values": ["KSAMPLER SETTINGS EXPLAINED:\n\nSeed: 42 (starting point)\nSeed Mode: 'increment' (42, 43, 44, 45, 46 for 5 images)\nSteps: 25 (quality vs speed)\nCFG: 7.5 (prompt adherence)\nSampler: 'euler' (fast, good quality)\nScheduler: 'normal' (standard)\nDenoise: 1 (full generation)\n\nFOR MORE VARIATION: Change seed to 'randomize'\nFOR CONSISTENCY: Keep 'increment'"],
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 12,
+      "type": "Note",
+      "pos": [1250, 150],
+      "size": {"0": 210, "1": 120},
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "properties": {"text": ""},
+      "widgets_values": ["OUTPUTS:\n\nSaveImage: vertex_ai_batch_00001.png through 00005.png\n\nPreviewImage: Grid view of all 5 variants\n\nImageCompare: Side-by-side comparison"],
+      "color": "#233",
+      "bgcolor": "#355"
+    },
+    {
+      "id": 13,
+      "type": "ImageCompare",
+      "pos": [1850, 50],
+      "size": {"0": 315, "1": 400},
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {"name": "images", "type": "IMAGE", "link": 15}
+      ],
+      "properties": {"Node name for S&R": "ImageCompare"}
+    },
+    {
+      "id": 14,
+      "type": "Note",
+      "pos": [1850, 480],
+      "size": {"0": 315, "1": 140},
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "properties": {"text": ""},
+      "widgets_values": ["IMAGE COMPARE NODE:\n\nAllows you to:\n1. View all 5 variants side-by-side\n2. Compare quality across variations\n3. Select best performers for Meta Ads testing\n\nUse this to pick your 1-2 best variants before uploading to Airtable"],
+      "color": "#233",
+      "bgcolor": "#355"
+    },
+    {
+      "id": 15,
+      "type": "Note",
+      "pos": [50, 580],
+      "size": {"0": 315, "1": 170},
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "properties": {"text": ""},
+      "widgets_values": ["INTEGRATION WITH N8N:\n\n1. Run this workflow in ComfyUI\n2. Images saved to ComfyUI/output/\n3. n8n watches that folder (File Trigger node)\n4. n8n uploads images to Airtable\n5. Links images to product record\n\nOR: Use ComfyUI API from n8n (POST to localhost:8188/prompt)"],
+      "color": "#a1309b",
+      "bgcolor": "#c4509f"
+    }
+  ],
+  "links": [
+    [1, 1, 0, 5, 0, "MODEL"],
+    [2, 1, 1, 2, 0, "CLIP"],
+    [3, 1, 1, 3, 0, "CLIP"],
+    [4, 2, 0, 5, 1, "CONDITIONING"],
+    [5, 3, 0, 5, 2, "CONDITIONING"],
+    [6, 4, 0, 5, 3, "LATENT"],
+    [7, 5, 0, 6, 0, "LATENT"],
+    [8, 6, 0, 7, 0, "IMAGE"],
+    [11, 1, 2, 6, 1, "VAE"],
+    [12, 6, 0, 9, 0, "IMAGE"],
+    [15, 6, 0, 13, 0, "IMAGE"]
+  ],
+  "groups": [
+    {
+      "title": "Input: Vertex AI + Batch Settings",
+      "bounding": [390, 30, 470, 740],
+      "color": "#3f789e",
+      "font_size": 24
+    },
+    {
+      "title": "Generation: Flux/Dev Batch",
+      "bounding": [890, 30, 335, 560],
+      "color": "#8A8",
+      "font_size": 24
+    },
+    {
+      "title": "Output: 5 Variants + Compare",
+      "bounding": [1240, 30, 940, 610],
+      "color": "#A88",
+      "font_size": 24
+    }
+  ],
+  "config": {},
+  "extra": {},
+  "version": 0.4
+}

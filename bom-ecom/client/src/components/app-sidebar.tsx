@@ -30,6 +30,10 @@ import {
   ChevronRight,
   Factory,
   Award,
+  Brain,
+  Activity,
+  Radar,
+  Swords,
 } from "lucide-react";
 import {
   Sidebar,
@@ -77,6 +81,9 @@ const navigation: NavEntry[] = [
     icon: Microscope,
     items: [
       { title: "Products", path: "/research/products", icon: PackageSearch },
+      { title: "Signal Engine", path: "/research/signal-engine", icon: Activity },
+      { title: "Competitor Ads", path: "/research/competitor-ads", icon: Swords },
+      { title: "Scraper Hub", path: "/research/scraper-hub", icon: Radar },
       { title: "Avatars", path: "/research/avatars", icon: Users },
       { title: "Angles", path: "/research/angles", icon: Compass },
       { title: "Hooks / Tags", path: "/research/hooks-tags", icon: Tag },
