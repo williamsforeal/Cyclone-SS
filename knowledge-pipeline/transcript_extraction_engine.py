@@ -1,26 +1,31 @@
 """
-TRANSCRIPT EXTRACTION ENGINE
-Processes raw coaching call transcripts → structured BigQuery rows.
+TRANSCRIPT EXTRACTION ENGINE (v2 — Normalized Schema)
+Processes raw coaching call transcripts → structured BigQuery rows across 7 tables.
 
 Flow: GCS file lands → Pub/Sub triggers → this function runs →
-      Gemini extracts insights → rows land in BigQuery.
+      Gemini extracts insights → rows land in BigQuery bomb_ecom dataset.
 
 Deploy as: Cloud Run service (triggered by Pub/Sub)
 Model: Gemini 2.0 Flash (fast, cheap, handles 30k+ word transcripts)
+
+Target dataset: bomb_ecom
+Tables: raw_transcripts, stg_transcript_products, stg_transcript_niches,
+        stg_transcript_patterns, stg_transcript_psychology,
+        stg_transcript_case_studies, stg_transcript_calls
 """
 
+import hashlib
 import json
 import os
 from datetime import datetime
-from google.cloud import bigquery, storage, aiplatform
+from google.cloud import bigquery, storage
 import vertexai
-from vertexai.generative_models import GenerativeModel, Part
+from vertexai.generative_models import GenerativeModel
 
 # ── Config ──────────────────────────────────────────────────────
 PROJECT_ID = os.environ.get("GCP_PROJECT_ID", "gen-lang-client-0234791928")
 LOCATION = os.environ.get("GCP_LOCATION", "us-central1")
-DATASET_ID = "ecom_os"
-TABLE_ID = "coaching_insights"
+DATASET_ID = "bomb_ecom"
 BUCKET_NAME = os.environ.get("GCS_BUCKET", "jake-ecom-knowledge")
 
 # ── Initialize clients ──────────────────────────────────────────
@@ -29,134 +34,165 @@ bq_client = bigquery.Client(project=PROJECT_ID)
 storage_client = storage.Client(project=PROJECT_ID)
 
 
+def _hash_id(*parts: str) -> str:
+    """Generate deterministic ID from concatenated parts."""
+    combined = "|".join(str(p).lower().strip() for p in parts)
+    return hashlib.sha256(combined.encode("utf-8")).hexdigest()[:16]
+
+
 # ════════════════════════════════════════════════════════════════
-# THE EXTRACTION PROMPT
+# THE EXTRACTION PROMPT (v2 — matches transcript-extraction-schema.md)
 # ════════════════════════════════════════════════════════════════
-# This is the core IP. Everything else is plumbing.
-# Edit THIS when you want to extract different patterns.
 
 EXTRACTION_PROMPT = """
 You are a marketing intelligence analyst processing ecommerce coaching call transcripts.
+These are 1-4+ hour recordings where coaches and students discuss products, strategies,
+psychology, and real-world results.
 
-Your job: extract every actionable insight from this transcript and return them as structured JSON.
-
-## EXTRACTION CATEGORIES
-
-Extract insights into these categories ONLY:
-
-1. **product_criteria** — Any rule, heuristic, or signal for evaluating whether a product is worth testing.
-   Examples: margin thresholds, price range advice, competition signals, niche selection criteria,
-   supplier red flags, trend indicators, seasonal timing.
-
-2. **ad_strategy** — Any tactic, framework, or principle for creating or optimizing ad creatives.
-   Examples: hook formulas, copy structures, image styles that convert, video vs static guidance,
-   creative testing frameworks, audience targeting advice, ad format recommendations.
-
-3. **scaling_rule** — Any rule for when/how to scale spend, kill ads, or manage campaigns.
-   Examples: ROAS thresholds, budget scaling percentages, kill criteria, CBO vs ABO advice,
-   audience expansion timing, retargeting setup, lookalike strategies.
-
-4. **platform_tactic** — Specific Meta/TikTok/Google platform mechanics or algorithm insights.
-   Examples: pixel optimization events, campaign structure advice, bidding strategies,
-   attribution window settings, creative fatigue signals, placement recommendations.
-
-5. **mindset_principle** — Mental models, decision frameworks, or founder psychology advice.
-   Examples: when to pivot vs persist, handling losing streaks, time management for testing,
-   avoiding shiny object syndrome, building systems over manual work.
-
-6. **mistake_to_avoid** — Specific warnings about what NOT to do.
-   Examples: common beginner errors, money-wasting patterns, scaling too early signals,
-   product research traps, creative approaches that don't convert.
-
-7. **tool_recommendation** — Any specific tool, software, or service recommended.
-   Examples: spy tools, analytics platforms, creative tools, fulfillment services,
-   AI tools, automation platforms.
-
-8. **case_study** — Real examples of products/brands/campaigns discussed with outcomes.
-   Examples: "Brand X did Y and got Z result", specific numbers shared about real campaigns,
-   before/after scenarios from real businesses.
-
-## EXTRACTION RULES
-
-- Extract EVERY distinct insight. A single transcript might contain 20-50 insights.
-- Each insight is ONE atomic idea. Don't combine multiple concepts into one row.
-- Preserve specific numbers, thresholds, and metrics exactly as stated.
-- If a speaker shares a personal opinion vs a proven rule, flag the confidence level.
-- If products or niches are mentioned by name, capture them.
-- If metrics are referenced (CTR, ROAS, CPC, AOV, etc.), capture which ones.
-- Ignore small talk, introductions, housekeeping. Only extract substantive content.
-- If someone asks a question that gets a detailed answer, extract the ANSWER as the insight.
-
-## CONFIDENCE LEVELS
-
-- **proven**: Speaker states this from direct experience with data/results to back it up.
-- **strong_opinion**: Speaker is confident but doesn't cite specific data.
-- **hypothesis**: Speaker is speculating or brainstorming.
-- **community_consensus**: Multiple people agree or it's presented as common knowledge.
-- **contrarian**: Speaker explicitly disagrees with common advice.
+Your job: extract EVERY actionable piece of intelligence and return it as structured JSON.
 
 ## OUTPUT FORMAT
 
-Return ONLY a JSON array. No markdown, no explanation, no preamble.
+Return ONLY a JSON object (no markdown, no explanation, no preamble) with these keys:
 
 ```json
-[
-  {
-    "insight_text": "The exact insight, paraphrased clearly in 1-3 sentences max",
-    "category": "one of the 8 categories above",
-    "confidence": "proven | strong_opinion | hypothesis | community_consensus | contrarian",
-    "speaker": "Name of person who said it, or 'unknown' if unclear",
-    "products_mentioned": ["product1", "product2"] or [],
-    "niches_mentioned": ["niche1", "niche2"] or [],
-    "metrics_mentioned": ["ROAS", "CTR", "AOV"] or [],
-    "specific_numbers": ["2.0 ROAS threshold", "$30-50 AOV sweet spot"] or [],
-    "tools_mentioned": ["tool1", "tool2"] or [],
-    "actionability": "immediate | when_scaling | foundational | situational",
-    "tags": ["tag1", "tag2", "tag3"]
-  }
-]
+{
+  "products": [...],
+  "niches": [...],
+  "patterns": [...],
+  "psychology": [...],
+  "caseStudies": [...],
+  "entities": {...},
+  "callMeta": {...},
+  "summary": "string"
+}
 ```
 
-## EXAMPLE EXTRACTION
+## 1. Products
 
-If the transcript says:
-"Yeah so what I've found is if you're not getting a sale within the first $20-30 of spend,
-just kill it. Don't wait. I've tested over 200 products and that rule holds like 90% of the time.
-The only exception is if your CTR is above 3% — then give it another day because the traffic
-quality is there, you might just need a landing page tweak."
-
-You'd extract TWO insights:
+Products mentioned or discussed — by the coach, students, or in Q&A.
 
 ```json
-[
-  {
-    "insight_text": "Kill an ad if no sale within first $20-30 of spend. Tested across 200+ products with ~90% reliability.",
-    "category": "scaling_rule",
-    "confidence": "proven",
-    "speaker": "unknown",
-    "products_mentioned": [],
-    "niches_mentioned": [],
-    "metrics_mentioned": ["spend", "sales"],
-    "specific_numbers": ["$20-30 kill threshold", "200+ products tested", "90% hit rate"],
-    "tools_mentioned": [],
-    "actionability": "immediate",
-    "tags": ["kill-criteria", "ad-testing", "spend-threshold"]
+{
+  "productName": "string (2-5 words, normalized)",
+  "niche": "string (category this product sits in)",
+  "whyMentioned": "string (context — was it a win, a failure, an example, a student question?)",
+  "mentionContext": "string (1-2 sentence quote from transcript)",
+  "speakerRole": "coach | student | unknown",
+  "verdict": "promising | cautionary | neutral | failed",
+  "painPoint": "string or null (the human problem this product solves)",
+  "targetAvatar": "string or null (who buys this)",
+  "anglesSuggested": ["string array of ad angles/hooks discussed"],
+  "objections": ["string array of objections or risks mentioned"],
+  "platformsMentioned": ["TikTok", "Amazon", "Facebook"]
+}
+```
+
+## 2. Niches
+
+Market categories and verticals discussed — trends, opportunities, warnings.
+
+```json
+{
+  "nicheName": "string (e.g., 'pets', 'home fitness', 'pain relief')",
+  "outlook": "hot | warming | cooling | dead | evergreen",
+  "reasoning": "string (why discussed this way)",
+  "mentionContext": "string (quote from transcript)",
+  "audienceInsight": "string or null (who's buying and why)",
+  "seasonality": "string or null (e.g., 'Q4 gift season', 'year-round')",
+  "productsLinked": ["product names from products[] that belong to this niche"]
+}
+```
+
+## 3. Patterns
+
+Strategies, tactics, mistakes, and operational wisdom.
+
+```json
+{
+  "patternName": "string (short label, e.g., 'Pain-first hook structure')",
+  "patternType": "strategy | tactic | mistake | warning | framework",
+  "description": "string (2-3 sentence explanation)",
+  "mentionContext": "string (quote from transcript)",
+  "category": "product_selection | ad_creative | offer_design | scaling | mindset | fulfillment | testing | funnel | general",
+  "sentiment": "do_this | avoid_this | depends",
+  "speakerRole": "coach | student | unknown"
+}
+```
+
+## 4. Psychology
+
+Buyer psychology, persuasion principles, and human behavior insights.
+
+```json
+{
+  "insightName": "string (short label)",
+  "principle": "string (the underlying psychological principle)",
+  "application": "string (how to use this in ecommerce)",
+  "mentionContext": "string (quote from transcript)",
+  "category": "buyer_behavior | persuasion | objection_handling | emotional_trigger | cognitive_bias | social_dynamics",
+  "examples": ["concrete examples given in the call"]
+}
+```
+
+## 5. Case Studies
+
+Real results shared by coaches or students.
+
+```json
+{
+  "title": "string (e.g., 'Student hit $50k/month with posture corrector')",
+  "outcome": "win | loss | mixed | in_progress",
+  "speakerRole": "coach | student",
+  "productOrNiche": "string",
+  "keyNumbers": {
+    "revenue": "string or null",
+    "adSpend": "string or null",
+    "margin": "string or null",
+    "timeline": "string or null",
+    "other": "string or null"
   },
-  {
-    "insight_text": "Exception to kill rule: if CTR is above 3%, give the ad another day. High CTR signals good traffic quality — the issue is likely the landing page, not the creative.",
-    "category": "scaling_rule",
-    "confidence": "proven",
-    "speaker": "unknown",
-    "products_mentioned": [],
-    "niches_mentioned": [],
-    "metrics_mentioned": ["CTR"],
-    "specific_numbers": ["3% CTR threshold"],
-    "tools_mentioned": [],
-    "actionability": "immediate",
-    "tags": ["kill-criteria", "ctr", "landing-page", "exception-rule"]
-  }
-]
+  "whatWorked": ["string array"],
+  "whatFailed": ["string array"],
+  "lessonsLearned": ["string array"],
+  "mentionContext": "string (quote from transcript)"
+}
 ```
+
+## 6. Entities (for search/indexing)
+
+```json
+{
+  "products": ["all product names mentioned"],
+  "niches": ["all niches/categories mentioned"],
+  "platforms": ["TikTok", "Amazon", "Facebook", "Shopify"],
+  "tools": ["KaloData", "Minea", "PiPiAds"],
+  "people": ["speaker names, student names"],
+  "brands": ["competitor brand names"]
+}
+```
+
+## 7. Call Metadata
+
+```json
+{
+  "callDate": "string or null (date if mentioned)",
+  "callType": "weekly_call | community_call | onboarding | masterclass | q_and_a | unknown",
+  "mainTopics": ["3-5 main topics covered"],
+  "speakerNames": ["names of coaches/speakers"],
+  "studentQuestions": ["notable questions students asked"]
+}
+```
+
+## EXTRACTION RULES
+
+- Extract EVERY distinct insight. A 4-hour call may have 50+ products, 100+ patterns.
+- Each item is ONE atomic idea. Don't combine multiple concepts.
+- Preserve specific numbers, thresholds, and metrics exactly as stated.
+- mentionContext on EVERY entity = audit trail back to source transcript.
+- speakerRole distinguishes coach authority from student experience.
+- Ignore small talk, introductions, housekeeping. Only extract substantive content.
+- If someone asks a question that gets a detailed answer, extract the ANSWER.
 
 Now process this transcript:
 """
@@ -166,59 +202,115 @@ Now process this transcript:
 # PROCESSING FUNCTIONS
 # ════════════════════════════════════════════════════════════════
 
-def extract_insights_from_transcript(transcript_text: str, filename: str) -> list[dict]:
+def extract_from_transcript(transcript_text: str, filename: str = "") -> dict:
     """
-    Send transcript to Gemini → get structured insights back.
-    Handles chunking for very long transcripts (>25k words).
+    Send transcript to Gemini → get structured extraction back.
+    Returns the full extraction dict (products, niches, patterns, etc.)
     """
     model = GenerativeModel("gemini-2.0-flash-001")
 
-    # Gemini 2.0 Flash handles ~1M tokens, so most transcripts fit in one call.
-    # Only chunk if truly massive (100k+ words).
     word_count = len(transcript_text.split())
 
     if word_count > 100000:
-        # Split into chunks of ~50k words with overlap
         chunks = chunk_transcript(transcript_text, chunk_size=50000, overlap=2000)
-        all_insights = []
+        all_extractions = []
         for i, chunk in enumerate(chunks):
             print(f"Processing chunk {i+1}/{len(chunks)} ({len(chunk.split())} words)")
-            insights = _call_gemini(model, chunk)
-            all_insights.extend(insights)
-        return deduplicate_insights(all_insights)
+            extraction = _call_gemini(model, chunk)
+            if extraction:
+                all_extractions.append(extraction)
+        return merge_extractions(all_extractions)
     else:
-        return _call_gemini(model, transcript_text)
+        return _call_gemini(model, transcript_text) or _empty_extraction()
 
 
-def _call_gemini(model: GenerativeModel, text: str) -> list[dict]:
-    """Single Gemini API call. Returns parsed JSON array."""
+def _call_gemini(model: GenerativeModel, text: str) -> dict | None:
+    """Single Gemini API call. Returns parsed JSON dict."""
 
     full_prompt = EXTRACTION_PROMPT + "\n\n" + text
 
     response = model.generate_content(
         full_prompt,
         generation_config={
-            "temperature": 0.2,          # Low temp = precise extraction
-            "max_output_tokens": 8192,   # Max supported by gemini-2.0-flash-001
-            "response_mime_type": "application/json"  # Force JSON output
+            "temperature": 0.2,
+            "max_output_tokens": 8192,
+            "response_mime_type": "application/json"
         }
     )
 
     try:
-        insights = json.loads(response.text)
-        if not isinstance(insights, list):
-            print(f"Warning: Expected array, got {type(insights)}. Wrapping.")
-            insights = [insights]
-        return insights
+        result = json.loads(response.text)
+        if isinstance(result, dict):
+            return result
+        print(f"Warning: Expected dict, got {type(result)}")
+        return None
     except json.JSONDecodeError as e:
         print(f"JSON parse error: {e}")
         print(f"Raw response: {response.text[:500]}")
-        # Attempt to extract JSON from markdown fences if Gemini wrapped it
         import re
-        match = re.search(r'\[.*\]', response.text, re.DOTALL)
+        match = re.search(r'\{.*\}', response.text, re.DOTALL)
         if match:
-            return json.loads(match.group())
-        return []
+            try:
+                return json.loads(match.group())
+            except json.JSONDecodeError:
+                pass
+        return None
+
+
+def _empty_extraction() -> dict:
+    """Return empty extraction structure."""
+    return {
+        "products": [], "niches": [], "patterns": [],
+        "psychology": [], "caseStudies": [],
+        "entities": {"products": [], "niches": [], "platforms": [], "tools": [], "people": [], "brands": []},
+        "callMeta": {"callDate": None, "callType": "unknown", "mainTopics": [], "speakerNames": [], "studentQuestions": []},
+        "summary": ""
+    }
+
+
+def merge_extractions(extractions: list[dict]) -> dict:
+    """Merge multiple chunk extractions into one, deduplicating."""
+    merged = _empty_extraction()
+
+    for ext in extractions:
+        merged["products"].extend(ext.get("products", []))
+        merged["niches"].extend(ext.get("niches", []))
+        merged["patterns"].extend(ext.get("patterns", []))
+        merged["psychology"].extend(ext.get("psychology", []))
+        merged["caseStudies"].extend(ext.get("caseStudies", []))
+        merged["summary"] += " " + ext.get("summary", "")
+
+        # Merge entities (union of arrays)
+        for key in ("products", "niches", "platforms", "tools", "people", "brands"):
+            src = ext.get("entities", {}).get(key, [])
+            merged["entities"][key] = list(set(merged["entities"][key] + src))
+
+        # Use call metadata from first chunk that has it
+        ext_meta = ext.get("callMeta", {})
+        if ext_meta.get("callType") and ext_meta["callType"] != "unknown" and merged["callMeta"]["callType"] == "unknown":
+            merged["callMeta"] = ext_meta
+
+    # Deduplicate by name fields
+    merged["products"] = _dedup_by_key(merged["products"], "productName")
+    merged["niches"] = _dedup_by_key(merged["niches"], "nicheName")
+    merged["patterns"] = _dedup_by_key(merged["patterns"], "patternName")
+    merged["psychology"] = _dedup_by_key(merged["psychology"], "insightName")
+    merged["caseStudies"] = _dedup_by_key(merged["caseStudies"], "title")
+    merged["summary"] = merged["summary"].strip()
+
+    return merged
+
+
+def _dedup_by_key(items: list[dict], key: str) -> list[dict]:
+    """Remove duplicates based on a key field (case-insensitive)."""
+    seen = set()
+    unique = []
+    for item in items:
+        val = item.get(key, "").lower().strip()
+        if val and val not in seen:
+            seen.add(val)
+            unique.append(item)
+    return unique
 
 
 def chunk_transcript(text: str, chunk_size: int = 50000, overlap: int = 2000) -> list[str]:
@@ -233,119 +325,191 @@ def chunk_transcript(text: str, chunk_size: int = 50000, overlap: int = 2000) ->
     return chunks
 
 
-def deduplicate_insights(insights: list[dict]) -> list[dict]:
-    """Remove near-duplicate insights from chunked processing."""
-    seen = set()
-    unique = []
-    for insight in insights:
-        # Use first 100 chars of insight_text as dedup key
-        key = insight.get("insight_text", "")[:100].lower().strip()
-        if key not in seen:
-            seen.add(key)
-            unique.append(insight)
-    return unique
-
-
 # ════════════════════════════════════════════════════════════════
-# BIGQUERY LOADING
+# BIGQUERY LOADING (v2 — normalized multi-table)
 # ════════════════════════════════════════════════════════════════
 
-def load_to_bigquery(insights: list[dict], source_filename: str, call_date: str = None, source_type: str = None):
+def load_to_bigquery(extraction: dict, doc_id: str, doc_title: str,
+                     doc_url: str = None, raw_text: str = None) -> dict:
     """
-    Load extracted insights into BigQuery coaching_insights table.
-    Adds metadata columns (source file, processing timestamp, call date).
-
-    source_type: explicit data source bucket. One of:
-        discord_ai_com | product_market_research | brand_intelligence |
-        creative_ad_intelligence | visual_os | apify_scrape
-    If not provided, inferred from filename.
+    Load extracted data into BigQuery bomb_ecom tables.
+    Returns dict of {table_name: rows_inserted}.
     """
-    table_ref = f"{PROJECT_ID}.{DATASET_ID}.{TABLE_ID}"
+    now = datetime.now().isoformat()
+    transcript_id = _hash_id(doc_id)
+    counts = {}
 
-    # Enrich each row with metadata
-    rows = []
-    for i, insight in enumerate(insights):
-        row = {
-            "insight_id": f"{source_filename}_{i:03d}",
-            "source_file": source_filename,
-            "call_date": call_date or datetime.now().strftime("%Y-%m-%d"),
-            "processed_at": datetime.now().isoformat(),
-            "call_topic": source_type or _infer_topic(source_filename),
+    # 1. Raw transcript
+    raw_row = {
+        "transcript_id": transcript_id,
+        "doc_id": doc_id,
+        "doc_title": doc_title,
+        "doc_url": doc_url,
+        "raw_text": (raw_text or "")[:12000],
+        "extraction_json": json.dumps(extraction),
+        "extracted_at": now,
+    }
+    counts["raw_transcripts"] = _insert_rows("raw_transcripts", [raw_row])
 
-            # Core extraction fields
-            "insight_text": insight.get("insight_text", ""),
-            "category": insight.get("category", "uncategorized"),
-            "confidence": insight.get("confidence", "unknown"),
-            "speaker": insight.get("speaker", "unknown"),
-            "actionability": insight.get("actionability", "situational"),
+    # 2. Products
+    product_rows = []
+    for p in extraction.get("products", []):
+        product_rows.append({
+            "id": _hash_id(transcript_id, p.get("productName", ""), p.get("niche", "")),
+            "transcript_id": transcript_id,
+            "doc_title": doc_title,
+            "product_name": p.get("productName", "unknown"),
+            "niche": p.get("niche"),
+            "why_mentioned": p.get("whyMentioned"),
+            "mention_context": p.get("mentionContext"),
+            "speaker_role": p.get("speakerRole"),
+            "verdict": p.get("verdict"),
+            "pain_point": p.get("painPoint"),
+            "target_avatar": p.get("targetAvatar"),
+            "angles_suggested": p.get("anglesSuggested", []),
+            "objections": p.get("objections", []),
+            "platforms": p.get("platformsMentioned", []),
+            "extracted_at": now,
+        })
+    counts["stg_transcript_products"] = _insert_rows("stg_transcript_products", product_rows)
 
-            # Array fields → stored as JSON strings in BigQuery
-            "products_mentioned": json.dumps(insight.get("products_mentioned", [])),
-            "niches_mentioned": json.dumps(insight.get("niches_mentioned", [])),
-            "metrics_mentioned": json.dumps(insight.get("metrics_mentioned", [])),
-            "specific_numbers": json.dumps(insight.get("specific_numbers", [])),
-            "tools_mentioned": json.dumps(insight.get("tools_mentioned", [])),
-            "tags": json.dumps(insight.get("tags", []))
-        }
-        rows.append(row)
+    # 3. Niches
+    niche_rows = []
+    for n in extraction.get("niches", []):
+        niche_rows.append({
+            "id": _hash_id(transcript_id, n.get("nicheName", "")),
+            "transcript_id": transcript_id,
+            "doc_title": doc_title,
+            "niche_name": n.get("nicheName", "unknown"),
+            "outlook": n.get("outlook"),
+            "reasoning": n.get("reasoning"),
+            "mention_context": n.get("mentionContext"),
+            "audience_insight": n.get("audienceInsight"),
+            "seasonality": n.get("seasonality"),
+            "products_linked": n.get("productsLinked", []),
+            "extracted_at": now,
+        })
+    counts["stg_transcript_niches"] = _insert_rows("stg_transcript_niches", niche_rows)
 
-    # Insert into BigQuery
+    # 4. Patterns
+    pattern_rows = []
+    for p in extraction.get("patterns", []):
+        pattern_rows.append({
+            "id": _hash_id(transcript_id, p.get("patternName", ""), p.get("patternType", "")),
+            "transcript_id": transcript_id,
+            "doc_title": doc_title,
+            "pattern_name": p.get("patternName", "unknown"),
+            "pattern_type": p.get("patternType"),
+            "description": p.get("description"),
+            "mention_context": p.get("mentionContext"),
+            "category": p.get("category"),
+            "sentiment": p.get("sentiment"),
+            "speaker_role": p.get("speakerRole"),
+            "extracted_at": now,
+        })
+    counts["stg_transcript_patterns"] = _insert_rows("stg_transcript_patterns", pattern_rows)
+
+    # 5. Psychology
+    psych_rows = []
+    for p in extraction.get("psychology", []):
+        psych_rows.append({
+            "id": _hash_id(transcript_id, p.get("insightName", ""), p.get("category", "")),
+            "transcript_id": transcript_id,
+            "doc_title": doc_title,
+            "insight_name": p.get("insightName", "unknown"),
+            "principle": p.get("principle"),
+            "application": p.get("application"),
+            "mention_context": p.get("mentionContext"),
+            "category": p.get("category"),
+            "examples": p.get("examples", []),
+            "extracted_at": now,
+        })
+    counts["stg_transcript_psychology"] = _insert_rows("stg_transcript_psychology", psych_rows)
+
+    # 6. Case Studies
+    case_rows = []
+    for c in extraction.get("caseStudies", []):
+        numbers = c.get("keyNumbers", {})
+        case_rows.append({
+            "id": _hash_id(transcript_id, c.get("title", "")),
+            "transcript_id": transcript_id,
+            "doc_title": doc_title,
+            "title": c.get("title", "unknown"),
+            "outcome": c.get("outcome"),
+            "speaker_role": c.get("speakerRole"),
+            "product_or_niche": c.get("productOrNiche"),
+            "revenue": numbers.get("revenue"),
+            "ad_spend": numbers.get("adSpend"),
+            "margin": numbers.get("margin"),
+            "timeline": numbers.get("timeline"),
+            "other_numbers": numbers.get("other"),
+            "what_worked": c.get("whatWorked", []),
+            "what_failed": c.get("whatFailed", []),
+            "lessons_learned": c.get("lessonsLearned", []),
+            "mention_context": c.get("mentionContext"),
+            "extracted_at": now,
+        })
+    counts["stg_transcript_case_studies"] = _insert_rows("stg_transcript_case_studies", case_rows)
+
+    # 7. Call metadata
+    meta = extraction.get("callMeta", {})
+    call_row = {
+        "transcript_id": transcript_id,
+        "doc_id": doc_id,
+        "doc_title": doc_title,
+        "doc_url": doc_url,
+        "call_date": _parse_date(meta.get("callDate")),
+        "call_type": meta.get("callType", "unknown"),
+        "main_topics": meta.get("mainTopics", []),
+        "speaker_names": meta.get("speakerNames", []),
+        "student_questions": meta.get("studentQuestions", []),
+        "product_count": len(extraction.get("products", [])),
+        "niche_count": len(extraction.get("niches", [])),
+        "pattern_count": len(extraction.get("patterns", [])),
+        "psychology_count": len(extraction.get("psychology", [])),
+        "case_study_count": len(extraction.get("caseStudies", [])),
+        "summary": extraction.get("summary", ""),
+        "extracted_at": now,
+    }
+    counts["stg_transcript_calls"] = _insert_rows("stg_transcript_calls", [call_row])
+
+    total = sum(counts.values())
+    print(f"✓ Loaded {total} total rows across {len(counts)} tables for {doc_title}")
+    return counts
+
+
+def _parse_date(raw_date: str | None) -> str | None:
+    """Parse messy date strings from Gemini into YYYY-MM-DD format. Returns None if unparseable."""
+    if not raw_date:
+        return None
+    from dateutil import parser as dateparser
+    try:
+        parsed = dateparser.parse(raw_date, fuzzy=True)
+        return parsed.strftime("%Y-%m-%d") if parsed else None
+    except (ValueError, OverflowError):
+        return None
+
+
+def _insert_rows(table_name: str, rows: list[dict]) -> int:
+    """Insert rows into a BigQuery table. Returns count inserted."""
+    if not rows:
+        return 0
+
+    table_ref = f"{PROJECT_ID}.{DATASET_ID}.{table_name}"
     errors = bq_client.insert_rows_json(table_ref, rows)
     if errors:
-        print(f"BigQuery insert errors: {errors}")
-        raise Exception(f"Failed to insert {len(errors)} rows")
+        print(f"BigQuery insert errors for {table_name}: {errors}")
+        raise Exception(f"Failed to insert into {table_name}: {errors}")
 
-    print(f"✓ Loaded {len(rows)} insights from {source_filename} into {table_ref}")
     return len(rows)
-
-
-def _infer_topic(filename: str) -> str:
-    """Guess the call topic from filename. Override with metadata if available."""
-    filename_lower = filename.lower()
-    topic_map = {
-        "product": "product_research",
-        "scaling": "scaling_strategy",
-        "creative": "ad_creative",
-        "ads": "ad_strategy",
-        "meta": "platform_tactics",
-        "tiktok": "platform_tactics",
-        "mindset": "mindset",
-        "general": "general_q_and_a"
-    }
-    for keyword, topic in topic_map.items():
-        if keyword in filename_lower:
-            return topic
-    return "general_q_and_a"
 
 
 # ════════════════════════════════════════════════════════════════
 # BIGQUERY TABLE CREATION (run once)
 # ════════════════════════════════════════════════════════════════
 
-def create_bigquery_table():
-    """Create the coaching_insights table if it doesn't exist."""
-
-    schema = [
-        bigquery.SchemaField("insight_id", "STRING", mode="REQUIRED"),
-        bigquery.SchemaField("source_file", "STRING"),
-        bigquery.SchemaField("call_date", "DATE"),
-        bigquery.SchemaField("processed_at", "TIMESTAMP"),
-        bigquery.SchemaField("call_topic", "STRING"),
-        bigquery.SchemaField("insight_text", "STRING"),
-        bigquery.SchemaField("category", "STRING"),
-        bigquery.SchemaField("confidence", "STRING"),
-        bigquery.SchemaField("speaker", "STRING"),
-        bigquery.SchemaField("actionability", "STRING"),
-        bigquery.SchemaField("products_mentioned", "STRING"),  # JSON array as string
-        bigquery.SchemaField("niches_mentioned", "STRING"),
-        bigquery.SchemaField("metrics_mentioned", "STRING"),
-        bigquery.SchemaField("specific_numbers", "STRING"),
-        bigquery.SchemaField("tools_mentioned", "STRING"),
-        bigquery.SchemaField("tags", "STRING"),
-    ]
-
-    table_ref = f"{PROJECT_ID}.{DATASET_ID}.{TABLE_ID}"
-    table = bigquery.Table(table_ref, schema=schema)
+def create_bigquery_tables():
+    """Create the bomb_ecom dataset and all transcript extraction tables."""
 
     # Create dataset if needed
     dataset_ref = f"{PROJECT_ID}.{DATASET_ID}"
@@ -357,30 +521,134 @@ def create_bigquery_table():
         bq_client.create_dataset(dataset)
         print(f"✓ Created dataset: {dataset_ref}")
 
-    # Create table
-    table = bq_client.create_table(table, exists_ok=True)
-    print(f"✓ Table ready: {table_ref}")
+    tables = {
+        "raw_transcripts": [
+            bigquery.SchemaField("transcript_id", "STRING", mode="REQUIRED"),
+            bigquery.SchemaField("doc_id", "STRING", mode="REQUIRED"),
+            bigquery.SchemaField("doc_title", "STRING"),
+            bigquery.SchemaField("doc_url", "STRING"),
+            bigquery.SchemaField("raw_text", "STRING"),
+            bigquery.SchemaField("extraction_json", "STRING"),
+            bigquery.SchemaField("extracted_at", "TIMESTAMP", mode="REQUIRED"),
+            bigquery.SchemaField("ingested_at", "TIMESTAMP"),
+        ],
+        "stg_transcript_products": [
+            bigquery.SchemaField("id", "STRING", mode="REQUIRED"),
+            bigquery.SchemaField("transcript_id", "STRING", mode="REQUIRED"),
+            bigquery.SchemaField("doc_title", "STRING"),
+            bigquery.SchemaField("product_name", "STRING", mode="REQUIRED"),
+            bigquery.SchemaField("niche", "STRING"),
+            bigquery.SchemaField("why_mentioned", "STRING"),
+            bigquery.SchemaField("mention_context", "STRING"),
+            bigquery.SchemaField("speaker_role", "STRING"),
+            bigquery.SchemaField("verdict", "STRING"),
+            bigquery.SchemaField("pain_point", "STRING"),
+            bigquery.SchemaField("target_avatar", "STRING"),
+            bigquery.SchemaField("angles_suggested", "STRING", mode="REPEATED"),
+            bigquery.SchemaField("objections", "STRING", mode="REPEATED"),
+            bigquery.SchemaField("platforms", "STRING", mode="REPEATED"),
+            bigquery.SchemaField("extracted_at", "TIMESTAMP", mode="REQUIRED"),
+        ],
+        "stg_transcript_niches": [
+            bigquery.SchemaField("id", "STRING", mode="REQUIRED"),
+            bigquery.SchemaField("transcript_id", "STRING", mode="REQUIRED"),
+            bigquery.SchemaField("doc_title", "STRING"),
+            bigquery.SchemaField("niche_name", "STRING", mode="REQUIRED"),
+            bigquery.SchemaField("outlook", "STRING"),
+            bigquery.SchemaField("reasoning", "STRING"),
+            bigquery.SchemaField("mention_context", "STRING"),
+            bigquery.SchemaField("audience_insight", "STRING"),
+            bigquery.SchemaField("seasonality", "STRING"),
+            bigquery.SchemaField("products_linked", "STRING", mode="REPEATED"),
+            bigquery.SchemaField("extracted_at", "TIMESTAMP", mode="REQUIRED"),
+        ],
+        "stg_transcript_patterns": [
+            bigquery.SchemaField("id", "STRING", mode="REQUIRED"),
+            bigquery.SchemaField("transcript_id", "STRING", mode="REQUIRED"),
+            bigquery.SchemaField("doc_title", "STRING"),
+            bigquery.SchemaField("pattern_name", "STRING", mode="REQUIRED"),
+            bigquery.SchemaField("pattern_type", "STRING"),
+            bigquery.SchemaField("description", "STRING"),
+            bigquery.SchemaField("mention_context", "STRING"),
+            bigquery.SchemaField("category", "STRING"),
+            bigquery.SchemaField("sentiment", "STRING"),
+            bigquery.SchemaField("speaker_role", "STRING"),
+            bigquery.SchemaField("extracted_at", "TIMESTAMP", mode="REQUIRED"),
+        ],
+        "stg_transcript_psychology": [
+            bigquery.SchemaField("id", "STRING", mode="REQUIRED"),
+            bigquery.SchemaField("transcript_id", "STRING", mode="REQUIRED"),
+            bigquery.SchemaField("doc_title", "STRING"),
+            bigquery.SchemaField("insight_name", "STRING", mode="REQUIRED"),
+            bigquery.SchemaField("principle", "STRING"),
+            bigquery.SchemaField("application", "STRING"),
+            bigquery.SchemaField("mention_context", "STRING"),
+            bigquery.SchemaField("category", "STRING"),
+            bigquery.SchemaField("examples", "STRING", mode="REPEATED"),
+            bigquery.SchemaField("extracted_at", "TIMESTAMP", mode="REQUIRED"),
+        ],
+        "stg_transcript_case_studies": [
+            bigquery.SchemaField("id", "STRING", mode="REQUIRED"),
+            bigquery.SchemaField("transcript_id", "STRING", mode="REQUIRED"),
+            bigquery.SchemaField("doc_title", "STRING"),
+            bigquery.SchemaField("title", "STRING", mode="REQUIRED"),
+            bigquery.SchemaField("outcome", "STRING"),
+            bigquery.SchemaField("speaker_role", "STRING"),
+            bigquery.SchemaField("product_or_niche", "STRING"),
+            bigquery.SchemaField("revenue", "STRING"),
+            bigquery.SchemaField("ad_spend", "STRING"),
+            bigquery.SchemaField("margin", "STRING"),
+            bigquery.SchemaField("timeline", "STRING"),
+            bigquery.SchemaField("other_numbers", "STRING"),
+            bigquery.SchemaField("what_worked", "STRING", mode="REPEATED"),
+            bigquery.SchemaField("what_failed", "STRING", mode="REPEATED"),
+            bigquery.SchemaField("lessons_learned", "STRING", mode="REPEATED"),
+            bigquery.SchemaField("mention_context", "STRING"),
+            bigquery.SchemaField("extracted_at", "TIMESTAMP", mode="REQUIRED"),
+        ],
+        "stg_transcript_calls": [
+            bigquery.SchemaField("transcript_id", "STRING", mode="REQUIRED"),
+            bigquery.SchemaField("doc_id", "STRING", mode="REQUIRED"),
+            bigquery.SchemaField("doc_title", "STRING"),
+            bigquery.SchemaField("doc_url", "STRING"),
+            bigquery.SchemaField("call_date", "DATE"),
+            bigquery.SchemaField("call_type", "STRING"),
+            bigquery.SchemaField("main_topics", "STRING", mode="REPEATED"),
+            bigquery.SchemaField("speaker_names", "STRING", mode="REPEATED"),
+            bigquery.SchemaField("student_questions", "STRING", mode="REPEATED"),
+            bigquery.SchemaField("product_count", "INT64"),
+            bigquery.SchemaField("niche_count", "INT64"),
+            bigquery.SchemaField("pattern_count", "INT64"),
+            bigquery.SchemaField("psychology_count", "INT64"),
+            bigquery.SchemaField("case_study_count", "INT64"),
+            bigquery.SchemaField("summary", "STRING"),
+            bigquery.SchemaField("extracted_at", "TIMESTAMP", mode="REQUIRED"),
+        ],
+    }
+
+    for table_name, schema in tables.items():
+        table_ref = f"{PROJECT_ID}.{DATASET_ID}.{table_name}"
+        table = bigquery.Table(table_ref, schema=schema)
+        table = bq_client.create_table(table, exists_ok=True)
+        print(f"✓ Table ready: {table_ref}")
 
 
 # ════════════════════════════════════════════════════════════════
 # CLOUD RUN ENTRY POINT
 # ════════════════════════════════════════════════════════════════
-# This is what Pub/Sub triggers when a file lands in GCS.
 
 def process_gcs_event(event: dict):
     """
     Triggered by Pub/Sub when a new file lands in the coaching-transcripts/ folder.
-    Downloads the file, extracts insights via Gemini, loads to BigQuery.
+    Downloads the file, extracts via Gemini, loads to BigQuery.
     """
     bucket_name = event.get("bucket", BUCKET_NAME)
     file_name = event.get("name", "")
 
-    # Only process files in coaching-transcripts/
     if not file_name.startswith("coaching-transcripts/"):
         print(f"Skipping {file_name} — not a coaching transcript")
         return
 
-    # Only process .txt files
     if not file_name.endswith(".txt"):
         print(f"Skipping {file_name} — not a .txt file")
         return
@@ -395,14 +663,22 @@ def process_gcs_event(event: dict):
     word_count = len(transcript_text.split())
     print(f"Transcript: {word_count} words")
 
-    # 2. Extract insights via Gemini
-    insights = extract_insights_from_transcript(transcript_text, file_name)
-    print(f"Extracted: {len(insights)} insights")
+    # 2. Extract via Gemini
+    extraction = extract_from_transcript(transcript_text, file_name)
+
+    product_count = len(extraction.get("products", []))
+    pattern_count = len(extraction.get("patterns", []))
+    print(f"Extracted: {product_count} products, {pattern_count} patterns")
 
     # 3. Load to BigQuery
-    rows_loaded = load_to_bigquery(insights, source_filename=file_name)
+    counts = load_to_bigquery(
+        extraction,
+        doc_id=file_name,
+        doc_title=file_name.split("/")[-1].replace(".txt", ""),
+        raw_text=transcript_text,
+    )
 
-    # 4. Move processed file to /processed/ subfolder (optional cleanup)
+    # 4. Move processed file to /processed/ subfolder
     processed_path = file_name.replace("coaching-transcripts/", "coaching-transcripts/processed/")
     bucket.rename_blob(blob, processed_path)
     print(f"Moved to: {processed_path}")
@@ -410,17 +686,16 @@ def process_gcs_event(event: dict):
     return {
         "file": file_name,
         "words": word_count,
-        "insights_extracted": len(insights),
-        "rows_loaded": rows_loaded
+        "tables": counts,
+        "total_rows": sum(counts.values()),
     }
 
 
 # ════════════════════════════════════════════════════════════════
-# LOCAL TESTING (run this file directly to test)
+# LOCAL TESTING
 # ════════════════════════════════════════════════════════════════
 
 if __name__ == "__main__":
-    # Test with a sample transcript
     sample = """
     Coach: Alright so the number one mistake I see people make with product research
     is they look at what's trending on TikTok and try to sell it on Facebook. Those are
@@ -441,9 +716,19 @@ if __name__ == "__main__":
     with testimonials, maybe a comparison table. Static ads alone won't carry a $100+ product
     unless you've got insane social proof — like 5000+ reviews. For your first product,
     stay in the $39-79 range. It's the proving ground.
+
+    Student: I've been looking at posture correctors. There's a brand doing $200k/month
+    on TikTok according to KaloData, but their reviews on Amazon are terrible — 3.2 stars.
+
+    Coach: That's actually a great signal. High demand, poor execution by incumbents.
+    The pain is real — back pain affects like 80% of office workers. Check if they're
+    running Facebook ads too. If they're only on TikTok, that's your arbitrage opportunity.
     """
 
-    print("Testing extraction...")
-    insights = extract_insights_from_transcript(sample, "test-transcript.txt")
-    print(json.dumps(insights, indent=2))
-    print(f"\nExtracted {len(insights)} insights from sample.")
+    print("Testing extraction (v2 — normalized schema)...")
+    extraction = extract_from_transcript(sample, "test-transcript.txt")
+    print(json.dumps(extraction, indent=2))
+
+    print(f"\nExtracted:")
+    for key in ("products", "niches", "patterns", "psychology", "caseStudies"):
+        print(f"  {key}: {len(extraction.get(key, []))}")

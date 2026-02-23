@@ -1,26 +1,16 @@
 """
-LOCAL TRANSCRIPT LOADER
-Reads .txt transcript files from a local folder → Gemini extraction → BigQuery.
+LOCAL TRANSCRIPT LOADER (v2 — Normalized Schema)
+Reads .txt transcript files from a local folder → Gemini extraction → BigQuery bomb_ecom.
 
 Bypasses the GCS/Pub/Sub/Cloud Run pipeline entirely.
 Use this to seed BigQuery with your first batch of data.
 
-SOURCE TYPES (--source-type flag):
-    discord_ai_com           Discord AI Com community transcripts
-    product_market_research  Product/market criteria, metrics, research calls
-    brand_intelligence       Brand positioning, competitor intelligence
-    creative_ad_intelligence Ad creative, copywriting, marketing psychology
-    visual_os                Visual OS, design frameworks, creative direction
-    apify_scrape             Inbound Apify scrape data (set up later)
+Run from Cloud Shell or locally with gcloud auth:
+    python3 knowledge-pipeline/load-local-transcripts.py \
+        --folder ~/transcripts/discord
 
-Run from Cloud Shell — one folder per source type:
-    python3 knowledge-pipeline/load-local-transcripts.py \\
-        --folder ~/transcripts/discord \\
-        --source-type discord_ai_com
-
-    python3 knowledge-pipeline/load-local-transcripts.py \\
-        --folder ~/transcripts/product-research \\
-        --source-type product_market_research
+    python3 knowledge-pipeline/load-local-transcripts.py \
+        --file ~/transcripts/product-research-call.txt --dry-run
 """
 
 import argparse
@@ -32,24 +22,14 @@ from pathlib import Path
 # Add parent dir so we can import the extraction engine
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from transcript_extraction_engine import (
-    extract_insights_from_transcript,
+    extract_from_transcript,
     load_to_bigquery,
-    create_bigquery_table
+    create_bigquery_tables,
 )
 
 
-SOURCE_TYPES = [
-    "discord_ai_com",
-    "product_market_research",
-    "brand_intelligence",
-    "creative_ad_intelligence",
-    "visual_os",
-    "apify_scrape",
-]
-
-
-def load_file(file_path: Path, dry_run: bool = False, source_type: str = None):
-    """Process a single transcript file → BigQuery."""
+def load_file(file_path: Path, dry_run: bool = False) -> dict:
+    """Process a single transcript file → BigQuery. Returns table counts."""
     print(f"\n{'='*60}")
     print(f"  File: {file_path.name}")
     print(f"{'='*60}")
@@ -60,52 +40,62 @@ def load_file(file_path: Path, dry_run: bool = False, source_type: str = None):
 
     if word_count < 50:
         print(f"  Skipping — too short to be a real transcript.")
-        return 0
+        return {}
 
-    print(f"  Extracting insights via Gemini...")
-    insights = extract_insights_from_transcript(text, file_path.name)
-    print(f"  Extracted: {len(insights)} insights")
+    print(f"  Extracting via Gemini (v2 normalized schema)...")
+    extraction = extract_from_transcript(text, file_path.name)
 
-    if not insights:
-        print(f"  No insights found — skipping BQ load.")
-        return 0
+    # Print extraction summary
+    for key in ("products", "niches", "patterns", "psychology", "caseStudies"):
+        count = len(extraction.get(key, []))
+        if count > 0:
+            print(f"  {key}: {count}")
 
-    # Preview first insight
-    print(f"\n  Sample insight:")
-    first = insights[0]
-    print(f"    Category:    {first.get('category')}")
-    print(f"    Confidence:  {first.get('confidence')}")
-    print(f"    Text:        {first.get('insight_text', '')[:100]}...")
+    total_items = sum(len(extraction.get(k, [])) for k in ("products", "niches", "patterns", "psychology", "caseStudies"))
+    if total_items == 0:
+        print(f"  No items extracted — skipping BQ load.")
+        return {}
+
+    # Preview first product if available
+    products = extraction.get("products", [])
+    if products:
+        first = products[0]
+        print(f"\n  Sample product:")
+        print(f"    Name:    {first.get('productName')}")
+        print(f"    Niche:   {first.get('niche')}")
+        print(f"    Verdict: {first.get('verdict')}")
 
     if dry_run:
-        print(f"\n  [DRY RUN] Would load {len(insights)} rows to BigQuery.")
-        print(f"  Full output:")
-        print(json.dumps(insights, indent=2))
-        return len(insights)
+        print(f"\n  [DRY RUN] Would load to BigQuery bomb_ecom tables.")
+        print(f"  Full extraction:")
+        print(json.dumps(extraction, indent=2))
+        return {"dry_run": total_items}
 
-    rows_loaded = load_to_bigquery(insights, source_filename=file_path.name, source_type=source_type)
-    print(f"  ✓ Loaded {rows_loaded} rows to BigQuery")
-    return rows_loaded
+    doc_title = file_path.stem
+    counts = load_to_bigquery(
+        extraction,
+        doc_id=file_path.name,
+        doc_title=doc_title,
+        raw_text=text,
+    )
+    print(f"  ✓ Loaded to BigQuery bomb_ecom")
+    return counts
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Load transcripts into BigQuery")
+    parser = argparse.ArgumentParser(description="Load transcripts into BigQuery bomb_ecom (v2 normalized)")
     parser.add_argument("--folder", help="Folder containing .txt transcript files")
     parser.add_argument("--file",   help="Single .txt transcript file to process")
-    parser.add_argument("--source-type",
-                        choices=SOURCE_TYPES,
-                        help="Data source bucket (required for clean data organization)")
     parser.add_argument("--dry-run", action="store_true",
                         help="Extract only — don't write to BigQuery, print JSON instead")
     parser.add_argument("--setup",  action="store_true",
-                        help="Create BigQuery table then exit (run this first)")
+                        help="Create BigQuery tables then exit (run this first)")
     args = parser.parse_args()
-    source_type = args.source_type
 
-    # ── Setup mode: just create the table ───────────────────────
+    # ── Setup mode: just create the tables ───────────────────────
     if args.setup:
-        print("Creating BigQuery table...")
-        create_bigquery_table()
+        print("Creating BigQuery bomb_ecom tables (v2 normalized schema)...")
+        create_bigquery_tables()
         print("Done. Run again without --setup to load transcripts.")
         return
 
@@ -113,9 +103,9 @@ def main():
         parser.print_help()
         sys.exit(1)
 
-    # ── Ensure BQ table exists ───────────────────────────────────
-    print("Ensuring BigQuery table exists...")
-    create_bigquery_table()
+    # ── Ensure BQ tables exist ───────────────────────────────────
+    print("Ensuring BigQuery tables exist...")
+    create_bigquery_tables()
 
     # ── Collect files to process ────────────────────────────────
     files = []
@@ -132,25 +122,23 @@ def main():
             sys.exit(1)
         print(f"Found {len(files)} files in {folder}")
 
-    if source_type:
-        print(f"  Source type: {source_type}")
-    else:
-        print(f"  Source type: (inferred from filename — pass --source-type for clean data)")
-
     # ── Process each file ───────────────────────────────────────
-    total_insights = 0
+    all_counts = {}
     for f in files:
-        count = load_file(f, dry_run=args.dry_run, source_type=source_type)
-        total_insights += count
+        counts = load_file(f, dry_run=args.dry_run)
+        for table, n in counts.items():
+            all_counts[table] = all_counts.get(table, 0) + n
 
     # ── Summary ─────────────────────────────────────────────────
     print(f"\n{'='*60}")
     print(f"  COMPLETE")
     print(f"  Files processed: {len(files)}")
-    print(f"  Total insights:  {total_insights}")
-    if not args.dry_run:
-        print(f"  BigQuery table:  ecom_os.coaching_insights")
-        print(f"  View in console: https://console.cloud.google.com/bigquery")
+    if not args.dry_run and all_counts:
+        print(f"  Rows by table:")
+        for table, n in sorted(all_counts.items()):
+            print(f"    bomb_ecom.{table}: {n}")
+        print(f"  Total rows: {sum(all_counts.values())}")
+        print(f"  View: https://console.cloud.google.com/bigquery")
     print(f"{'='*60}\n")
 
 

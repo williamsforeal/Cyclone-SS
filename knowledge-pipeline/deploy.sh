@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # ════════════════════════════════════════════════════════════════
-# TRANSCRIPT EXTRACTION ENGINE — DEPLOY SCRIPT
+# TRANSCRIPT EXTRACTION ENGINE — DEPLOY SCRIPT (v2)
 # Wires: Cloud Run ← Pub/Sub ← GCS bucket
+# Target: bomb_ecom dataset (normalized multi-table schema)
 #
 # Run from repo root:
 #   bash knowledge-pipeline/deploy.sh
@@ -51,9 +52,10 @@ fi
 
 # Grant roles to service account
 ROLES=(
-  "roles/bigquery.dataEditor"   # Write rows to coaching_insights
+  "roles/bigquery.dataEditor"   # Write rows to bomb_ecom tables
   "roles/bigquery.jobUser"      # Run BQ jobs (needed for insert_rows_json)
   "roles/storage.objectViewer"  # Read transcripts from GCS
+  "roles/storage.objectAdmin"   # Move processed files in GCS
   "roles/aiplatform.user"       # Call Gemini via Vertex AI
 )
 for ROLE in "${ROLES[@]}"; do
@@ -66,7 +68,6 @@ for ROLE in "${ROLES[@]}"; do
 done
 
 # Allow Pub/Sub service agent to generate OIDC tokens for our SA
-# (required for authenticated push subscriptions)
 PUBSUB_SERVICE_AGENT="service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com"
 gcloud iam service-accounts add-iam-policy-binding "${SA_EMAIL}" \
   --member="serviceAccount:${PUBSUB_SERVICE_AGENT}" \
@@ -89,23 +90,37 @@ else
   ok "Created bucket: gs://${BUCKET}"
 fi
 
-# Create coaching-transcripts/ prefix (GCS doesn't have real folders,
-# but a placeholder object makes it visible in the console)
+# Create coaching-transcripts/ prefix
 if ! gsutil ls "gs://${BUCKET}/coaching-transcripts/" &>/dev/null; then
   echo "" | gsutil cp - "gs://${BUCKET}/coaching-transcripts/.keep"
   ok "Created gs://${BUCKET}/coaching-transcripts/"
 fi
 
-# BigQuery table (uses exists_ok=True so safe to re-run)
-echo "  Creating BigQuery table ecom_os.coaching_insights..."
+# BigQuery tables (v2 normalized schema — bomb_ecom dataset)
+echo "  Creating BigQuery bomb_ecom tables..."
 python3 -c "
 import os
 os.environ['GCP_PROJECT_ID'] = '${PROJECT_ID}'
+os.environ['GCP_LOCATION'] = '${REGION}'
 import sys; sys.path.insert(0, 'knowledge-pipeline')
-from transcript_extraction_engine import create_bigquery_table
-create_bigquery_table()
+from transcript_extraction_engine import create_bigquery_tables
+create_bigquery_tables()
 "
-ok "BigQuery table ready: ${PROJECT_ID}.ecom_os.coaching_insights"
+ok "BigQuery tables ready in ${PROJECT_ID}.bomb_ecom"
+
+# Run scrape DDL if it exists
+if [ -f "docs/schemas/bigquery-scrape-ddl.sql" ]; then
+  echo "  Creating scrape tables from DDL..."
+  bq query --use_legacy_sql=false --project_id="${PROJECT_ID}" < docs/schemas/bigquery-scrape-ddl.sql
+  ok "Scrape tables created in bomb_ecom"
+fi
+
+# Run transcript DDL views if exists
+if [ -f "docs/schemas/bigquery-transcript-ddl.sql" ]; then
+  echo "  Creating transcript views from DDL..."
+  bq query --use_legacy_sql=false --project_id="${PROJECT_ID}" < docs/schemas/bigquery-transcript-ddl.sql
+  ok "Transcript views created in bomb_ecom"
+fi
 
 
 # ════════════════════════════════════════════════════════════════
@@ -114,7 +129,7 @@ ok "BigQuery table ready: ${PROJECT_ID}.ecom_os.coaching_insights"
 
 section "Phase 3: Build & Deploy"
 
-# Build Docker image via Cloud Build (no local Docker needed)
+# Build Docker image via Cloud Build
 echo "  Building image (this takes ~2 min)..."
 gcloud builds submit knowledge-pipeline/ \
   --tag "${IMAGE}" \
@@ -168,7 +183,7 @@ else
   ok "Created Pub/Sub topic: ${TOPIC}"
 fi
 
-# Create GCS → Pub/Sub notification (only for new file uploads)
+# Create GCS → Pub/Sub notification
 EXISTING_NOTIF=$(gsutil notification list "gs://${BUCKET}" 2>/dev/null | grep "${TOPIC}" || true)
 if [ -n "${EXISTING_NOTIF}" ]; then
   skip "GCS notification for ${TOPIC}"
@@ -206,7 +221,7 @@ echo ""
 echo "  Cloud Run:    ${CLOUD_RUN_URL}"
 echo "  GCS bucket:   gs://${BUCKET}/coaching-transcripts/"
 echo "  Pub/Sub:      ${TOPIC} → ${SUBSCRIPTION}"
-echo "  BigQuery:     ${PROJECT_ID}.ecom_os.coaching_insights"
+echo "  BigQuery:     ${PROJECT_ID}.bomb_ecom (7 transcript tables + scrape tables)"
 echo ""
 echo "  To process a transcript, upload a .txt file:"
 echo "  gsutil cp my-call.txt gs://${BUCKET}/coaching-transcripts/"
