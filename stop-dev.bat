@@ -1,8 +1,8 @@
 @echo off
 REM Stop development environment
 
-echo Stopping n8n and PostgreSQL...
-docker-compose stop n8n postgres
+echo Stopping n8n + PostgreSQL + Bomb Ecom OS...
+docker-compose stop n8n postgres bom-ecom
 
 echo.
 echo Services stopped!

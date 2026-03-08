@@ -11,7 +11,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Minimal txt2img workflow - customize prompt/checkpoint as needed\nconst workflow = {\n  \"3\": { \"inputs\": { \"ckpt_name\": \"v1-5-pruned-ema.safetensors\" }, \"class_type\": \"CheckpointLoaderSimple\" },\n  \"4\": { \"inputs\": { \"width\": 512, \"height\": 512, \"batch_size\": 1 }, \"class_type\": \"EmptyLatentImage\" },\n  \"6\": { \"inputs\": { \"text\": \"a beautiful landscape, sunset, highly detailed\", \"clip\": [\"3\", 1] }, \"class_type\": \"CLIPTextEncode\" },\n  \"7\": { \"inputs\": { \"text\": \"blurry, low quality\", \"clip\": [\"3\", 1] }, \"class_type\": \"CLIPTextEncode\" },\n  \"9\": { \"inputs\": { \"seed\": Math.floor(Math.random()*1e9), \"steps\": 20, \"cfg\": 7.5, \"sampler_name\": \"euler\", \"scheduler\": \"normal\", \"denoise\": 1, \"model\": [\"3\", 0], \"positive\": [\"6\", 0], \"negative\": [\"7\", 0], \"latent_image\": [\"4\", 0] }, \"class_type\": \"KSampler\" },\n  \"10\": { \"inputs\": { \"samples\": [\"9\", 0], \"vae\": [\"3\", 2] }, \"class_type\": \"VAEDecode\" },\n  \"11\": { \"inputs\": { \"filename_prefix\": \"ComfyUI\", \"images\": [\"10\", 0] }, \"class_type\": \"SaveImage\" }\n};\nreturn [{ json: { prompt: workflow } }];"
+        "jsCode": "// Flux Dev fp8 txt2img workflow\n// Requires: flux1-dev-fp8.safetensors, clip_l.safetensors, t5xxl_fp8_e4m3fn.safetensors, ae.safetensors\nconst prompt = $input.item.json.prompt || \"a product shot, clean white background, professional lighting\";\nconst seed = Math.floor(Math.random() * 1e14);\n\nconst workflow = {\n  \"1\": { \"inputs\": { \"unet_name\": \"flux1-dev-fp8.safetensors\", \"weight_dtype\": \"fp8_e4m3fn\" }, \"class_type\": \"UNETLoader\" },\n  \"2\": { \"inputs\": { \"clip_name1\": \"clip_l.safetensors\", \"clip_name2\": \"t5xxl_fp8_e4m3fn.safetensors\", \"type\": \"flux\", \"device\": \"default\" }, \"class_type\": \"DualCLIPLoader\" },\n  \"3\": { \"inputs\": { \"vae_name\": \"ae.safetensors\" }, \"class_type\": \"VAELoader\" },\n  \"4\": { \"inputs\": { \"text\": prompt, \"clip\": [\"2\", 0] }, \"class_type\": \"CLIPTextEncode\" },\n  \"5\": { \"inputs\": { \"width\": 1024, \"height\": 1024, \"batch_size\": 1 }, \"class_type\": \"EmptyLatentImage\" },\n  \"6\": { \"inputs\": { \"noise\": [\"7\", 0], \"guider\": [\"8\", 0], \"sampler\": [\"9\", 0], \"sigmas\": [\"10\", 0], \"latent_image\": [\"5\", 0] }, \"class_type\": \"SamplerCustomAdvanced\" },\n  \"7\": { \"inputs\": { \"noise_seed\": seed }, \"class_type\": \"RandomNoise\" },\n  \"8\": { \"inputs\": { \"model\": [\"1\", 0], \"conditioning\": [\"4\", 0] }, \"class_type\": \"BasicGuider\" },\n  \"9\": { \"inputs\": { \"sampler_name\": \"euler\" }, \"class_type\": \"KSamplerSelect\" },\n  \"10\": { \"inputs\": { \"model\": [\"1\", 0], \"steps\": 20, \"denoise\": 1.0, \"scheduler\": \"simple\" }, \"class_type\": \"BasicScheduler\" },\n  \"11\": { \"inputs\": { \"samples\": [\"6\", 0], \"vae\": [\"3\", 0] }, \"class_type\": \"VAEDecode\" },\n  \"12\": { \"inputs\": { \"filename_prefix\": \"flux-n8n\", \"images\": [\"11\", 0] }, \"class_type\": \"SaveImage\" }\n};\nreturn [{ json: { prompt: workflow } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -22,7 +22,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://comfyui:8188/prompt",
+        "url": "http://host.docker.internal:8188/prompt",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [

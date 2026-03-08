@@ -1,0 +1,130 @@
+[
+  {
+    "exportLinks": {
+      "application/x-vnd.oasis.opendocument.spreadsheet": "https://docs.google.com/spreadsheets/export?id=1GWOVlI8TlKROM9k55Vt-PTrfoTkiqqXRlqD7mncSP7g&exportFormat=ods",
+      "text/tab-separated-values": "https://docs.google.com/spreadsheets/export?id=1GWOVlI8TlKROM9k55Vt-PTrfoTkiqqXRlqD7mncSP7g&exportFormat=tsv",
+      "application/pdf": "https://docs.google.com/spreadsheets/export?id=1GWOVlI8TlKROM9k55Vt-PTrfoTkiqqXRlqD7mncSP7g&exportFormat=pdf",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "https://docs.google.com/spreadsheets/export?id=1GWOVlI8TlKROM9k55Vt-PTrfoTkiqqXRlqD7mncSP7g&exportFormat=xlsx",
+      "text/csv": "https://docs.google.com/spreadsheets/export?id=1GWOVlI8TlKROM9k55Vt-PTrfoTkiqqXRlqD7mncSP7g&exportFormat=csv",
+      "application/zip": "https://docs.google.com/spreadsheets/export?id=1GWOVlI8TlKROM9k55Vt-PTrfoTkiqqXRlqD7mncSP7g&exportFormat=zip",
+      "application/vnd.oasis.opendocument.spreadsheet": "https://docs.google.com/spreadsheets/export?id=1GWOVlI8TlKROM9k55Vt-PTrfoTkiqqXRlqD7mncSP7g&exportFormat=ods"
+    },
+    "parents": [
+      "183wR6zN108M2BNY1jPj-QnGJLeHO3krS"
+    ],
+    "lastModifyingUser": {
+      "displayName": "Jacob Bottema",
+      "kind": "drive#user",
+      "me": true,
+      "permissionId": "05387264304981007675",
+      "emailAddress": "jake@williamsforeal.com",
+      "photoLink": "https://lh3.googleusercontent.com/a-/ALV-UjXOlMtzGqMIzw9fc7N03-abapp-dXfX46fXHPnidq8tuOzt97ur-Ch9BcEGME9DTAEAoPcg1Ucf9pmVUaMZlSrRGyZjm4mIxrmI7RKs3CrBPOJUCQgnJBfYoWDF5-9qy7HxVvGtbiGqqZHoNbDu2I2ROVfaoNiFaSLuZ7p-BboeK42Ar4yHTwyFrpsyNuBlKCPQhNIOVQ-OplEdxP4mzTDNu-yKsktzbWK_6_3atwpzdDXS2Sxy5cqMYoBpBA6l1S748-90s7EQdPxbpsIvaV_OcDDl0FQqRHAHLircvsVgfUzSQ9DWM16Yv_wHtqAWG6b5zYiMhAofVcqpfo71i2uIJ3aM_0uE8KseQe1H5b2fKqdTgO3DWM1eYzknr9lOetlDCLQbHSDiULRHJ3YnehHRaVjLGNzpzgD7Sun3RaPA2nCyD6Jd_WMcpCX5cvDB4601GyYYcSq_9OyMDBMkdaiApkGIHv-KJeE-YUMA-Vowl_RISAvzvRcj3-ZtM6XuNWlNISm7CyXDrblWa8QCnYiqvyh6fYHrTaD_N6ZvOYXpHzdsa8Mfm6zK-3uUmKWc_BrQ-Pe6qGPiLkNOlbz_6obk7bKuAL5QfCEGCeekIKLu6ER9H8JUkvS1c2QHyhYDtyqro3ggrc9MWE0xxoCBa8asYqpKww9mU29-p9i8BEuStXCGmWSZ0dc8-BLFbZgeIrAsnUmdlwaWjkpykzg8hvRRUGi_neBudIvwZQu3IblloF7vfYP9rSDsR_iBBSZtwBVLiLYucpcMM2TZlufDxZzeMeoCJ-UXE1NE94a1sgZeEold_VMdzq-Y_nT0EWrVy5eE9O0T1mxOaX9ziu6885Q62VEa8SpVIWP32ARmT4mjCJqmaf0Cd3cawpcWuS42aJe7OA9FAOCUe9_P-6jh08ghofAEvGHR1ystgpjsboevhqf1ZgMqij_iup7yeqyMVRb9BQa-8smdDzHy9x0CkqzlaIBuAsv3rWuwQmdjFdMfoZ6On_0qZJVpAZs0aYldHeQyl667LsHdAJ75njTU3miaLbhyFKJQjjC0pHvsLWJ2QEurtLqI=s64"
+    },
+    "owners": [
+      {
+        "displayName": "Jacob Bottema",
+        "kind": "drive#user",
+        "me": true,
+        "permissionId": "05387264304981007675",
+        "emailAddress": "jake@williamsforeal.com",
+        "photoLink": "https://lh3.googleusercontent.com/a-/ALV-UjXOlMtzGqMIzw9fc7N03-abapp-dXfX46fXHPnidq8tuOzt97ur-Ch9BcEGME9DTAEAoPcg1Ucf9pmVUaMZlSrRGyZjm4mIxrmI7RKs3CrBPOJUCQgnJBfYoWDF5-9qy7HxVvGtbiGqqZHoNbDu2I2ROVfaoNiFaSLuZ7p-BboeK42Ar4yHTwyFrpsyNuBlKCPQhNIOVQ-OplEdxP4mzTDNu-yKsktzbWK_6_3atwpzdDXS2Sxy5cqMYoBpBA6l1S748-90s7EQdPxbpsIvaV_OcDDl0FQqRHAHLircvsVgfUzSQ9DWM16Yv_wHtqAWG6b5zYiMhAofVcqpfo71i2uIJ3aM_0uE8KseQe1H5b2fKqdTgO3DWM1eYzknr9lOetlDCLQbHSDiULRHJ3YnehHRaVjLGNzpzgD7Sun3RaPA2nCyD6Jd_WMcpCX5cvDB4601GyYYcSq_9OyMDBMkdaiApkGIHv-KJeE-YUMA-Vowl_RISAvzvRcj3-ZtM6XuNWlNISm7CyXDrblWa8QCnYiqvyh6fYHrTaD_N6ZvOYXpHzdsa8Mfm6zK-3uUmKWc_BrQ-Pe6qGPiLkNOlbz_6obk7bKuAL5QfCEGCeekIKLu6ER9H8JUkvS1c2QHyhYDtyqro3ggrc9MWE0xxoCBa8asYqpKww9mU29-p9i8BEuStXCGmWSZ0dc8-BLFbZgeIrAsnUmdlwaWjkpykzg8hvRRUGi_neBudIvwZQu3IblloF7vfYP9rSDsR_iBBSZtwBVLiLYucpcMM2TZlufDxZzeMeoCJ-UXE1NE94a1sgZeEold_VMdzq-Y_nT0EWrVy5eE9O0T1mxOaX9ziu6885Q62VEa8SpVIWP32ARmT4mjCJqmaf0Cd3cawpcWuS42aJe7OA9FAOCUe9_P-6jh08ghofAEvGHR1ystgpjsboevhqf1ZgMqij_iup7yeqyMVRb9BQa-8smdDzHy9x0CkqzlaIBuAsv3rWuwQmdjFdMfoZ6On_0qZJVpAZs0aYldHeQyl667LsHdAJ75njTU3miaLbhyFKJQjjC0pHvsLWJ2QEurtLqI=s64"
+      }
+    ],
+    "permissions": [
+      {
+        "kind": "drive#permission",
+        "id": "05387264304981007675",
+        "type": "user",
+        "emailAddress": "jake@williamsforeal.com",
+        "role": "owner",
+        "displayName": "Jacob Bottema",
+        "photoLink": "https://lh3.googleusercontent.com/a-/ALV-UjUhvASBowOyRb_qvGmB_KiQ6ehLK08cGOk8of-tzfAXkmZah50lgfo1KKurIXBLhTm5_eojYUG2o0_pPtda4I9CGr-rZgDZ-vwAdbeZZL9pf8RUO1RoWUmjimdWqdVd1xXy2hNaLJw0nBFO5BoMH-2lc7l1L3766N40BoDPysCiLhZpOpfnN7gRWOR695Y5FtHe8F96cDfPT4IvP1C_YD06Ywiuj59h8Y1vqX9y3fjm32jOAYXoH3jPsS5MIV8vz8ppXUqBHX097qWb08RvCnUOr56O2nmKQJoqPbMQKxzqmKSffTsvUv4pEauSZM27GR3Uk5MadRQUdEQ8L_MOaHAPSjXmF1kXyj4MpNPmYwJmt392uREgMrFFmljlOQKdD-o4wWeFzrs2bupnhGih5lgdWbhHko6YVSr1UpXP2t_Cb5xV4uI27Gn-75wUcl64BvDKPQAQdmTCS0vSyV25rFD4LK1Mmyl8DWDqyuLgtjjccDTJjKxDf_E6K742BHMhUXKKlwffDKd46o7FlkdLfMcZ4kjz9aI920kApzqZp7LhzgJ_PMjglxGC5kSrIcVJFUOksKf8x7BrUIqWzeU8HHx21Cv-NmpUCbMXKIo_moMK1BWqg0k8hBuwHiVGd-_nlSILFuC9hEvxeNwkKzd0PqUx7jtcZQqR8YJ8taECb2lScDmsatUhH2ypfgL0DK0t_M08Z5TDt2hl2RViqRCToNkipvOTcwArrj8khgvwq9zYI5hg7P0YjRQJDHT9x3DSP6Icu7wtggzW_bKXjZtubVFAeP-jFcQAF9zHqwTwZ0ZhMdFEhmwqw-fTTIIhLZ1R95Y8kzvnU901SSP7E5ZpYaMHRVO0pAIIAa6l-aPty7aMfreGsKcPoYgGhEICGgVzsjsEEPjlqjJQf3MNmT26PEV5YdwkXagvgQQdJ_srBM7pZogmZ4je-7hFXxWtYZvRZyUb1vNQjQjSeC40thoZNRmx9wag78WnEaiGKziaLmcDWF85Ijw_nqJl8BsltwwHWP2r1ulpAgvbNC4oI4NQVOOJiZEW4Ru21dz2mzfUBNmnl870bu30=s64",
+        "deleted": false,
+        "pendingOwner": false
+      }
+    ],
+    "spaces": [
+      "drive"
+    ],
+    "capabilities": {
+      "canAcceptOwnership": false,
+      "canAddChildren": false,
+      "canAddMyDriveParent": false,
+      "canChangeCopyRequiresWriterPermission": true,
+      "canChangeItemDownloadRestriction": true,
+      "canChangeSecurityUpdateEnabled": false,
+      "canChangeViewersCanCopyContent": true,
+      "canComment": true,
+      "canCopy": true,
+      "canDelete": true,
+      "canDisableInheritedPermissions": false,
+      "canDownload": true,
+      "canEdit": true,
+      "canEnableInheritedPermissions": true,
+      "canListChildren": false,
+      "canModifyContent": true,
+      "canModifyContentRestriction": true,
+      "canModifyEditorContentRestriction": true,
+      "canModifyOwnerContentRestriction": true,
+      "canModifyLabels": false,
+      "canMoveChildrenWithinDrive": false,
+      "canMoveItemIntoTeamDrive": true,
+      "canMoveItemOutOfDrive": true,
+      "canMoveItemWithinDrive": true,
+      "canReadLabels": false,
+      "canReadRevisions": true,
+      "canRemoveChildren": false,
+      "canRemoveContentRestriction": false,
+      "canRemoveMyDriveParent": true,
+      "canRename": true,
+      "canShare": true,
+      "canTrash": true,
+      "canUntrash": true
+    },
+    "permissionIds": [
+      "05387264304981007675"
+    ],
+    "linkShareMetadata": {
+      "securityUpdateEligible": false,
+      "securityUpdateEnabled": true
+    },
+    "downloadRestrictions": {
+      "itemDownloadRestriction": {
+        "restrictedForReaders": false,
+        "restrictedForWriters": false
+      },
+      "effectiveDownloadRestrictionWithContext": {
+        "restrictedForReaders": false,
+        "restrictedForWriters": false
+      }
+    },
+    "kind": "drive#file",
+    "id": "1GWOVlI8TlKROM9k55Vt-PTrfoTkiqqXRlqD7mncSP7g",
+    "name": "prod-research2.27",
+    "mimeType": "application/vnd.google-apps.spreadsheet",
+    "starred": false,
+    "trashed": false,
+    "explicitlyTrashed": false,
+    "version": "15",
+    "webViewLink": "https://docs.google.com/spreadsheets/d/1GWOVlI8TlKROM9k55Vt-PTrfoTkiqqXRlqD7mncSP7g/edit?usp=drivesdk",
+    "iconLink": "https://drive-thirdparty.googleusercontent.com/16/type/application/vnd.google-apps.spreadsheet",
+    "hasThumbnail": true,
+    "thumbnailLink": "https://lh3.googleusercontent.com/drive-storage/AJQWtBNaJpYn4AJop8rSdeOiB8660BTtcs6F9RGCK5DZE9GNBCgoqjIkEAUVMHAOhCOxsDDriYpgGwc57JV0vurd1tdoTdUCc98KK9JihhpCktJnEfcLUAWngQMm6xTYTdg=s220",
+    "thumbnailVersion": "4",
+    "viewedByMe": true,
+    "viewedByMeTime": "2026-03-06T13:15:31.164Z",
+    "createdTime": "2026-03-06T08:04:14.752Z",
+    "modifiedTime": "2026-03-06T16:13:44.962Z",
+    "modifiedByMeTime": "2026-03-06T16:13:44.962Z",
+    "modifiedByMe": true,
+    "shared": false,
+    "ownedByMe": true,
+    "viewersCanCopyContent": true,
+    "copyRequiresWriterPermission": false,
+    "writersCanShare": true,
+    "size": "1702",
+    "quotaBytesUsed": "1702",
+    "isAppAuthorized": false,
+    "inheritedPermissionsDisabled": false
+  }
+]
