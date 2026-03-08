@@ -1,0 +1,708 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>williamsforeal — Agent Team & Skills Dashboard</title>
+<style>
+  :root {
+    --bg: #0a0a0f; --surface: #12121a; --card: #1a1a26; --border: #2a2a3a;
+    --text: #e8e8f0; --muted: #7a7a90; --accent: #a78bfa; --accent2: #818cf8;
+    --green: #34d399; --amber: #fbbf24; --red: #f87171; --blue: #60a5fa;
+    --cyan: #22d3ee; --pink: #f472b6; --orange: #fb923c;
+    --gradient1: linear-gradient(135deg, #a78bfa 0%, #818cf8 100%);
+    --gradient2: linear-gradient(135deg, #34d399 0%, #22d3ee 100%);
+    --gradient3: linear-gradient(135deg, #f472b6 0%, #fb923c 100%);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; overflow-x: hidden; }
+
+  /* Header */
+  .header { padding: 40px 32px 24px; max-width: 1200px; margin: 0 auto; }
+  .header-top { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .brand-icon { width: 48px; height: 48px; border-radius: 14px; background: var(--gradient1); display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; color: white; letter-spacing: -1px; }
+  .brand h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
+  .brand p { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .eval-badge { display: flex; align-items: center; gap: 8px; background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.2); border-radius: 20px; padding: 6px 14px; font-size: 13px; color: var(--green); font-weight: 600; }
+  .eval-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  /* Nav tabs */
+  .nav { display: flex; gap: 4px; padding: 0 32px; max-width: 1200px; margin: 0 auto 24px; border-bottom: 1px solid var(--border); }
+  .nav-tab { padding: 10px 18px; font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; background: none; border-top: none; border-left: none; border-right: none; }
+  .nav-tab:hover { color: var(--text); }
+  .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* Sections */
+  .section { max-width: 1200px; margin: 0 auto; padding: 0 32px; display: none; }
+  .section.active { display: block; }
+
+  /* Architecture view */
+  .arch-grid { display: grid; grid-template-columns: 1fr 80px 1fr; gap: 0; align-items: start; margin-bottom: 32px; }
+  .tier-box { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
+  .tier-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 4px; }
+  .tier-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .tier-subtitle { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+  .tier-items { display: flex; flex-direction: column; gap: 8px; }
+  .tier-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 10px; background: rgba(255,255,255,0.03); font-size: 13px; }
+  .tier-item .emoji { font-size: 18px; width: 28px; text-align: center; flex-shrink: 0; }
+  .tier-item .name { font-weight: 600; }
+  .tier-item .role { color: var(--muted); font-size: 12px; }
+  .bridge-col { display: flex; flex-direction: column; align-items: center; justify-content: center; padding-top: 60px; }
+  .bridge-arrow { width: 2px; height: 60px; background: var(--border); position: relative; }
+  .bridge-arrow::before, .bridge-arrow::after { content: ''; position: absolute; left: 50%; transform: translateX(-50%); width: 40px; height: 1px; background: var(--border); }
+  .bridge-arrow::before { top: 0; }
+  .bridge-arrow::after { bottom: 0; }
+  .bridge-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; writing-mode: vertical-lr; transform: rotate(180deg); margin: 8px 0; }
+  .bridge-icon { font-size: 20px; margin: 8px 0; }
+
+  /* Skills cards */
+  .skills-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .skill-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; transition: all 0.2s; cursor: pointer; }
+  .skill-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(167,139,250,0.08); }
+  .skill-card-head { padding: 20px 20px 0; display: flex; justify-content: space-between; align-items: flex-start; }
+  .skill-icon { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+  .skill-card-head .meta { text-align: right; }
+  .skill-status { font-size: 11px; padding: 3px 8px; border-radius: 6px; font-weight: 600; }
+  .skill-status.auto { background: rgba(167,139,250,0.15); color: var(--accent); }
+  .skill-status.manual { background: rgba(52,211,153,0.15); color: var(--green); }
+  .skill-status.ref { background: rgba(122,122,144,0.15); color: var(--muted); }
+  .skill-card-body { padding: 14px 20px 20px; }
+  .skill-card-body h3 { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
+  .skill-card-body .desc { font-size: 13px; color: var(--muted); margin-bottom: 12px; line-height: 1.5; }
+  .skill-modes { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .mode-tag { font-size: 11px; padding: 3px 8px; border-radius: 6px; background: rgba(255,255,255,0.05); color: var(--text); border: 1px solid var(--border); }
+  .skill-triggers { font-size: 11px; color: var(--muted); }
+  .skill-triggers code { background: rgba(255,255,255,0.06); padding: 1px 5px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 10px; }
+
+  /* Skill detail panel */
+  .detail-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 100; backdrop-filter: blur(4px); }
+  .detail-overlay.open { display: flex; align-items: center; justify-content: center; }
+  .detail-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; width: 90%; max-width: 720px; max-height: 85vh; overflow-y: auto; padding: 32px; position: relative; }
+  .detail-panel::-webkit-scrollbar { width: 6px; }
+  .detail-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  .detail-close { position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.06); border: none; color: var(--muted); width: 32px; height: 32px; border-radius: 8px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+  .detail-close:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+  .detail-panel h2 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+  .detail-panel .detail-desc { color: var(--muted); font-size: 14px; margin-bottom: 20px; }
+  .detail-section { margin-bottom: 20px; }
+  .detail-section h4 { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); margin-bottom: 10px; }
+  .detail-table { width: 100%; border-collapse: collapse; }
+  .detail-table th { text-align: left; font-size: 12px; color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--border); font-weight: 500; }
+  .detail-table td { padding: 8px 10px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+  .detail-list { list-style: none; }
+  .detail-list li { padding: 6px 0; font-size: 13px; display: flex; align-items: flex-start; gap: 8px; }
+  .detail-list li::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-top: 7px; flex-shrink: 0; }
+  .integration-flow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; font-size: 13px; }
+  .flow-arrow { color: var(--accent); font-size: 16px; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; }
+  .badge.pass { background: rgba(52,211,153,0.15); color: var(--green); }
+  .badge.warn { background: rgba(251,191,36,0.15); color: var(--amber); }
+  .type-badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 500; background: rgba(255,255,255,0.06); color: var(--muted); border: 1px solid var(--border); }
+
+  /* Integration map */
+  .int-grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 32px; }
+  .int-row { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; display: flex; align-items: center; gap: 16px; }
+  .int-from, .int-to { font-size: 13px; font-weight: 600; min-width: 130px; }
+  .int-desc { font-size: 12px; color: var(--muted); flex: 1; }
+  .int-arrow-icon { color: var(--accent); font-size: 18px; flex-shrink: 0; }
+
+  /* Infra table */
+  .infra-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; margin-bottom: 32px; }
+  .infra-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+  .infra-card h4 { font-size: 15px; font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+  .infra-card .infra-url { font-size: 12px; color: var(--cyan); font-family: monospace; margin-bottom: 10px; word-break: break-all; }
+  .infra-card .infra-detail { font-size: 12px; color: var(--muted); }
+  .infra-card .infra-detail strong { color: var(--text); font-weight: 500; }
+
+  /* Eval summary */
+  .eval-summary { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 32px; }
+  .eval-summary h3 { font-size: 16px; margin-bottom: 16px; }
+  .eval-bars { display: flex; flex-direction: column; gap: 14px; }
+  .eval-bar-row { display: flex; align-items: center; gap: 12px; }
+  .eval-bar-label { width: 140px; font-size: 13px; color: var(--muted); text-align: right; flex-shrink: 0; }
+  .eval-bar-track { flex: 1; height: 24px; background: #21262d; border-radius: 6px; overflow: hidden; position: relative; }
+  .eval-bar-fill { height: 100%; border-radius: 6px; display: flex; align-items: center; padding-left: 10px; font-size: 12px; font-weight: 700; transition: width 1.2s ease; }
+  .eval-bar-fill.skill { background: linear-gradient(90deg, #7c3aed, #a78bfa); }
+  .eval-bar-fill.base { background: linear-gradient(90deg, #92400e, #fbbf24); }
+
+  /* Webhook table */
+  .webhook-table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 14px; overflow: hidden; border: 1px solid var(--border); margin-bottom: 32px; }
+  .webhook-table th { text-align: left; font-size: 12px; color: var(--muted); padding: 12px 16px; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border); font-weight: 500; }
+  .webhook-table td { padding: 12px 16px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+  .webhook-table td:first-child { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--cyan); }
+
+  /* Section headers */
+  .section-header { margin-bottom: 20px; }
+  .section-header h2 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .section-header p { font-size: 13px; color: var(--muted); }
+
+  /* Footer */
+  .footer { text-align: center; padding: 40px 32px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--border); margin-top: 40px; }
+
+  @media (max-width: 800px) {
+    .arch-grid { grid-template-columns: 1fr; }
+    .bridge-col { flex-direction: row; padding: 16px 0; }
+    .bridge-arrow { width: 60px; height: 2px; }
+    .bridge-label { writing-mode: horizontal-tb; transform: none; }
+    .skills-grid { grid-template-columns: 1fr; }
+    .header { padding: 24px 16px 16px; }
+    .nav, .section { padding-left: 16px; padding-right: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-top">
+    <div class="brand">
+      <div class="brand-icon">W</div>
+      <div>
+        <h1>Agent Team & Skills</h1>
+        <p>williamsforeal LLC &middot; Cowork + OpenClaw Architecture</p>
+      </div>
+    </div>
+    <div class="eval-badge">
+      <div class="eval-dot"></div>
+      92.5% Eval Pass Rate
+    </div>
+  </div>
+</div>
+
+<!-- Nav -->
+<div class="nav">
+  <button class="nav-tab active" data-tab="architecture">Architecture</button>
+  <button class="nav-tab" data-tab="skills">Skills</button>
+  <button class="nav-tab" data-tab="integration">Integration Map</button>
+  <button class="nav-tab" data-tab="infra">Infrastructure</button>
+  <button class="nav-tab" data-tab="eval">Eval Results</button>
+</div>
+
+<!-- Architecture Tab -->
+<div class="section active" id="architecture">
+  <div class="section-header">
+    <h2>Two-Tier Architecture</h2>
+    <p>Windows Cowork handles strategy, brand, and ads. Linux OpenClaw handles code, APIs, and deployment.</p>
+  </div>
+  <div class="arch-grid">
+    <!-- Tier 2: Cowork -->
+    <div class="tier-box" style="border-color: rgba(167,139,250,0.3);">
+      <div class="tier-label" style="color: var(--accent);">Tier 2 &middot; Windows</div>
+      <div class="tier-title">Cowork Agent</div>
+      <div class="tier-subtitle">Single agent + 5 on-demand skills</div>
+      <div class="tier-items">
+        <div class="tier-item"><span class="emoji">&#x1F3AF;</span><div><div class="name">creative-ads</div><div class="role">DTC copy, ad families, Motion Methodology</div></div></div>
+        <div class="tier-item"><span class="emoji">&#x1F4CA;</span><div><div class="name">ecom-strategy</div><div class="role">Campaign planning, funnels, positioning</div></div></div>
+        <div class="tier-item"><span class="emoji">&#x1F4D6;</span><div><div class="name">brand-kb</div><div class="role">Compliance, voice, terminology (read-only)</div></div></div>
+        <div class="tier-item"><span class="emoji">&#x1F527;</span><div><div class="name">technical-ops</div><div class="role">Claude Code bridge, infra reference</div></div></div>
+        <div class="tier-item"><span class="emoji">&#x1F3A8;</span><div><div class="name">media-generation</div><div class="role">Image, video, BannerBear, ComfyUI</div></div></div>
+      </div>
+    </div>
+
+    <!-- Bridge -->
+    <div class="bridge-col">
+      <div class="bridge-icon">&#x1F4C1;</div>
+      <div class="bridge-label">SHARED FOLDER</div>
+      <div style="width:2px;height:40px;background:var(--border);"></div>
+      <div style="font-size:11px;color:var(--muted);text-align:center;">openclaw-<br>micro-team/</div>
+    </div>
+
+    <!-- Tier 1: OpenClaw -->
+    <div class="tier-box" style="border-color: rgba(52,211,153,0.3);">
+      <div class="tier-label" style="color: var(--green);">Tier 1 &middot; Linux / WSL</div>
+      <div class="tier-title">OpenClaw Agents</div>
+      <div class="tier-subtitle">5 specialized agents via Claude Code</div>
+      <div class="tier-items">
+        <div class="tier-item"><span class="emoji">&#x1F300;</span><div><div class="name">Cyclone &middot; CTO</div><div class="role">Lead coordinator, architecture</div></div></div>
+        <div class="tier-item"><span class="emoji">&#x1F528;</span><div><div class="name">Forge &middot; Build</div><div class="role">Code, features, integrations</div></div></div>
+        <div class="tier-item"><span class="emoji">&#x1F4CA;</span><div><div class="name">Signal &middot; Data</div><div class="role">Analytics, BigQuery, pipelines</div></div></div>
+        <div class="tier-item"><span class="emoji">&#x1F3A8;</span><div><div class="name">Muse &middot; Creative</div><div class="role">Ad generation, visual specs</div></div></div>
+        <div class="tier-item"><span class="emoji">&#x1F3D7;&#xFE0F;</span><div><div class="name">Atlas &middot; Ops</div><div class="role">Infrastructure, Docker, GCP</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Flow description -->
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:24px;">
+    <h4 style="font-size:14px;margin-bottom:12px;">How they connect</h4>
+    <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="color:var(--accent);font-weight:600;min-width:120px;">Strategy &#x2192; Code</span>
+        <span style="color:var(--muted);">Cowork creates briefs & specs &#x2192; drops in shared folder &#x2192; Claude Code implements</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="color:var(--green);font-weight:600;min-width:120px;">Code &#x2192; Review</span>
+        <span style="color:var(--muted);">Claude Code pushes builds &#x2192; Cowork reviews outcomes & iterates</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="color:var(--cyan);font-weight:600;min-width:120px;">Shared Knowledge</span>
+        <span style="color:var(--muted);">Both layers read from skills/, shared/, and brand-profiles/</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Skills Tab -->
+<div class="section" id="skills">
+  <div class="section-header">
+    <h2>Custom Skills</h2>
+    <p>5 on-demand skills loaded via keyword triggers from AGENTS.md. Click any card for full details.</p>
+  </div>
+  <div class="skills-grid" id="skillsGrid"></div>
+</div>
+
+<!-- Integration Tab -->
+<div class="section" id="integration">
+  <div class="section-header">
+    <h2>Integration Map</h2>
+    <p>How skills flow into each other and connect to Cowork built-in plugins.</p>
+  </div>
+
+  <h3 style="font-size:15px;margin-bottom:12px;">Cross-Skill Flows</h3>
+  <div class="int-grid">
+    <div class="int-row"><span class="int-from" style="color:var(--blue);">ecom-strategy</span><span class="int-arrow-icon">&#x2192;</span><span class="int-to" style="color:var(--accent);">creative-ads</span><span class="int-desc">Campaign brief becomes the copy brief. Angles, avatars, and funnel stages map directly.</span></div>
+    <div class="int-row"><span class="int-from" style="color:var(--accent);">creative-ads</span><span class="int-arrow-icon">&#x2192;</span><span class="int-to" style="color:var(--pink);">media-generation</span><span class="int-desc">Copy (headlines, CTAs) feeds into BannerBear template specs and video scripts.</span></div>
+    <div class="int-row"><span class="int-from" style="color:var(--pink);">media-generation</span><span class="int-arrow-icon">&#x2192;</span><span class="int-to" style="color:var(--orange);">technical-ops</span><span class="int-desc">BannerBear renders route through n8n webhooks for automated deployment.</span></div>
+    <div class="int-row"><span class="int-from" style="color:var(--muted);">brand-kb</span><span class="int-arrow-icon">&#x2192;</span><span class="int-to" style="color:var(--accent);">creative-ads</span><span class="int-desc">Compliance rules, terminology, and belief framework loaded for every copy output.</span></div>
+    <div class="int-row"><span class="int-from" style="color:var(--orange);">technical-ops</span><span class="int-arrow-icon">&#x2192;</span><span class="int-to" style="color:var(--green);">OpenClaw</span><span class="int-desc">Specs and briefs handed off to Linux layer. Cyclone coordinates, Forge builds.</span></div>
+  </div>
+
+  <h3 style="font-size:15px;margin-bottom:12px;">Cowork Plugin Mapping</h3>
+  <div class="int-grid">
+    <div class="int-row"><span class="int-from" style="color:var(--muted);">marketing:campaign-planning</span><span class="int-arrow-icon">+</span><span class="int-to" style="color:var(--blue);">ecom-strategy</span><span class="int-desc">Built-in plugin adds calendar + channel detail to custom strategy skill.</span></div>
+    <div class="int-row"><span class="int-from" style="color:var(--muted);">marketing:content-creation</span><span class="int-arrow-icon">+</span><span class="int-to" style="color:var(--accent);">creative-ads</span><span class="int-desc">Built-in handles blog/social; custom handles DTC ad copy with brand compliance.</span></div>
+    <div class="int-row"><span class="int-from" style="color:var(--muted);">marketing:competitive-analysis</span><span class="int-arrow-icon">+</span><span class="int-to" style="color:var(--blue);">ecom-strategy</span><span class="int-desc">Built-in runs web research; custom adds DTC-specific positioning framework.</span></div>
+    <div class="int-row"><span class="int-from" style="color:var(--muted);">sales:competitive-intelligence</span><span class="int-arrow-icon">+</span><span class="int-to" style="color:var(--blue);">ecom-strategy</span><span class="int-desc">Built-in generates battlecards; custom maps competitive gaps to ad angles.</span></div>
+  </div>
+</div>
+
+<!-- Infrastructure Tab -->
+<div class="section" id="infra">
+  <div class="section-header">
+    <h2>Infrastructure</h2>
+    <p>Key services, endpoints, and technical reference for the pipeline.</p>
+  </div>
+
+  <div class="infra-grid">
+    <div class="infra-card">
+      <h4>&#x2699;&#xFE0F; n8n</h4>
+      <div class="infra-url">http://localhost:5678</div>
+      <div class="infra-detail">
+        <strong>Runs in:</strong> Docker on Windows<br>
+        <strong>Purpose:</strong> Backend automation for Bomb Ecom OS<br>
+        <strong>Webhooks:</strong> 5 planned endpoints
+      </div>
+    </div>
+    <div class="infra-card">
+      <h4>&#x2601;&#xFE0F; GCP</h4>
+      <div class="infra-url">gen-lang-client-0234791928</div>
+      <div class="infra-detail">
+        <strong>Region:</strong> us-central1<br>
+        <strong>Services:</strong> Vertex AI, BigQuery, Cloud Run, Functions<br>
+        <strong>Deploy:</strong> gcp-deploy skill (OpenClaw)
+      </div>
+    </div>
+    <div class="infra-card">
+      <h4>&#x1F4BE; Airtable</h4>
+      <div class="infra-url">appvPrfjiuXIhdNuW</div>
+      <div class="infra-detail">
+        <strong>Main base:</strong> Static Scaler 1000<br>
+        <strong>Ad copy base:</strong> appaz3BOFrhlI1MWf<br>
+        <strong>Tables:</strong> Projects, Ad Copy, Static Creatives, Campaigns
+      </div>
+    </div>
+    <div class="infra-card">
+      <h4>&#x1F433; Docker</h4>
+      <div class="infra-url">Cyclone-SS/docker-compose.yml</div>
+      <div class="infra-detail">
+        <strong>Running:</strong> n8n container<br>
+        <strong>Planned:</strong> React frontend, additional services<br>
+        <strong>Location:</strong> Windows host
+      </div>
+    </div>
+    <div class="infra-card">
+      <h4>&#x1F5BC;&#xFE0F; BannerBear</h4>
+      <div class="infra-url">api.bannerbear.com/v2</div>
+      <div class="infra-detail">
+        <strong>Purpose:</strong> Templated static ad rendering<br>
+        <strong>Integration:</strong> n8n webhook &#x2192; API call<br>
+        <strong>Spec:</strong> template_id + modifications[]
+      </div>
+    </div>
+    <div class="infra-card">
+      <h4>&#x1F9EA; Bria (fal-ai)</h4>
+      <div class="infra-url">fal-ai/bria/product-shot</div>
+      <div class="infra-detail">
+        <strong>Purpose:</strong> Product placement in scenes<br>
+        <strong>Critical:</strong> Never use Flux Dev for product shots<br>
+        <strong>Params:</strong> image_url, scene_description, placement_type
+      </div>
+    </div>
+  </div>
+
+  <h3 style="font-size:15px;margin-bottom:12px;">n8n Webhook Endpoints</h3>
+  <table class="webhook-table">
+    <thead><tr><th>Endpoint</th><th>Purpose</th><th>Trigger</th></tr></thead>
+    <tbody>
+      <tr><td>/webhook/static-ad</td><td>Static ad generation pipeline</td><td>Manual / Cowork handoff</td></tr>
+      <tr><td>/webhook/ad-family</td><td>Ad family pipeline (multi-asset)</td><td>creative-ads brief output</td></tr>
+      <tr><td>/webhook/product-import</td><td>Import products from suppliers</td><td>Scheduled / manual</td></tr>
+      <tr><td>/webhook/spy-results</td><td>Receive competitive spy data</td><td>External scraper callback</td></tr>
+      <tr><td>/webhook/meta-publish</td><td>Publish ads to Meta</td><td>Approval workflow complete</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Eval Tab -->
+<div class="section" id="eval">
+  <div class="section-header">
+    <h2>Eval Results</h2>
+    <p>Iteration 1 benchmark — 3 test cases, 28 assertions, with-skill vs baseline comparison.</p>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;">
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;text-align:center;">
+      <div style="font-size:32px;font-weight:700;color:var(--green);">92.5%</div>
+      <div style="font-size:12px;color:var(--muted);">With Skill</div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;text-align:center;">
+      <div style="font-size:32px;font-weight:700;color:var(--amber);">79.2%</div>
+      <div style="font-size:12px;color:var(--muted);">Baseline</div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;text-align:center;">
+      <div style="font-size:32px;font-weight:700;color:var(--accent);">+13.3%</div>
+      <div style="font-size:12px;color:var(--muted);">Delta</div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;text-align:center;">
+      <div style="font-size:32px;font-weight:700;color:var(--cyan);">26/28</div>
+      <div style="font-size:12px;color:var(--muted);">Passed</div>
+    </div>
+  </div>
+
+  <div class="eval-summary">
+    <h3>Pass Rate by Test Case</h3>
+    <div class="eval-bars" id="evalBars"></div>
+  </div>
+
+  <div id="evalDetails"></div>
+</div>
+
+<!-- Detail Overlay -->
+<div class="detail-overlay" id="detailOverlay">
+  <div class="detail-panel" id="detailPanel">
+    <button class="detail-close" id="detailClose">&times;</button>
+    <div id="detailContent"></div>
+  </div>
+</div>
+
+<div class="footer">
+  williamsforeal LLC &middot; Bomb Ecom OS &middot; Cowork + OpenClaw Agent Architecture<br>
+  Built with Claude Cowork &middot; skill-creator eval framework
+</div>
+
+<script>
+// Skills data
+const skills = [
+  {
+    id: 'creative-ads', icon: '&#x1F3AF;', color: '#a78bfa',
+    name: 'Creative Ads', status: 'manual', statusLabel: 'On-Demand',
+    desc: 'DTC ad copy, ad families (Motion Methodology), static ads, UGC scripts, carousel copy, email sequences, landing pages, and Bomb Ecom OS UI copy.',
+    modes: ['Write', 'Review', 'Audit', 'Adapt'],
+    triggers: ['/ad-copy', '/hook', '/copy', '"ad family"', '"write me a hook"'],
+    tools: ['Read', 'Grep', 'Glob', 'Edit', 'Write', 'WebSearch'],
+    details: {
+      hierarchy: ['Hook (pattern interrupt)', 'Agitation (name the pain)', 'Mechanism (how it solves)', 'Proof (social/demo)', 'CTA (specific next step)'],
+      surfaces: ['Static Ad (headline 5-12 words, CTA badge 2-4 words)', 'Meta Fields (Headline 40ch, Description 30ch, Primary Text)', 'Carousel (hook card 1, CTA final card)', 'UGC Script (0-3s hook, 3-20s body, 20-30s CTA)'],
+      angles: ['Curiosity', 'Identity', 'Pain Relief', 'Social Proof', 'Us vs Them', 'Urgency', 'Gift', 'Work/Hobby', 'Science', 'Cost', 'Scarcity'],
+      avatars: ['Desk Workers', 'Women 45+', 'Gift Buyers', 'Hobbyists', 'Professionals', 'General'],
+      integrations: [
+        { from: 'ecom-strategy', action: 'provides campaign brief' },
+        { from: 'media-generation', action: 'handles visual rendering' },
+        { from: 'brand-kb', action: 'deep brand profiles for compliance' },
+        { from: 'technical-ops', action: 'oversees code/deploy' }
+      ]
+    }
+  },
+  {
+    id: 'ecom-strategy', icon: '&#x1F4CA;', color: '#60a5fa',
+    name: 'Ecom Strategy', status: 'manual', statusLabel: 'On-Demand',
+    desc: 'Campaign planning, brand positioning, competitive analysis, funnel architecture, KPI setting, and launch strategies for DTC brands.',
+    modes: ['Plan', 'Review', 'Analyze'],
+    triggers: ['/strategy', '/campaign', '"plan the campaign"', '"competitor analysis"'],
+    tools: ['Read', 'Grep', 'Glob', 'WebSearch', 'Write'],
+    details: {
+      planningFlow: ['Define goal (revenue/ROAS/CPA)', 'Identify avatar(s)', 'Choose angle(s) from 11', 'Map to funnel stage', 'Select media mix', 'Set budget & timeline', 'Compliance check', 'Output campaign brief'],
+      funnelStages: ['Cold: Attention + curiosity (CPM, CTR, hook rate)', 'Warm: Education + trust (engagement, add-to-cart)', 'Hot: Conversion (CPA, ROAS)', 'Retention: Repeat purchase, LTV, referral'],
+      integrations: [
+        { from: 'creative-ads', action: 'executes copy from campaign brief' },
+        { from: 'brand-kb', action: 'verify positioning vs compliance' },
+        { from: 'media-generation', action: 'visual requirements per asset' },
+        { from: 'technical-ops', action: 'maps to n8n webhook triggers' }
+      ]
+    }
+  },
+  {
+    id: 'brand-kb', icon: '&#x1F4D6;', color: '#7a7a90',
+    name: 'Brand KB', status: 'ref', statusLabel: 'Auto-load',
+    desc: 'Read-only reference skill for brand compliance, voice verification, terminology glossary, belief framework alignment, and audit sweep patterns.',
+    modes: ['Reference only'],
+    triggers: ['/brand', '/compliance', '"is this compliant"', '"terminology"'],
+    tools: ['Read', 'Grep', 'Glob'],
+    details: {
+      brands: ['Abundria / PalmAura \u2014 DTC wellness', 'williamsforeal \u2014 personal brand, music, creative'],
+      compliance: ['P0 banned: cures, treats, heals, reverses, clinically proven', 'No before/after medical results', 'No unauthorized testimonials', 'Tone: empowering + grounded, never clinical or fear-based'],
+      terminology: ['"warm compression" not "heat therapy"', '"hand reset" not "hand treatment"', '"Hand Stress Loop" not "hand problems"', '"360\u00b0 compression" not "all-around"', '"ad family" not "ad set" or "creative batch"'],
+      beliefs: ['1. Hand strain is real and addressable', '2. Traditional solutions aren\u2019t enough', '3. Warm compression + massage is the right mechanism', '4. PalmAura delivers this better than alternatives', '5. People like me use it and love it', '6. Now is the right time']
+    }
+  },
+  {
+    id: 'technical-ops', icon: '&#x1F527;', color: '#fb923c',
+    name: 'Technical Ops', status: 'manual', statusLabel: 'On-Demand',
+    desc: 'Bridge between Windows Cowork and Linux/OpenClaw. References n8n, Docker, GCP, Airtable, Git, and coordinates spec-based handoffs.',
+    modes: ['Reference', 'Coordinate', 'Spec'],
+    triggers: ['/tech', '/code', '/deploy', '"n8n"', '"OpenClaw"', '"Docker"', '"GCP"'],
+    tools: ['Read', 'Grep', 'Glob', 'Write', 'Edit', 'WebSearch'],
+    details: {
+      agents: [
+        { name: 'Cyclone', role: 'CTO', workspace: 'workspace-cto' },
+        { name: 'Forge', role: 'Build', workspace: 'workspace-build' },
+        { name: 'Signal', role: 'Data', workspace: 'workspace-data' },
+        { name: 'Muse', role: 'Creative', workspace: 'workspace-creative' },
+        { name: 'Atlas', role: 'Ops', workspace: 'workspace-ops' }
+      ],
+      rules: ['Don\u2019t overwrite files OpenClaw agents manage', 'workspace-* dirs are agent-owned', 'skills/ directory is shared between both layers', 'When something needs building \u2192 write a spec, not the code'],
+      integrations: [
+        { from: 'creative-ads', action: 'hands off copy for n8n template deploy' },
+        { from: 'ecom-strategy', action: 'maps campaigns to n8n webhook triggers' },
+        { from: 'media-generation', action: 'handles BannerBear API calls via n8n' },
+        { from: 'brand-kb', action: 'ensures compliance in automated pipelines' }
+      ]
+    }
+  },
+  {
+    id: 'media-generation', icon: '&#x1F3A8;', color: '#f472b6',
+    name: 'Media Generation', status: 'manual', statusLabel: 'On-Demand',
+    desc: 'Image generation (Bria, ComfyUI), BannerBear template rendering, video production (Higgsfield, ElevenLabs), and visual JSON extraction.',
+    modes: ['Generate', 'Render', 'Extract'],
+    triggers: ['/image', '/video', '/render', '"product shot"', '"BannerBear"', '"ComfyUI"'],
+    tools: ['Read', 'Write', 'WebSearch', 'Glob'],
+    details: {
+      toolMatrix: [
+        { tool: 'Bria (fal-ai)', use: 'Product placement in scenes', note: 'Preserves product identity' },
+        { tool: 'ComfyUI', use: 'Custom AI compositions', note: 'Local AMD GPU, full control' },
+        { tool: 'BannerBear', use: 'Templated static ads', note: 'Consistent brand templates' },
+        { tool: 'Higgsfield', use: 'UGC-style AI video', note: 'AI-generated presenters' },
+        { tool: 'ElevenLabs', use: 'Voice narration', note: 'Natural TTS for video ads' }
+      ],
+      videoPipeline: ['Script \u2192 creative-ads skill (UGC format)', 'Voice \u2192 ElevenLabs TTS (match avatar)', 'Visual \u2192 Higgsfield or Bria scenes', 'Composite \u2192 Edit with captions', 'Export \u2192 9:16 / 1:1 / 16:9'],
+      integrations: [
+        { from: 'creative-ads', action: 'provides copy for template rendering' },
+        { from: 'ecom-strategy', action: 'specifies visual requirements per asset' },
+        { from: 'technical-ops', action: 'BannerBear API calls route through n8n' },
+        { from: 'brand-kb', action: 'visual compliance (colors, tone)' }
+      ]
+    }
+  }
+];
+
+// Eval data
+const evalData = [
+  {
+    name: 'Cold Campaign Brief', skill: 90, base: 70,
+    assertions: [
+      { text: "Uses 'warm compression' not 'heat therapy'", type: 'compliance', w: true, wo: false },
+      { text: 'No medical claims', type: 'compliance', w: true, wo: true },
+      { text: '3+ distinct ad angles', type: 'strategy', w: true, wo: true },
+      { text: 'Meta ad fields with limits', type: 'format', w: true, wo: false },
+      { text: 'KPIs with numeric targets', type: 'strategy', w: true, wo: true },
+      { text: 'Desk worker avatar + pain points', type: 'targeting', w: true, wo: true },
+      { text: 'Hooks are scroll-stoppers', type: 'copy_quality', w: true, wo: true },
+      { text: 'CTAs are specific', type: 'copy_quality', w: true, wo: true },
+      { text: 'Scale/kill rules included', type: 'strategy', w: true, wo: true },
+      { text: "'ad family' terminology used", type: 'terminology', w: false, wo: false }
+    ]
+  },
+  {
+    name: 'Ad Family Brief', skill: 100, base: 80,
+    assertions: [
+      { text: 'Learned concept as psychological trigger', type: 'methodology', w: true, wo: false },
+      { text: '3 assets: static, carousel, UGC', type: 'format', w: true, wo: true },
+      { text: 'Static has headline + CTA badge', type: 'format', w: true, wo: true },
+      { text: 'Carousel 3+ cards, hook on card 1', type: 'format', w: true, wo: true },
+      { text: 'UGC timed sections (0-3s, 3-20s, 20-30s)', type: 'format', w: true, wo: false },
+      { text: "'Hand Stress Loop' capitalized", type: 'terminology', w: true, wo: true },
+      { text: 'No medical claims', type: 'compliance', w: true, wo: true },
+      { text: 'Each asset varies format, preserves concept', type: 'methodology', w: true, wo: true },
+      { text: 'References Motion Methodology', type: 'methodology', w: true, wo: true },
+      { text: "UGC avoids 'Wait don\u2019t scroll'", type: 'copy_quality', w: true, wo: true }
+    ]
+  },
+  {
+    name: 'Technical Handoff', skill: 87.5, base: 87.5,
+    assertions: [
+      { text: 'Specific n8n webhook endpoints', type: 'technical', w: true, wo: true },
+      { text: 'Airtable base ID or table names', type: 'technical', w: true, wo: true },
+      { text: 'BannerBear template spec structure', type: 'technical', w: true, wo: true },
+      { text: 'Ad copy fields mapped to Airtable', type: 'integration', w: true, wo: true },
+      { text: 'OpenClaw agents by codename', type: 'integration', w: false, wo: true },
+      { text: 'Two-tier architecture described', type: 'architecture', w: true, wo: true },
+      { text: 'Concrete command or API call', type: 'technical', w: true, wo: true },
+      { text: 'GCP or Docker context', type: 'technical', w: true, wo: false }
+    ]
+  }
+];
+
+// Render skills cards
+const skillsGrid = document.getElementById('skillsGrid');
+skills.forEach(s => {
+  skillsGrid.innerHTML += `
+    <div class="skill-card" onclick="openDetail('${s.id}')">
+      <div class="skill-card-head">
+        <div class="skill-icon" style="background:${s.color}15;color:${s.color}">${s.icon}</div>
+        <div class="meta"><span class="skill-status ${s.status}">${s.statusLabel}</span></div>
+      </div>
+      <div class="skill-card-body">
+        <h3>${s.name}</h3>
+        <div class="desc">${s.desc}</div>
+        <div class="skill-modes">${s.modes.map(m => `<span class="mode-tag">${m}</span>`).join('')}</div>
+        <div class="skill-triggers">Triggers: ${s.triggers.map(t => `<code>${t}</code>`).join(' ')}</div>
+      </div>
+    </div>
+  `;
+});
+
+// Render eval bars
+const evalBarsEl = document.getElementById('evalBars');
+evalData.forEach(e => {
+  evalBarsEl.innerHTML += `
+    <div class="eval-bar-row">
+      <div class="eval-bar-label">${e.name}</div>
+      <div class="eval-bar-track"><div class="eval-bar-fill skill" style="width:${e.skill}%">${e.skill}%</div></div>
+    </div>
+    <div class="eval-bar-row">
+      <div class="eval-bar-label" style="font-size:11px;color:#555">baseline</div>
+      <div class="eval-bar-track"><div class="eval-bar-fill base" style="width:${e.base}%">${e.base}%</div></div>
+    </div>
+    <div style="height:6px"></div>
+  `;
+});
+
+// Render eval details
+const evalDetailsEl = document.getElementById('evalDetails');
+evalData.forEach((e, i) => {
+  const delta = e.skill - e.base;
+  let rows = e.assertions.map(a => `
+    <tr>
+      <td style="width:30px"><span style="color:${a.w ? 'var(--green)' : 'var(--red)'}">${a.w ? '\u2713' : '\u2717'}</span></td>
+      <td style="width:30px"><span style="color:${a.wo ? 'var(--green)' : 'var(--red)'}">${a.wo ? '\u2713' : '\u2717'}</span></td>
+      <td><span class="type-badge">${a.type}</span></td>
+      <td>${a.text}</td>
+    </tr>
+  `).join('');
+  evalDetailsEl.innerHTML += `
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:14px;overflow:hidden;">
+      <div style="padding:14px 18px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
+        <span style="font-weight:600;">${e.name}</span>
+        <div style="display:flex;gap:8px;">
+          <span class="badge pass">${e.skill}%</span>
+          <span class="badge warn">${e.base}%</span>
+          <span class="badge pass">+${delta}%</span>
+        </div>
+      </div>
+      <div style="padding:0 18px 18px;display:${i===0?'block':'none'}">
+        <table class="detail-table"><thead><tr><th>Skill</th><th>Base</th><th>Type</th><th>Assertion</th></tr></thead><tbody>${rows}</tbody></table>
+      </div>
+    </div>
+  `;
+});
+
+// Tab switching
+document.querySelectorAll('.nav-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.tab).classList.add('active');
+  });
+});
+
+// Detail panel
+function openDetail(id) {
+  const s = skills.find(sk => sk.id === id);
+  if (!s) return;
+  const overlay = document.getElementById('detailOverlay');
+  const content = document.getElementById('detailContent');
+
+  let html = `<h2 style="display:flex;align-items:center;gap:10px;">${s.icon} ${s.name}</h2>`;
+  html += `<div class="detail-desc">${s.desc}</div>`;
+  html += `<div style="display:flex;gap:6px;margin-bottom:20px;">${s.modes.map(m => `<span class="mode-tag">${m}</span>`).join('')}</div>`;
+  html += `<div class="detail-section"><h4>Allowed Tools</h4><div style="display:flex;gap:6px;flex-wrap:wrap;">${s.tools.map(t => `<span style="font-size:12px;padding:3px 8px;background:rgba(96,165,250,0.1);color:var(--blue);border-radius:6px;">${t}</span>`).join('')}</div></div>`;
+
+  // Skill-specific sections
+  if (s.details.hierarchy) {
+    html += `<div class="detail-section"><h4>Ad Copy Hierarchy</h4><ul class="detail-list">${s.details.hierarchy.map(h => `<li>${h}</li>`).join('')}</ul></div>`;
+  }
+  if (s.details.surfaces) {
+    html += `<div class="detail-section"><h4>Copy Surfaces</h4><ul class="detail-list">${s.details.surfaces.map(h => `<li>${h}</li>`).join('')}</ul></div>`;
+  }
+  if (s.details.angles) {
+    html += `<div class="detail-section"><h4>11 Ad Angles</h4><div style="display:flex;flex-wrap:wrap;gap:6px;">${s.details.angles.map(a => `<span class="mode-tag">${a}</span>`).join('')}</div></div>`;
+  }
+  if (s.details.avatars) {
+    html += `<div class="detail-section"><h4>Target Avatars</h4><div style="display:flex;flex-wrap:wrap;gap:6px;">${s.details.avatars.map(a => `<span class="mode-tag">${a}</span>`).join('')}</div></div>`;
+  }
+  if (s.details.planningFlow) {
+    html += `<div class="detail-section"><h4>Campaign Planning Flow</h4><ol style="list-style:decimal;padding-left:20px;">${s.details.planningFlow.map(p => `<li style="font-size:13px;padding:3px 0;">${p}</li>`).join('')}</ol></div>`;
+  }
+  if (s.details.funnelStages) {
+    html += `<div class="detail-section"><h4>DTC Funnel Stages</h4><ul class="detail-list">${s.details.funnelStages.map(f => `<li>${f}</li>`).join('')}</ul></div>`;
+  }
+  if (s.details.brands) {
+    html += `<div class="detail-section"><h4>Brand Profiles</h4><ul class="detail-list">${s.details.brands.map(b => `<li>${b}</li>`).join('')}</ul></div>`;
+  }
+  if (s.details.compliance) {
+    html += `<div class="detail-section"><h4>Compliance Rules (P0)</h4><ul class="detail-list">${s.details.compliance.map(c => `<li>${c}</li>`).join('')}</ul></div>`;
+  }
+  if (s.details.terminology) {
+    html += `<div class="detail-section"><h4>Terminology Glossary</h4><ul class="detail-list">${s.details.terminology.map(t => `<li>${t}</li>`).join('')}</ul></div>`;
+  }
+  if (s.details.beliefs) {
+    html += `<div class="detail-section"><h4>Belief Framework (Abundria)</h4><ol style="list-style:decimal;padding-left:20px;">${s.details.beliefs.map(b => `<li style="font-size:13px;padding:3px 0;">${b}</li>`).join('')}</ol></div>`;
+  }
+  if (s.details.agents) {
+    html += `<div class="detail-section"><h4>OpenClaw Agent Reference</h4><table class="detail-table"><thead><tr><th>Codename</th><th>Role</th><th>Workspace</th></tr></thead><tbody>${s.details.agents.map(a => `<tr><td style="font-weight:600;">${a.name}</td><td>${a.role}</td><td style="font-family:monospace;font-size:12px;color:var(--cyan);">${a.workspace}</td></tr>`).join('')}</tbody></table></div>`;
+  }
+  if (s.details.rules) {
+    html += `<div class="detail-section"><h4>Coordination Rules</h4><ul class="detail-list">${s.details.rules.map(r => `<li>${r}</li>`).join('')}</ul></div>`;
+  }
+  if (s.details.toolMatrix) {
+    html += `<div class="detail-section"><h4>Tool Selection Matrix</h4><table class="detail-table"><thead><tr><th>Tool</th><th>Use Case</th><th>Note</th></tr></thead><tbody>${s.details.toolMatrix.map(t => `<tr><td style="font-weight:600;">${t.tool}</td><td>${t.use}</td><td style="color:var(--muted);font-size:12px;">${t.note}</td></tr>`).join('')}</tbody></table></div>`;
+  }
+  if (s.details.videoPipeline) {
+    html += `<div class="detail-section"><h4>Video Pipeline</h4><ol style="list-style:decimal;padding-left:20px;">${s.details.videoPipeline.map(v => `<li style="font-size:13px;padding:3px 0;">${v}</li>`).join('')}</ol></div>`;
+  }
+
+  // Integrations (always present)
+  if (s.details.integrations) {
+    html += `<div class="detail-section"><h4>Integrations</h4>${s.details.integrations.map(i => `<div class="integration-flow"><span style="color:var(--blue);font-weight:600;">${i.from}</span><span class="flow-arrow">\u2192</span><span>${i.action}</span></div>`).join('')}</div>`;
+  }
+
+  content.innerHTML = html;
+  overlay.classList.add('open');
+}
+
+document.getElementById('detailClose').addEventListener('click', () => {
+  document.getElementById('detailOverlay').classList.remove('open');
+});
+document.getElementById('detailOverlay').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') document.getElementById('detailOverlay').classList.remove('open');
+});
+</script>
+</body>
+</html
