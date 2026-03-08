@@ -1,0 +1,59 @@
+/* Bomb Ecom OS — slide-deck matched theme (dark / neon glass) */
+:root {
+  --background: #141414;
+  --foreground: #f6f7f7;
+
+  --card: #212123;
+  --card-foreground: #f6f7f7;
+
+  --popover: #212123;
+  --popover-foreground: #f6f7f7;
+
+  /* Neon system accents (deck vibe) */
+  --primary: #2497cd;                 /* neon cyan */
+  --primary-foreground: #0b0b0c;
+
+  --secondary: #9153c4;               /* neon violet */
+  --secondary-foreground: #f6f7f7;
+
+  /* “Glass” neutrals */
+  --muted: #353538;
+  --muted-foreground: #afb0b2;
+
+  /* Subtle hover/focus surface (cool, techy) */
+  --accent: #2a3f49;                  /* deep teal surface */
+  --accent-foreground: #f6f7f7;
+
+  /* System */
+  --destructive: #ef4444;
+  --destructive-foreground: #f6f7f7;
+
+  --border: #353538;
+  --input: #353538;
+  --ring: #2497cd;
+
+  /* Charts (kept in your deck spectrum) */
+  --chart-1: #2497cd;                 /* cyan */
+  --chart-2: #9153c4;                 /* violet */
+  --chart-3: #2c97ca;                 /* cyan-blue */
+  --chart-4: #406d95;                 /* steel blue */
+  --chart-5: #ffba8c;                 /* warm logo accent */
+
+  /* Sidebar */
+  --sidebar: #141414;
+  --sidebar-foreground: #f6f7f7;
+  --sidebar-primary: #2497cd;
+  --sidebar-primary-foreground: #0b0b0c;
+  --sidebar-accent: #212123;
+  --sidebar-accent-foreground: #f6f7f7;
+  --sidebar-border: #353538;
+  --sidebar-ring: #2497cd;
+
+  /* Optional helpers to nail the “deck glow + glass” feel */
+  --glow-cyan: #2497cd;
+  --glow-purple: #9153c4;
+  --glow-gradient: linear-gradient(90deg, #9153c4 0%, #2497cd 100%);
+  --glass-bg: rgba(33, 33, 35, 0.55);
+  --glass-border: rgba(175, 176, 178, 0.22);
+  --glass-highlight: rgba(246, 247, 247, 0.06);
+}
