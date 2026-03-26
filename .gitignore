@@ -146,3 +146,6 @@ __pycache__/
 .yarn/install-state.gz
 .pnp.*
 nul
+
+# Temporary processing files (disposable — scraped data, intermediate exports)
+.tmp/
