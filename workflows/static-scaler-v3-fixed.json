@@ -106,7 +106,7 @@
           "__rl": true,
           "value": "appvPrfjiuXIhdNuW",
           "mode": "list",
-          "cachedResultName": "🎦Static Scaler 1000",
+          "cachedResultName": "\ud83c\udfa6Static Scaler 1000",
           "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW"
         },
         "table": {
@@ -368,7 +368,7 @@
           "__rl": true,
           "value": "appvPrfjiuXIhdNuW",
           "mode": "list",
-          "cachedResultName": "🎦Static Scaler 1000",
+          "cachedResultName": "\ud83c\udfa6Static Scaler 1000",
           "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW"
         },
         "table": {
@@ -413,14 +413,12 @@
       "parameters": {
         "method": "POST",
         "url": "https://platform.higgsfield.ai/higgsfield-ai/soul/standard",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Key 34474446-7b4f-4802-bbeb-376dc9f76f89:65785da94a84090b5fedaed17db2d88c0f736cf2f116808ace4ea62643dc7696"
+              "value": "={{ 'Key ' + $env.HIGGSFIELD_CLIENT_ID + ':' + $env.HIGGSFIELD_CLIENT_SECRET }}"
             }
           ]
         },
@@ -442,20 +440,21 @@
         624
       ],
       "id": "feaa9474-2493-4aa2-a6ab-f2cb8d4cab3f",
-      "name": "HTTP Request",
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "AmMgOpxnGeRUfLDq",
-          "name": "Higgsfield"
-        }
-      }
+      "name": "HTTP Request"
     },
     {
       "parameters": {
         "url": "={{ $json.status_url }}",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "options": {}
+        "options": {},
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Key ' + $env.HIGGSFIELD_CLIENT_ID + ':' + $env.HIGGSFIELD_CLIENT_SECRET }}"
+            }
+          ]
+        }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
@@ -464,13 +463,7 @@
         624
       ],
       "id": "968520a5-daec-419d-9868-1fe449330f6a",
-      "name": "HTTP Request1",
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "AmMgOpxnGeRUfLDq",
-          "name": "Higgsfield"
-        }
-      }
+      "name": "HTTP Request1"
     },
     {
       "parameters": {
@@ -490,14 +483,12 @@
       "parameters": {
         "method": "POST",
         "url": "https://platform.higgsfield.ai/higgsfield-ai/soul/standard",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Key 34474446-7b4f-4802-bbeb-376dc9f76f89:65785da94a84090b5fedaed17db2d88c0f736cf2f116808ace4ea62643dc7696"
+              "value": "={{ 'Key ' + $env.HIGGSFIELD_CLIENT_ID + ':' + $env.HIGGSFIELD_CLIENT_SECRET }}"
             }
           ]
         },
@@ -519,20 +510,21 @@
         400
       ],
       "id": "8cdab044-02cb-4070-94f0-54fbd4ab4f75",
-      "name": "HTTP Request2",
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "AmMgOpxnGeRUfLDq",
-          "name": "Higgsfield"
-        }
-      }
+      "name": "HTTP Request2"
     },
     {
       "parameters": {
         "url": "={{ $json.status_url }}",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "options": {}
+        "options": {},
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Key ' + $env.HIGGSFIELD_CLIENT_ID + ':' + $env.HIGGSFIELD_CLIENT_SECRET }}"
+            }
+          ]
+        }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
@@ -541,13 +533,7 @@
         400
       ],
       "id": "48a288ee-7edf-4bee-825c-72b7a1da4f06",
-      "name": "HTTP Request4",
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "AmMgOpxnGeRUfLDq",
-          "name": "Higgsfield"
-        }
-      }
+      "name": "HTTP Request4"
     },
     {
       "parameters": {
@@ -670,7 +656,7 @@
           "__rl": true,
           "value": "appvPrfjiuXIhdNuW",
           "mode": "list",
-          "cachedResultName": "🎦Static Scaler 1000",
+          "cachedResultName": "\ud83c\udfa6Static Scaler 1000",
           "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW"
         },
         "table": {
@@ -700,7 +686,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Classify Ad Type - Dynamic field handling\nconst items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  const data = item.json;\n  \n  // Convert any value (string, array, object) to searchable string\n  const getString = (val) => {\n    if (Array.isArray(val)) return val.join(' ').toLowerCase();\n    if (typeof val === 'object' && val !== null) return JSON.stringify(val).toLowerCase();\n    return (val || '').toLowerCase();\n  };\n  \n  // Dynamically combine ALL text fields for classification\n  // Excludes IDs, timestamps, URLs, and system fields\n  const excludeKeys = ['id', 'adCopyRecordId', 'recordId', 'createdTime', 'url', 'n8n'];\n  \n  let combined = '';\n  for (const [key, val] of Object.entries(data)) {\n    if (excludeKeys.some(ex => key.toLowerCase().includes(ex))) continue;\n    if (typeof val === 'string' || Array.isArray(val)) {\n      combined += ' ' + getString(val);\n    }\n  }\n  combined = combined.toLowerCase();\n  \n  // Classification rules - add new patterns here as needed\n  let adType = 'Lifestyle Composite';\n  \n  const rules = [\n    { type: 'Testimonial', pattern: /review|★|testimonial|ratings|quote|\"i was\"|\"i thought\"|\"finally\"|story|customer|said|told me/ },\n    { type: 'Comparison', pattern: /\\bvs\\b|comparison|old way|new way|side-by-side|competitor|versus|compared to/ },\n    { type: 'Before/After', pattern: /timeline|progression|before|transformation|journey|after using|results in/ },\n    { type: 'Benefits Wheel', pattern: /benefit|feature|breakdown|infographic|cost|mechanism|diagram|explainer|how it works|why it works/ },\n    { type: 'Product Hero', pattern: /product shot|hero|lineup|macro|packshot|unboxing|showcase|display/ }\n  ];\n  \n  for (const rule of rules) {\n    if (rule.pattern.test(combined)) {\n      adType = rule.type;\n      break;\n    }\n  }\n  \n  results.push({\n    json: {\n      ...data,\n      adType: adType\n    }\n  });\n}\n\nreturn results;"
+        "jsCode": "// Classify Ad Type - Dynamic field handling\nconst items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  const data = item.json;\n  \n  // Convert any value (string, array, object) to searchable string\n  const getString = (val) => {\n    if (Array.isArray(val)) return val.join(' ').toLowerCase();\n    if (typeof val === 'object' && val !== null) return JSON.stringify(val).toLowerCase();\n    return (val || '').toLowerCase();\n  };\n  \n  // Dynamically combine ALL text fields for classification\n  // Excludes IDs, timestamps, URLs, and system fields\n  const excludeKeys = ['id', 'adCopyRecordId', 'recordId', 'createdTime', 'url', 'n8n'];\n  \n  let combined = '';\n  for (const [key, val] of Object.entries(data)) {\n    if (excludeKeys.some(ex => key.toLowerCase().includes(ex))) continue;\n    if (typeof val === 'string' || Array.isArray(val)) {\n      combined += ' ' + getString(val);\n    }\n  }\n  combined = combined.toLowerCase();\n  \n  // Classification rules - add new patterns here as needed\n  let adType = 'Lifestyle Composite';\n  \n  const rules = [\n    { type: 'Testimonial', pattern: /review|\u2605|testimonial|ratings|quote|\"i was\"|\"i thought\"|\"finally\"|story|customer|said|told me/ },\n    { type: 'Comparison', pattern: /\\bvs\\b|comparison|old way|new way|side-by-side|competitor|versus|compared to/ },\n    { type: 'Before/After', pattern: /timeline|progression|before|transformation|journey|after using|results in/ },\n    { type: 'Benefits Wheel', pattern: /benefit|feature|breakdown|infographic|cost|mechanism|diagram|explainer|how it works|why it works/ },\n    { type: 'Product Hero', pattern: /product shot|hero|lineup|macro|packshot|unboxing|showcase|display/ }\n  ];\n  \n  for (const rule of rules) {\n    if (rule.pattern.test(combined)) {\n      adType = rule.type;\n      break;\n    }\n  }\n  \n  results.push({\n    json: {\n      ...data,\n      adType: adType\n    }\n  });\n}\n\nreturn results;"
       },
       "id": "d8f98816-8652-4cb9-9ba6-69e0d372bf4e",
       "name": "Classify Ad Type",
@@ -1456,7 +1442,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Build OpenAI Chat Completions payload for Creative Director\nconst systemPrompt = \"You are a senior direct-response creative director for Abundria, trained in Eugene Schwartz (awareness stages, desire amplification, one dominant desire per ad) and David Ogilvy (clarity, specificity, visual simplicity, headlines do 80% of selling).\\r\\n\\r\\n## PRODUCT\\r\\nPalmAura Smart Warm Compress Hand Massager\\r\\n- 4 temperature modes (113-140F), multiple air compression modes\\r\\n- Cordless, USB-C, 10-20 min sessions, full-hand coverage (fingers + palm + wrist)\\r\\n- Unique mechanism: \\\"Adaptive 360 Warm Compression Cycle\\\"\\r\\n- Problem it solves: \\\"The Hand Stress Loop\\\" (micro-strain + poor circulation + incomplete relaxation)\\r\\n- Brand tone: calm, reassuring, precise, therapy-inspired. NOT hype, NOT gimmicky.\\r\\n- Aesthetic: Arrae/Seed style — minimal, warm, clinical-clean, earth tones\\r\\n\\r\\n## THE 6 BELIEFS (reinforce 1-3 per concept)\\r\\n1. Hand Stress Loop won't resolve without consistent intervention\\r\\n2. Warm 360 compression is the best at-home way to break the loop\\r\\n3. PalmAura is meaningfully different from generic massagers\\r\\n4. People like them get tangible outcomes in 10-15 min/day\\r\\n5. Safe, simple, fits real routines, backed by guarantee\\r\\n6. Smarter investment than staying stuck with pain, meds, or one-off treatments\\r\\n\\r\\n## TARGET SEGMENTS (use one per concept, never repeat)\\r\\nA) Remote workers 25-45: hands = livelihood, fear RSI/career loss, measure pain in lost productivity\\r\\nB) 45+ mobility seekers: fear losing independence, \\\"feeling 80 at 50\\\", want to feel capable again\\r\\nC) Caregivers/grandparents: fear becoming a burden, can't hold grandkids, identity tied to nurturing\\r\\nD) Gamers/creators: fear losing flow state, hands = their instrument, obsessive about performance\\r\\n\\r\\n## ANGLE PILLARS (rotate, never repeat across concepts)\\r\\n- 10-Minute Reset Ritual\\r\\n- Keyboard Athlete Recovery\\r\\n- Warm Therapy at Home\\r\\n- Relief Without Appointments\\r\\n- Gift for Hands That Do Everything\\r\\n- Daily Pain Reset\\r\\n\\r\\n## TASK\\r\\nGenerate exactly 3 ad concepts. Each concept targets a DIFFERENT segment and uses a DIFFERENT angle. Vary visual styles: one lifestyle scene, one product close-up/hero, one emotional/story scene.\\r\\n\\r\\nCRITICAL: The \\\"adCopy\\\" section is stored separately and overlaid LATER in post-production. It must NEVER appear in the visual direction. The visual direction describes ONLY what the camera sees — no text, no headlines, no logos, no words of any kind in the image.\\r\\n\\r\\n## OUTPUT FORMAT\\r\\nReturn ONLY a valid JSON array. No markdown. No explanation. No code blocks.\\r\\n\\r\\n[\\r\\n  {\\r\\n    \\\"conceptId\\\": \\\"A\\\",\\r\\n    \\\"segment\\\": \\\"which target segment\\\",\\r\\n    \\\"angle\\\": \\\"which angle pillar\\\",\\r\\n    \\\"awarenessLevel\\\": \\\"Problem Aware or Solution Aware or Product Aware\\\",\\r\\n    \\\"beliefsReinforced\\\": [1, 3],\\r\\n    \\\"visualDirection\\\": {\\r\\n      \\\"scene\\\": \\\"Detailed scene description. Environment, props, surfaces, context. Be specific about materials, textures, and spatial arrangement. The PalmAura device must be clearly visible and recognizable.\\\",\\r\\n      \\\"lighting\\\": \\\"Specific lighting. Example: soft diffused window light from camera-left, warm 3200K, subtle rim light on device\\\",\\r\\n      \\\"colorPalette\\\": \\\"Specific hex-adjacent colors. Example: warm cream background (#F5F0E8), sage green accent (#8FAE8B), device white (#FFFFFF)\\\",\\r\\n      \\\"composition\\\": \\\"Camera angle, lens, framing. Example: 45-degree overhead, 85mm equivalent, device at center-right with negative space in upper-left for text overlay\\\",\\r\\n      \\\"productPlacement\\\": \\\"Exactly how the PalmAura appears. Example: device on hand of 50-year-old woman, fingers visible entering the device, warm glow visible from heat indicator\\\",\\r\\n      \\\"mood\\\": \\\"One-line emotional tone. Example: quiet confidence, morning calm, gentle relief\\\",\\r\\n      \\\"style\\\": \\\"lifestyle or product-hero or emotional-story\\\"\\r\\n    },\\r\\n    \\\"adCopy\\\": {\\r\\n      \\\"headline\\\": \\\"6-8 words max. Benefit-focused. Mobile-legible.\\\",\\r\\n      \\\"subheadline\\\": \\\"One supporting line with specificity.\\\",\\r\\n      \\\"bodyBullets\\\": [\\\"benefit 1 with specifics\\\", \\\"benefit 2 with specifics\\\", \\\"benefit 3 with specifics\\\"],\\r\\n      \\\"cta\\\": \\\"Clear action phrase\\\"\\r\\n    }\\r\\n  }\\r\\n]\\r\\n\\r\\n## RULES\\r\\n- Each concept must feel like a completely different ad, not a variation\\r\\n- Visual direction uses rich sensory language (textures, materials, light quality, atmosphere)\\r\\n- Leave clean negative space in composition for text overlay (specify where)\\r\\n- Product must be the clear focal point in every concept\\r\\n- Headlines use specifics over generalities (\\\"10-minute hand reset\\\" not \\\"feel better\\\")\\r\\n- Copy compliance: use \\\"supports/helps/promotes\\\" never \\\"cures/treats/heals\\\"\\r\\n- No medical claims. Focus on: comfort, relief, stiffness, fatigue, warmth, relaxation\";\n\nconst userMessage = `Here is the product and ad context. Generate 3 ad concepts.\n\nProduct: PalmAura Smart Warm Compress Hand Massager\nProduct Image URL: ${$json.productImageUrl}\nAd Type: ${$json.adType}\nHeadline from brief: ${$json.headline}\nConcept from brief: ${$json.concept}\nCTA from brief: ${$json.cta}\nAngle from brief: ${$json.angle}\nAvatar Target: ${$json.avatarTarget}\nAwareness Level: ${$json.awarenessLevel}\nTags: ${$json.tags}\nRecord ID: ${$json.recordId}`;\n\nreturn [{\n  json: {\n    model: 'gpt-4o',\n    messages: [\n      { role: 'system', content: systemPrompt },\n      { role: 'user', content: userMessage }\n    ],\n    temperature: 0.8,\n    max_tokens: 3000\n  }\n}];"
+        "jsCode": "// Build OpenAI Chat Completions payload for Creative Director\nconst systemPrompt = \"You are a senior direct-response creative director for Abundria, trained in Eugene Schwartz (awareness stages, desire amplification, one dominant desire per ad) and David Ogilvy (clarity, specificity, visual simplicity, headlines do 80% of selling).\\r\\n\\r\\n## PRODUCT\\r\\nPalmAura Smart Warm Compress Hand Massager\\r\\n- 4 temperature modes (113-140F), multiple air compression modes\\r\\n- Cordless, USB-C, 10-20 min sessions, full-hand coverage (fingers + palm + wrist)\\r\\n- Unique mechanism: \\\"Adaptive 360 Warm Compression Cycle\\\"\\r\\n- Problem it solves: \\\"The Hand Stress Loop\\\" (micro-strain + poor circulation + incomplete relaxation)\\r\\n- Brand tone: calm, reassuring, precise, therapy-inspired. NOT hype, NOT gimmicky.\\r\\n- Aesthetic: Arrae/Seed style \u2014 minimal, warm, clinical-clean, earth tones\\r\\n\\r\\n## THE 6 BELIEFS (reinforce 1-3 per concept)\\r\\n1. Hand Stress Loop won't resolve without consistent intervention\\r\\n2. Warm 360 compression is the best at-home way to break the loop\\r\\n3. PalmAura is meaningfully different from generic massagers\\r\\n4. People like them get tangible outcomes in 10-15 min/day\\r\\n5. Safe, simple, fits real routines, backed by guarantee\\r\\n6. Smarter investment than staying stuck with pain, meds, or one-off treatments\\r\\n\\r\\n## TARGET SEGMENTS (use one per concept, never repeat)\\r\\nA) Remote workers 25-45: hands = livelihood, fear RSI/career loss, measure pain in lost productivity\\r\\nB) 45+ mobility seekers: fear losing independence, \\\"feeling 80 at 50\\\", want to feel capable again\\r\\nC) Caregivers/grandparents: fear becoming a burden, can't hold grandkids, identity tied to nurturing\\r\\nD) Gamers/creators: fear losing flow state, hands = their instrument, obsessive about performance\\r\\n\\r\\n## ANGLE PILLARS (rotate, never repeat across concepts)\\r\\n- 10-Minute Reset Ritual\\r\\n- Keyboard Athlete Recovery\\r\\n- Warm Therapy at Home\\r\\n- Relief Without Appointments\\r\\n- Gift for Hands That Do Everything\\r\\n- Daily Pain Reset\\r\\n\\r\\n## TASK\\r\\nGenerate exactly 3 ad concepts. Each concept targets a DIFFERENT segment and uses a DIFFERENT angle. Vary visual styles: one lifestyle scene, one product close-up/hero, one emotional/story scene.\\r\\n\\r\\nCRITICAL: The \\\"adCopy\\\" section is stored separately and overlaid LATER in post-production. It must NEVER appear in the visual direction. The visual direction describes ONLY what the camera sees \u2014 no text, no headlines, no logos, no words of any kind in the image.\\r\\n\\r\\n## OUTPUT FORMAT\\r\\nReturn ONLY a valid JSON array. No markdown. No explanation. No code blocks.\\r\\n\\r\\n[\\r\\n  {\\r\\n    \\\"conceptId\\\": \\\"A\\\",\\r\\n    \\\"segment\\\": \\\"which target segment\\\",\\r\\n    \\\"angle\\\": \\\"which angle pillar\\\",\\r\\n    \\\"awarenessLevel\\\": \\\"Problem Aware or Solution Aware or Product Aware\\\",\\r\\n    \\\"beliefsReinforced\\\": [1, 3],\\r\\n    \\\"visualDirection\\\": {\\r\\n      \\\"scene\\\": \\\"Detailed scene description. Environment, props, surfaces, context. Be specific about materials, textures, and spatial arrangement. The PalmAura device must be clearly visible and recognizable.\\\",\\r\\n      \\\"lighting\\\": \\\"Specific lighting. Example: soft diffused window light from camera-left, warm 3200K, subtle rim light on device\\\",\\r\\n      \\\"colorPalette\\\": \\\"Specific hex-adjacent colors. Example: warm cream background (#F5F0E8), sage green accent (#8FAE8B), device white (#FFFFFF)\\\",\\r\\n      \\\"composition\\\": \\\"Camera angle, lens, framing. Example: 45-degree overhead, 85mm equivalent, device at center-right with negative space in upper-left for text overlay\\\",\\r\\n      \\\"productPlacement\\\": \\\"Exactly how the PalmAura appears. Example: device on hand of 50-year-old woman, fingers visible entering the device, warm glow visible from heat indicator\\\",\\r\\n      \\\"mood\\\": \\\"One-line emotional tone. Example: quiet confidence, morning calm, gentle relief\\\",\\r\\n      \\\"style\\\": \\\"lifestyle or product-hero or emotional-story\\\"\\r\\n    },\\r\\n    \\\"adCopy\\\": {\\r\\n      \\\"headline\\\": \\\"6-8 words max. Benefit-focused. Mobile-legible.\\\",\\r\\n      \\\"subheadline\\\": \\\"One supporting line with specificity.\\\",\\r\\n      \\\"bodyBullets\\\": [\\\"benefit 1 with specifics\\\", \\\"benefit 2 with specifics\\\", \\\"benefit 3 with specifics\\\"],\\r\\n      \\\"cta\\\": \\\"Clear action phrase\\\"\\r\\n    }\\r\\n  }\\r\\n]\\r\\n\\r\\n## RULES\\r\\n- Each concept must feel like a completely different ad, not a variation\\r\\n- Visual direction uses rich sensory language (textures, materials, light quality, atmosphere)\\r\\n- Leave clean negative space in composition for text overlay (specify where)\\r\\n- Product must be the clear focal point in every concept\\r\\n- Headlines use specifics over generalities (\\\"10-minute hand reset\\\" not \\\"feel better\\\")\\r\\n- Copy compliance: use \\\"supports/helps/promotes\\\" never \\\"cures/treats/heals\\\"\\r\\n- No medical claims. Focus on: comfort, relief, stiffness, fatigue, warmth, relaxation\";\n\nconst userMessage = `Here is the product and ad context. Generate 3 ad concepts.\n\nProduct: PalmAura Smart Warm Compress Hand Massager\nProduct Image URL: ${$json.productImageUrl}\nAd Type: ${$json.adType}\nHeadline from brief: ${$json.headline}\nConcept from brief: ${$json.concept}\nCTA from brief: ${$json.cta}\nAngle from brief: ${$json.angle}\nAvatar Target: ${$json.avatarTarget}\nAwareness Level: ${$json.awarenessLevel}\nTags: ${$json.tags}\nRecord ID: ${$json.recordId}`;\n\nreturn [{\n  json: {\n    model: 'gpt-4o',\n    messages: [\n      { role: 'system', content: systemPrompt },\n      { role: 'user', content: userMessage }\n    ],\n    temperature: 0.8,\n    max_tokens: 3000\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -1495,7 +1481,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Build OpenAI Chat Completions payload for Image Prompt Engineer\nconst systemPrompt = \"You are an expert AI image prompt engineer specializing in DTC product advertising photography. Your job: convert a visual concept brief into a scene description for Bria Product Shot — a model that places the actual product photo into a generated scene.\\r\\n\\r\\nIMPORTANT: Bria Product Shot receives the product image separately. NEVER describe the product itself in the scene description. The model places the product automatically. Describe the SCENE the product will be placed into.\\r\\n\\r\\n## ABSOLUTE RULES\\r\\n1. NEVER include text, words, letters, numbers, logos, headlines, watermarks, or ANY typography.\\r\\n2. NEVER describe the product. The product is placed automatically from its photo.\\r\\n3. Keep the scene description under 80 words.\\r\\n4. The scene MUST directly relate to the ad concept's target segment and angle — no generic backgrounds.\\r\\n\\r\\n## SCENE STYLE BY CONCEPT TYPE\\r\\n\\r\\n**Lifestyle scenes** (style: \\\"lifestyle\\\"):\\r\\n- MUST include a person relevant to the target segment doing an activity that connects to the ad angle\\r\\n- Examples: \\\"Woman in her 30s working at a minimal home desk with laptop, soft window light, modern apartment, warm cream and sage tones, close-up composition at desk level\\\"\\r\\n- The person and their activity ARE the scene — the product will be placed near them\\r\\n- Frame TIGHT — desk/table level close-up, not a wide room shot\\r\\n\\r\\n**Product-hero scenes** (style: \\\"product-hero\\\"):\\r\\n- Close-up surface composition — NO wide room shots\\r\\n- Tight framing on a surface with 1-2 contextual props that relate to the target segment\\r\\n- Examples: \\\"Close-up of light oak desk surface with open notebook and reading glasses, soft morning window light, warm cream tones, shallow depth of field\\\"\\r\\n- Fill the frame — the surface should feel close and intimate\\r\\n\\r\\n**Emotional-story scenes** (style: \\\"emotional-story\\\"):\\r\\n- MUST include a person in an emotionally resonant moment relevant to the ad angle\\r\\n- Examples: \\\"Grandmother sitting in a cozy armchair holding a grandchild's hand, warm afternoon light through sheer curtains, soft earth tones, intimate close framing\\\"\\r\\n- The emotion and human connection ARE the scene\\r\\n\\r\\n## CRITICAL: MATCH THE AD CONCEPT\\r\\nThe scene must visually tell the story of the ad concept:\\r\\n- Remote workers segment → home office, desk, laptop, focused work\\r\\n- 45+ mobility seekers → cozy home, morning routine, garden\\r\\n- Caregivers/grandparents → family setting, nurturing moment, warmth\\r\\n- Gamers/creators → gaming setup, creative workspace, dark/focused mood\\r\\n\\r\\nThe scene is NOT a random background — it's the visual context that makes the ad concept land.\\r\\n\\r\\n## STYLE TARGETS\\r\\nHigh-end DTC aesthetic (Arrae, Seed, Jolie):\\r\\n- Clean compositions with intentional negative space for text overlay\\r\\n- Soft natural or studio lighting, never harsh\\r\\n- Earth tones: warm cream, sage, soft teal, natural wood, linen\\r\\n- Professional commercial photography quality\\r\\n\\r\\n## INPUT\\r\\nYou receive a JSON object with:\\r\\n- scene, lighting, colorPalette, composition, productPlacement, mood, style\\r\\n- productImageUrl (the S3 URL of the actual product photo — sent separately to Bria)\\r\\n\\r\\n## OUTPUT\\r\\nReturn ONLY valid JSON. No markdown. No explanation. No code blocks.\\r\\n\\r\\n{\\r\\n  \\\"scene_description\\\": \\\"Lifestyle scene or tight surface composition matching the ad concept. Under 80 words. No product description.\\\",\\r\\n  \\\"placement_type\\\": \\\"automatic\\\"\\r\\n}\\r\\n\\r\\n## PLACEMENT TYPE\\r\\n- Always use \\\"automatic\\\" — Bria will find the natural placement in the scene\";\n\nconst userMessage = `Convert this visual direction into an image generation prompt.\n\nVisual Direction:\n${JSON.stringify($json.visualDirection)}\n\nProduct Image URL: ${$json.productImageUrl}\nStyle: ${$json.style}`;\n\nreturn [{\n  json: {\n    model: 'gpt-4o-mini',\n    messages: [\n      { role: 'system', content: systemPrompt },\n      { role: 'user', content: userMessage }\n    ],\n    temperature: 0.4,\n    max_tokens: 500\n  }\n}];"
+        "jsCode": "// Build OpenAI Chat Completions payload for Image Prompt Engineer\nconst systemPrompt = \"You are an expert AI image prompt engineer specializing in DTC product advertising photography. Your job: convert a visual concept brief into a scene description for Bria Product Shot \u2014 a model that places the actual product photo into a generated scene.\\r\\n\\r\\nIMPORTANT: Bria Product Shot receives the product image separately. NEVER describe the product itself in the scene description. The model places the product automatically. Describe the SCENE the product will be placed into.\\r\\n\\r\\n## ABSOLUTE RULES\\r\\n1. NEVER include text, words, letters, numbers, logos, headlines, watermarks, or ANY typography.\\r\\n2. NEVER describe the product. The product is placed automatically from its photo.\\r\\n3. Keep the scene description under 80 words.\\r\\n4. The scene MUST directly relate to the ad concept's target segment and angle \u2014 no generic backgrounds.\\r\\n\\r\\n## SCENE STYLE BY CONCEPT TYPE\\r\\n\\r\\n**Lifestyle scenes** (style: \\\"lifestyle\\\"):\\r\\n- MUST include a person relevant to the target segment doing an activity that connects to the ad angle\\r\\n- Examples: \\\"Woman in her 30s working at a minimal home desk with laptop, soft window light, modern apartment, warm cream and sage tones, close-up composition at desk level\\\"\\r\\n- The person and their activity ARE the scene \u2014 the product will be placed near them\\r\\n- Frame TIGHT \u2014 desk/table level close-up, not a wide room shot\\r\\n\\r\\n**Product-hero scenes** (style: \\\"product-hero\\\"):\\r\\n- Close-up surface composition \u2014 NO wide room shots\\r\\n- Tight framing on a surface with 1-2 contextual props that relate to the target segment\\r\\n- Examples: \\\"Close-up of light oak desk surface with open notebook and reading glasses, soft morning window light, warm cream tones, shallow depth of field\\\"\\r\\n- Fill the frame \u2014 the surface should feel close and intimate\\r\\n\\r\\n**Emotional-story scenes** (style: \\\"emotional-story\\\"):\\r\\n- MUST include a person in an emotionally resonant moment relevant to the ad angle\\r\\n- Examples: \\\"Grandmother sitting in a cozy armchair holding a grandchild's hand, warm afternoon light through sheer curtains, soft earth tones, intimate close framing\\\"\\r\\n- The emotion and human connection ARE the scene\\r\\n\\r\\n## CRITICAL: MATCH THE AD CONCEPT\\r\\nThe scene must visually tell the story of the ad concept:\\r\\n- Remote workers segment \u2192 home office, desk, laptop, focused work\\r\\n- 45+ mobility seekers \u2192 cozy home, morning routine, garden\\r\\n- Caregivers/grandparents \u2192 family setting, nurturing moment, warmth\\r\\n- Gamers/creators \u2192 gaming setup, creative workspace, dark/focused mood\\r\\n\\r\\nThe scene is NOT a random background \u2014 it's the visual context that makes the ad concept land.\\r\\n\\r\\n## STYLE TARGETS\\r\\nHigh-end DTC aesthetic (Arrae, Seed, Jolie):\\r\\n- Clean compositions with intentional negative space for text overlay\\r\\n- Soft natural or studio lighting, never harsh\\r\\n- Earth tones: warm cream, sage, soft teal, natural wood, linen\\r\\n- Professional commercial photography quality\\r\\n\\r\\n## INPUT\\r\\nYou receive a JSON object with:\\r\\n- scene, lighting, colorPalette, composition, productPlacement, mood, style\\r\\n- productImageUrl (the S3 URL of the actual product photo \u2014 sent separately to Bria)\\r\\n\\r\\n## OUTPUT\\r\\nReturn ONLY valid JSON. No markdown. No explanation. No code blocks.\\r\\n\\r\\n{\\r\\n  \\\"scene_description\\\": \\\"Lifestyle scene or tight surface composition matching the ad concept. Under 80 words. No product description.\\\",\\r\\n  \\\"placement_type\\\": \\\"automatic\\\"\\r\\n}\\r\\n\\r\\n## PLACEMENT TYPE\\r\\n- Always use \\\"automatic\\\" \u2014 Bria will find the natural placement in the scene\";\n\nconst userMessage = `Convert this visual direction into an image generation prompt.\n\nVisual Direction:\n${JSON.stringify($json.visualDirection)}\n\nProduct Image URL: ${$json.productImageUrl}\nStyle: ${$json.style}`;\n\nreturn [{\n  json: {\n    model: 'gpt-4o-mini',\n    messages: [\n      { role: 'system', content: systemPrompt },\n      { role: 'user', content: userMessage }\n    ],\n    temperature: 0.4,\n    max_tokens: 500\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -1534,7 +1520,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Split Airtable response into 3 items — one per image URL (A, B, C)\nconst airtableResponse = $input.first().json;\nconst recordId = airtableResponse.id || '';\nconst fields = airtableResponse.fields || airtableResponse;\nconst results = [];\n\nfor (const label of ['A', 'B', 'C']) {\n  const url = fields[label];\n  if (url && typeof url === 'string' && url.startsWith('http')) {\n    results.push({\n      json: {\n        imageUrl: url,\n        conceptId: label,\n        recordId: recordId,\n        id: recordId + '_' + label\n      }\n    });\n  }\n}\n\nif (results.length === 0) {\n  return [{ json: { error: 'No image URLs found in Airtable response', recordId } }];\n}\n\nreturn results;"
+        "jsCode": "// Split Airtable response into 3 items \u2014 one per image URL (A, B, C)\nconst airtableResponse = $input.first().json;\nconst recordId = airtableResponse.id || '';\nconst fields = airtableResponse.fields || airtableResponse;\nconst results = [];\n\nfor (const label of ['A', 'B', 'C']) {\n  const url = fields[label];\n  if (url && typeof url === 'string' && url.startsWith('http')) {\n    results.push({\n      json: {\n        imageUrl: url,\n        conceptId: label,\n        recordId: recordId,\n        id: recordId + '_' + label\n      }\n    });\n  }\n}\n\nif (results.length === 0) {\n  return [{ json: { error: 'No image URLs found in Airtable response', recordId } }];\n}\n\nreturn results;"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
