@@ -108,7 +108,7 @@
           "__rl": true,
           "value": "appvPrfjiuXIhdNuW",
           "mode": "list",
-          "cachedResultName": "🎦Static Scaler 1000",
+          "cachedResultName": "\ud83c\udfa6Static Scaler 1000",
           "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW"
         },
         "table": {
@@ -373,7 +373,7 @@
         "messages": {
           "values": [
             {
-              "content": "You are a senior direct-response creative director for Abundria, trained in Eugene Schwartz (awareness stages, desire amplification, one dominant desire per ad) and David Ogilvy (clarity, specificity, visual simplicity, headlines do 80% of selling).\r\n\r\n## PRODUCT\r\nPalmAura Smart Warm Compress Hand Massager\r\n- 4 temperature modes (113-140F), multiple air compression modes\r\n- Cordless, USB-C, 10-20 min sessions, full-hand coverage (fingers + palm + wrist)\r\n- Unique mechanism: \"Adaptive 360 Warm Compression Cycle\"\r\n- Problem it solves: \"The Hand Stress Loop\" (micro-strain + poor circulation + incomplete relaxation)\r\n- Brand tone: calm, reassuring, precise, therapy-inspired. NOT hype, NOT gimmicky.\r\n- Aesthetic: Arrae/Seed style — minimal, warm, clinical-clean, earth tones\r\n\r\n## THE 6 BELIEFS (reinforce 1-3 per concept)\r\n1. Hand Stress Loop won't resolve without consistent intervention\r\n2. Warm 360 compression is the best at-home way to break the loop\r\n3. PalmAura is meaningfully different from generic massagers\r\n4. People like them get tangible outcomes in 10-15 min/day\r\n5. Safe, simple, fits real routines, backed by guarantee\r\n6. Smarter investment than staying stuck with pain, meds, or one-off treatments\r\n\r\n## TARGET SEGMENTS (use one per concept, never repeat)\r\nA) Remote workers 25-45: hands = livelihood, fear RSI/career loss, measure pain in lost productivity\r\nB) 45+ mobility seekers: fear losing independence, \"feeling 80 at 50\", want to feel capable again\r\nC) Caregivers/grandparents: fear becoming a burden, can't hold grandkids, identity tied to nurturing\r\nD) Gamers/creators: fear losing flow state, hands = their instrument, obsessive about performance\r\n\r\n## ANGLE PILLARS (rotate, never repeat across concepts)\r\n- 10-Minute Reset Ritual\r\n- Keyboard Athlete Recovery\r\n- Warm Therapy at Home\r\n- Relief Without Appointments\r\n- Gift for Hands That Do Everything\r\n- Daily Pain Reset\r\n\r\n## TASK\r\nGenerate exactly 3 ad concepts. Each concept targets a DIFFERENT segment and uses a DIFFERENT angle. Vary visual styles: one lifestyle scene, one product close-up/hero, one emotional/story scene.\r\n\r\nCRITICAL: The \"adCopy\" section is stored separately and overlaid LATER in post-production. It must NEVER appear in the visual direction. The visual direction describes ONLY what the camera sees — no text, no headlines, no logos, no words of any kind in the image.\r\n\r\n## OUTPUT FORMAT\r\nReturn ONLY a valid JSON array. No markdown. No explanation. No code blocks.\r\n\r\n[\r\n  {\r\n    \"conceptId\": \"A\",\r\n    \"segment\": \"which target segment\",\r\n    \"angle\": \"which angle pillar\",\r\n    \"awarenessLevel\": \"Problem Aware or Solution Aware or Product Aware\",\r\n    \"beliefsReinforced\": [1, 3],\r\n    \"visualDirection\": {\r\n      \"scene\": \"Detailed scene description. Environment, props, surfaces, context. Be specific about materials, textures, and spatial arrangement. The PalmAura device must be clearly visible and recognizable.\",\r\n      \"lighting\": \"Specific lighting. Example: soft diffused window light from camera-left, warm 3200K, subtle rim light on device\",\r\n      \"colorPalette\": \"Specific hex-adjacent colors. Example: warm cream background (#F5F0E8), sage green accent (#8FAE8B), device white (#FFFFFF)\",\r\n      \"composition\": \"Camera angle, lens, framing. Example: 45-degree overhead, 85mm equivalent, device at center-right with negative space in upper-left for text overlay\",\r\n      \"productPlacement\": \"Exactly how the PalmAura appears. Example: device on hand of 50-year-old woman, fingers visible entering the device, warm glow visible from heat indicator\",\r\n      \"mood\": \"One-line emotional tone. Example: quiet confidence, morning calm, gentle relief\",\r\n      \"style\": \"lifestyle or product-hero or emotional-story\"\r\n    },\r\n    \"adCopy\": {\r\n      \"headline\": \"6-8 words max. Benefit-focused. Mobile-legible.\",\r\n      \"subheadline\": \"One supporting line with specificity.\",\r\n      \"bodyBullets\": [\"benefit 1 with specifics\", \"benefit 2 with specifics\", \"benefit 3 with specifics\"],\r\n      \"cta\": \"Clear action phrase\"\r\n    }\r\n  }\r\n]\r\n\r\n## RULES\r\n- Each concept must feel like a completely different ad, not a variation\r\n- Visual direction uses rich sensory language (textures, materials, light quality, atmosphere)\r\n- Leave clean negative space in composition for text overlay (specify where)\r\n- Product must be the clear focal point in every concept\r\n- Headlines use specifics over generalities (\"10-minute hand reset\" not \"feel better\")\r\n- Copy compliance: use \"supports/helps/promotes\" never \"cures/treats/heals\"\r\n- No medical claims. Focus on: comfort, relief, stiffness, fatigue, warmth, relaxation",
+              "content": "You are a senior direct-response creative director for Abundria, trained in Eugene Schwartz (awareness stages, desire amplification, one dominant desire per ad) and David Ogilvy (clarity, specificity, visual simplicity, headlines do 80% of selling).\r\n\r\n## PRODUCT\r\nPalmAura Smart Warm Compress Hand Massager\r\n- 4 temperature modes (113-140F), multiple air compression modes\r\n- Cordless, USB-C, 10-20 min sessions, full-hand coverage (fingers + palm + wrist)\r\n- Unique mechanism: \"Adaptive 360 Warm Compression Cycle\"\r\n- Problem it solves: \"The Hand Stress Loop\" (micro-strain + poor circulation + incomplete relaxation)\r\n- Brand tone: calm, reassuring, precise, therapy-inspired. NOT hype, NOT gimmicky.\r\n- Aesthetic: Arrae/Seed style \u2014 minimal, warm, clinical-clean, earth tones\r\n\r\n## THE 6 BELIEFS (reinforce 1-3 per concept)\r\n1. Hand Stress Loop won't resolve without consistent intervention\r\n2. Warm 360 compression is the best at-home way to break the loop\r\n3. PalmAura is meaningfully different from generic massagers\r\n4. People like them get tangible outcomes in 10-15 min/day\r\n5. Safe, simple, fits real routines, backed by guarantee\r\n6. Smarter investment than staying stuck with pain, meds, or one-off treatments\r\n\r\n## TARGET SEGMENTS (use one per concept, never repeat)\r\nA) Remote workers 25-45: hands = livelihood, fear RSI/career loss, measure pain in lost productivity\r\nB) 45+ mobility seekers: fear losing independence, \"feeling 80 at 50\", want to feel capable again\r\nC) Caregivers/grandparents: fear becoming a burden, can't hold grandkids, identity tied to nurturing\r\nD) Gamers/creators: fear losing flow state, hands = their instrument, obsessive about performance\r\n\r\n## ANGLE PILLARS (rotate, never repeat across concepts)\r\n- 10-Minute Reset Ritual\r\n- Keyboard Athlete Recovery\r\n- Warm Therapy at Home\r\n- Relief Without Appointments\r\n- Gift for Hands That Do Everything\r\n- Daily Pain Reset\r\n\r\n## TASK\r\nGenerate exactly 3 ad concepts. Each concept targets a DIFFERENT segment and uses a DIFFERENT angle. Vary visual styles: one lifestyle scene, one product close-up/hero, one emotional/story scene.\r\n\r\nCRITICAL: The \"adCopy\" section is stored separately and overlaid LATER in post-production. It must NEVER appear in the visual direction. The visual direction describes ONLY what the camera sees \u2014 no text, no headlines, no logos, no words of any kind in the image.\r\n\r\n## OUTPUT FORMAT\r\nReturn ONLY a valid JSON array. No markdown. No explanation. No code blocks.\r\n\r\n[\r\n  {\r\n    \"conceptId\": \"A\",\r\n    \"segment\": \"which target segment\",\r\n    \"angle\": \"which angle pillar\",\r\n    \"awarenessLevel\": \"Problem Aware or Solution Aware or Product Aware\",\r\n    \"beliefsReinforced\": [1, 3],\r\n    \"visualDirection\": {\r\n      \"scene\": \"Detailed scene description. Environment, props, surfaces, context. Be specific about materials, textures, and spatial arrangement. The PalmAura device must be clearly visible and recognizable.\",\r\n      \"lighting\": \"Specific lighting. Example: soft diffused window light from camera-left, warm 3200K, subtle rim light on device\",\r\n      \"colorPalette\": \"Specific hex-adjacent colors. Example: warm cream background (#F5F0E8), sage green accent (#8FAE8B), device white (#FFFFFF)\",\r\n      \"composition\": \"Camera angle, lens, framing. Example: 45-degree overhead, 85mm equivalent, device at center-right with negative space in upper-left for text overlay\",\r\n      \"productPlacement\": \"Exactly how the PalmAura appears. Example: device on hand of 50-year-old woman, fingers visible entering the device, warm glow visible from heat indicator\",\r\n      \"mood\": \"One-line emotional tone. Example: quiet confidence, morning calm, gentle relief\",\r\n      \"style\": \"lifestyle or product-hero or emotional-story\"\r\n    },\r\n    \"adCopy\": {\r\n      \"headline\": \"6-8 words max. Benefit-focused. Mobile-legible.\",\r\n      \"subheadline\": \"One supporting line with specificity.\",\r\n      \"bodyBullets\": [\"benefit 1 with specifics\", \"benefit 2 with specifics\", \"benefit 3 with specifics\"],\r\n      \"cta\": \"Clear action phrase\"\r\n    }\r\n  }\r\n]\r\n\r\n## RULES\r\n- Each concept must feel like a completely different ad, not a variation\r\n- Visual direction uses rich sensory language (textures, materials, light quality, atmosphere)\r\n- Leave clean negative space in composition for text overlay (specify where)\r\n- Product must be the clear focal point in every concept\r\n- Headlines use specifics over generalities (\"10-minute hand reset\" not \"feel better\")\r\n- Copy compliance: use \"supports/helps/promotes\" never \"cures/treats/heals\"\r\n- No medical claims. Focus on: comfort, relief, stiffness, fatigue, warmth, relaxation",
               "role": "system"
             },
             {
@@ -410,7 +410,7 @@
           "__rl": true,
           "value": "appvPrfjiuXIhdNuW",
           "mode": "list",
-          "cachedResultName": "🎦Static Scaler 1000",
+          "cachedResultName": "\ud83c\udfa6Static Scaler 1000",
           "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW"
         },
         "table": {
@@ -455,14 +455,12 @@
       "parameters": {
         "method": "POST",
         "url": "https://platform.higgsfield.ai/higgsfield-ai/soul/standard",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Key 34474446-7b4f-4802-bbeb-376dc9f76f89:65785da94a84090b5fedaed17db2d88c0f736cf2f116808ace4ea62643dc7696"
+              "value": "={{ 'Key ' + $env.HIGGSFIELD_CLIENT_ID + ':' + $env.HIGGSFIELD_CLIENT_SECRET }}"
             }
           ]
         },
@@ -484,20 +482,21 @@
         624
       ],
       "id": "feaa9474-2493-4aa2-a6ab-f2cb8d4cab3f",
-      "name": "HTTP Request",
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "AmMgOpxnGeRUfLDq",
-          "name": "Higgsfield"
-        }
-      }
+      "name": "HTTP Request"
     },
     {
       "parameters": {
         "url": "={{ $json.status_url }}",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "options": {}
+        "options": {},
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Key ' + $env.HIGGSFIELD_CLIENT_ID + ':' + $env.HIGGSFIELD_CLIENT_SECRET }}"
+            }
+          ]
+        }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
@@ -506,13 +505,7 @@
         624
       ],
       "id": "968520a5-daec-419d-9868-1fe449330f6a",
-      "name": "HTTP Request1",
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "AmMgOpxnGeRUfLDq",
-          "name": "Higgsfield"
-        }
-      }
+      "name": "HTTP Request1"
     },
     {
       "parameters": {
@@ -532,14 +525,12 @@
       "parameters": {
         "method": "POST",
         "url": "https://platform.higgsfield.ai/higgsfield-ai/soul/standard",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Key 34474446-7b4f-4802-bbeb-376dc9f76f89:65785da94a84090b5fedaed17db2d88c0f736cf2f116808ace4ea62643dc7696"
+              "value": "={{ 'Key ' + $env.HIGGSFIELD_CLIENT_ID + ':' + $env.HIGGSFIELD_CLIENT_SECRET }}"
             }
           ]
         },
@@ -561,20 +552,21 @@
         400
       ],
       "id": "8cdab044-02cb-4070-94f0-54fbd4ab4f75",
-      "name": "HTTP Request2",
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "AmMgOpxnGeRUfLDq",
-          "name": "Higgsfield"
-        }
-      }
+      "name": "HTTP Request2"
     },
     {
       "parameters": {
         "url": "={{ $json.status_url }}",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "options": {}
+        "options": {},
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Key ' + $env.HIGGSFIELD_CLIENT_ID + ':' + $env.HIGGSFIELD_CLIENT_SECRET }}"
+            }
+          ]
+        }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
@@ -583,13 +575,7 @@
         400
       ],
       "id": "48a288ee-7edf-4bee-825c-72b7a1da4f06",
-      "name": "HTTP Request4",
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "AmMgOpxnGeRUfLDq",
-          "name": "Higgsfield"
-        }
-      }
+      "name": "HTTP Request4"
     },
     {
       "parameters": {
@@ -712,7 +698,7 @@
           "__rl": true,
           "value": "appvPrfjiuXIhdNuW",
           "mode": "list",
-          "cachedResultName": "🎦Static Scaler 1000",
+          "cachedResultName": "\ud83c\udfa6Static Scaler 1000",
           "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW"
         },
         "table": {
@@ -742,7 +728,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Classify Ad Type - Dynamic field handling\nconst items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  const data = item.json;\n  \n  // Convert any value (string, array, object) to searchable string\n  const getString = (val) => {\n    if (Array.isArray(val)) return val.join(' ').toLowerCase();\n    if (typeof val === 'object' && val !== null) return JSON.stringify(val).toLowerCase();\n    return (val || '').toLowerCase();\n  };\n  \n  // Dynamically combine ALL text fields for classification\n  // Excludes IDs, timestamps, URLs, and system fields\n  const excludeKeys = ['id', 'adCopyRecordId', 'recordId', 'createdTime', 'url', 'n8n'];\n  \n  let combined = '';\n  for (const [key, val] of Object.entries(data)) {\n    if (excludeKeys.some(ex => key.toLowerCase().includes(ex))) continue;\n    if (typeof val === 'string' || Array.isArray(val)) {\n      combined += ' ' + getString(val);\n    }\n  }\n  combined = combined.toLowerCase();\n  \n  // Classification rules - add new patterns here as needed\n  let adType = 'Lifestyle Composite';\n  \n  const rules = [\n    { type: 'Testimonial', pattern: /review|★|testimonial|ratings|quote|\"i was\"|\"i thought\"|\"finally\"|story|customer|said|told me/ },\n    { type: 'Comparison', pattern: /\\bvs\\b|comparison|old way|new way|side-by-side|competitor|versus|compared to/ },\n    { type: 'Before/After', pattern: /timeline|progression|before|transformation|journey|after using|results in/ },\n    { type: 'Benefits Wheel', pattern: /benefit|feature|breakdown|infographic|cost|mechanism|diagram|explainer|how it works|why it works/ },\n    { type: 'Product Hero', pattern: /product shot|hero|lineup|macro|packshot|unboxing|showcase|display/ }\n  ];\n  \n  for (const rule of rules) {\n    if (rule.pattern.test(combined)) {\n      adType = rule.type;\n      break;\n    }\n  }\n  \n  results.push({\n    json: {\n      ...data,\n      adType: adType\n    }\n  });\n}\n\nreturn results;"
+        "jsCode": "// Classify Ad Type - Dynamic field handling\nconst items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  const data = item.json;\n  \n  // Convert any value (string, array, object) to searchable string\n  const getString = (val) => {\n    if (Array.isArray(val)) return val.join(' ').toLowerCase();\n    if (typeof val === 'object' && val !== null) return JSON.stringify(val).toLowerCase();\n    return (val || '').toLowerCase();\n  };\n  \n  // Dynamically combine ALL text fields for classification\n  // Excludes IDs, timestamps, URLs, and system fields\n  const excludeKeys = ['id', 'adCopyRecordId', 'recordId', 'createdTime', 'url', 'n8n'];\n  \n  let combined = '';\n  for (const [key, val] of Object.entries(data)) {\n    if (excludeKeys.some(ex => key.toLowerCase().includes(ex))) continue;\n    if (typeof val === 'string' || Array.isArray(val)) {\n      combined += ' ' + getString(val);\n    }\n  }\n  combined = combined.toLowerCase();\n  \n  // Classification rules - add new patterns here as needed\n  let adType = 'Lifestyle Composite';\n  \n  const rules = [\n    { type: 'Testimonial', pattern: /review|\u2605|testimonial|ratings|quote|\"i was\"|\"i thought\"|\"finally\"|story|customer|said|told me/ },\n    { type: 'Comparison', pattern: /\\bvs\\b|comparison|old way|new way|side-by-side|competitor|versus|compared to/ },\n    { type: 'Before/After', pattern: /timeline|progression|before|transformation|journey|after using|results in/ },\n    { type: 'Benefits Wheel', pattern: /benefit|feature|breakdown|infographic|cost|mechanism|diagram|explainer|how it works|why it works/ },\n    { type: 'Product Hero', pattern: /product shot|hero|lineup|macro|packshot|unboxing|showcase|display/ }\n  ];\n  \n  for (const rule of rules) {\n    if (rule.pattern.test(combined)) {\n      adType = rule.type;\n      break;\n    }\n  }\n  \n  results.push({\n    json: {\n      ...data,\n      adType: adType\n    }\n  });\n}\n\nreturn results;"
       },
       "id": "d8f98816-8652-4cb9-9ba6-69e0d372bf4e",
       "name": "Classify Ad Type",
@@ -1492,7 +1478,7 @@
         "messages": {
           "values": [
             {
-              "content": "You are an expert AI image prompt engineer specializing in DTC product advertising photography. Your job: convert a visual concept brief into a precise, production-ready prompt for fal.ai Flux image generation.\r\n\r\n## ABSOLUTE RULES — VIOLATIONS WILL RUIN THE AD\r\n1. NEVER include text, words, letters, numbers, logos, headlines, watermarks, captions, labels, brand names, or ANY typography in the prompt. The image is a VISUAL CANVAS — copy is added in post-production.\r\n2. The PalmAura device MUST be the clear focal point. It is a white/cream smooth rounded enclosed hand massager device. If a hand is shown, the hand should be inside or interacting with the device.\r\n3. Keep the prompt under 120 words. Precise, not verbose.\r\n4. Always leave clean negative space for text overlay (top third or bottom third).\r\n\r\n## PRODUCT PHYSICAL DESCRIPTION\r\n- White/cream colored enclosed device that wraps around the entire hand\r\n- Smooth, rounded exterior with subtle LED indicator\r\n- Glove-like shape, approximately the size of a boxing glove but sleeker\r\n- When in use: a real human hand is inserted, fingers go into individual channels\r\n- Warm ambient glow suggests the heat function is active\r\n\r\n## STYLE TARGETS\r\nHigh-end DTC aesthetic (Arrae, Seed, Jolie):\r\n- Clean, uncluttered compositions with intentional negative space\r\n- Soft natural or studio lighting, never harsh\r\n- Earth tones: warm cream, sage, soft teal, natural wood, linen\r\n- Product always sharp, well-lit, and hero of the frame\r\n- Professional commercial photography quality\r\n\r\n## INPUT\r\nYou receive a JSON object with:\r\n- scene, lighting, colorPalette, composition, productPlacement, mood, style\r\n- productImageUrl (the S3 URL of the actual product photo to use as reference)\r\n\r\n## OUTPUT\r\nReturn ONLY valid JSON. No markdown. No explanation. No code blocks.\r\n\r\n{\r\n  \"prompt\": \"the complete positive prompt, under 120 words\",\r\n  \"negativePrompt\": \"text, words, letters, writing, typography, logos, watermarks, labels, captions, numbers, symbols, brand names, headlines, artifacts, distortions, blurry, low quality, extra fingers, floating objects, cluttered background, busy composition, cartoon, illustration, anime, painting, sketch, drawing\",\r\n  \"strength\": 0.55\r\n}\r\n\r\n## PROMPT STRUCTURE (follow this exact order)\r\n1. \"Commercial product photography of\" + product in scene\r\n2. Hand interaction detail (if lifestyle)\r\n3. Environment and setting specifics\r\n4. Lighting specification\r\n5. Color palette as visual descriptors (not hex codes)\r\n6. Camera angle and lens equivalent\r\n7. Negative space note: \"clean open space in [top/bottom] third of frame\"\r\n8. Quality anchors: \"professional product photography, commercial advertising, 8k, sharp focus, shallow depth of field, studio quality\"\r\n\r\n## STRENGTH GUIDE\r\n- 0.45-0.55: Strong reference to product image (recommended for product-hero shots)\r\n- 0.55-0.65: Balanced blend (recommended for lifestyle scenes)\r\n- 0.65-0.75: More creative generation (recommended for emotional/story scenes)\r\nChoose strength based on the \"style\" field in the input.",
+              "content": "You are an expert AI image prompt engineer specializing in DTC product advertising photography. Your job: convert a visual concept brief into a precise, production-ready prompt for fal.ai Flux image generation.\r\n\r\n## ABSOLUTE RULES \u2014 VIOLATIONS WILL RUIN THE AD\r\n1. NEVER include text, words, letters, numbers, logos, headlines, watermarks, captions, labels, brand names, or ANY typography in the prompt. The image is a VISUAL CANVAS \u2014 copy is added in post-production.\r\n2. The PalmAura device MUST be the clear focal point. It is a white/cream smooth rounded enclosed hand massager device. If a hand is shown, the hand should be inside or interacting with the device.\r\n3. Keep the prompt under 120 words. Precise, not verbose.\r\n4. Always leave clean negative space for text overlay (top third or bottom third).\r\n\r\n## PRODUCT PHYSICAL DESCRIPTION\r\n- White/cream colored enclosed device that wraps around the entire hand\r\n- Smooth, rounded exterior with subtle LED indicator\r\n- Glove-like shape, approximately the size of a boxing glove but sleeker\r\n- When in use: a real human hand is inserted, fingers go into individual channels\r\n- Warm ambient glow suggests the heat function is active\r\n\r\n## STYLE TARGETS\r\nHigh-end DTC aesthetic (Arrae, Seed, Jolie):\r\n- Clean, uncluttered compositions with intentional negative space\r\n- Soft natural or studio lighting, never harsh\r\n- Earth tones: warm cream, sage, soft teal, natural wood, linen\r\n- Product always sharp, well-lit, and hero of the frame\r\n- Professional commercial photography quality\r\n\r\n## INPUT\r\nYou receive a JSON object with:\r\n- scene, lighting, colorPalette, composition, productPlacement, mood, style\r\n- productImageUrl (the S3 URL of the actual product photo to use as reference)\r\n\r\n## OUTPUT\r\nReturn ONLY valid JSON. No markdown. No explanation. No code blocks.\r\n\r\n{\r\n  \"prompt\": \"the complete positive prompt, under 120 words\",\r\n  \"negativePrompt\": \"text, words, letters, writing, typography, logos, watermarks, labels, captions, numbers, symbols, brand names, headlines, artifacts, distortions, blurry, low quality, extra fingers, floating objects, cluttered background, busy composition, cartoon, illustration, anime, painting, sketch, drawing\",\r\n  \"strength\": 0.55\r\n}\r\n\r\n## PROMPT STRUCTURE (follow this exact order)\r\n1. \"Commercial product photography of\" + product in scene\r\n2. Hand interaction detail (if lifestyle)\r\n3. Environment and setting specifics\r\n4. Lighting specification\r\n5. Color palette as visual descriptors (not hex codes)\r\n6. Camera angle and lens equivalent\r\n7. Negative space note: \"clean open space in [top/bottom] third of frame\"\r\n8. Quality anchors: \"professional product photography, commercial advertising, 8k, sharp focus, shallow depth of field, studio quality\"\r\n\r\n## STRENGTH GUIDE\r\n- 0.45-0.55: Strong reference to product image (recommended for product-hero shots)\r\n- 0.55-0.65: Balanced blend (recommended for lifestyle scenes)\r\n- 0.65-0.75: More creative generation (recommended for emotional/story scenes)\r\nChoose strength based on the \"style\" field in the input.",
               "role": "system"
             },
             {
@@ -1953,7 +1939,7 @@
       "updatedAt": "2026-02-10T05:51:21.675Z",
       "createdAt": "2026-02-10T05:51:21.675Z",
       "id": "M6MgZ4ZBpexEo9UP",
-      "name": "⚖️scale"
+      "name": "\u2696\ufe0fscale"
     }
   ],
   "activeVersion": {
@@ -1964,7 +1950,7 @@
     "nodes": [
       {
         "parameters": {
-          "jsCode": "// ── n8n Code Node: The Splitter ──\n// Handles both formats:\n//   Format 1: { prompt1: \"...\", prompt2: \"...\" }\n//   Format 2: { A: { description: \"...\" }, B: { description: \"...\" }, C: { description: \"...\" } }\n\nconst newItems = [];\nconst items = $input.all();\n\nfor (const item of items) {\n  const json = item.json;\n\n  // FORMAT 2: A/B/C variant objects (from GPT-4o)\n  for (const key of ['A', 'B', 'C', 'D', 'E']) {\n    if (json[key] && typeof json[key] === 'object' && json[key].description) {\n      const cleanText = json[key].description\n        .replace(/^(visual|image|prompt\\s?\\d*|scene\\s?\\d*|option\\s?\\d*|concept\\s?\\d*|pattern interrupt)\\s*[:.-]\\s*/i, \"\")\n        .replace(/^[\"']|[\"']$/g, \"\")\n        .replace(/\\*\\*/g, \"\")\n        .trim();\n\n      if (cleanText.length > 5) {\n        newItems.push({\n          json: {\n            ...json,\n            cleanPrompt: cleanText,\n            sourceField: key\n          }\n        });\n      }\n    }\n  }\n\n  // FORMAT 1: prompt1, prompt2, etc. (legacy)\n  if (newItems.length === 0) {\n    for (const key of Object.keys(json)) {\n      if (key.toLowerCase().startsWith('prompt') && typeof json[key] === 'string') {\n        let cleanText = json[key]\n          .replace(/^(visual|image|prompt\\s?\\d*|scene\\s?\\d*|option\\s?\\d*|concept\\s?\\d*|pattern interrupt)\\s*[:.-]\\s*/i, \"\")\n          .replace(/^[\"']|[\"']$/g, \"\")\n          .replace(/\\*\\*/g, \"\")\n          .trim();\n\n        if (cleanText.length > 5) {\n          newItems.push({\n            json: {\n              ...json,\n              cleanPrompt: cleanText,\n              sourceField: key\n            }\n          });\n        }\n      }\n    }\n  }\n}\n\nif (newItems.length === 0) {\n  return items.map(item => ({ json: { ...item.json, cleanPrompt: \"ERROR: No valid prompt fields found in input.\" }}));\n}\n\nreturn newItems;"
+          "jsCode": "// \u2500\u2500 n8n Code Node: The Splitter \u2500\u2500\n// Handles both formats:\n//   Format 1: { prompt1: \"...\", prompt2: \"...\" }\n//   Format 2: { A: { description: \"...\" }, B: { description: \"...\" }, C: { description: \"...\" } }\n\nconst newItems = [];\nconst items = $input.all();\n\nfor (const item of items) {\n  const json = item.json;\n\n  // FORMAT 2: A/B/C variant objects (from GPT-4o)\n  for (const key of ['A', 'B', 'C', 'D', 'E']) {\n    if (json[key] && typeof json[key] === 'object' && json[key].description) {\n      const cleanText = json[key].description\n        .replace(/^(visual|image|prompt\\s?\\d*|scene\\s?\\d*|option\\s?\\d*|concept\\s?\\d*|pattern interrupt)\\s*[:.-]\\s*/i, \"\")\n        .replace(/^[\"']|[\"']$/g, \"\")\n        .replace(/\\*\\*/g, \"\")\n        .trim();\n\n      if (cleanText.length > 5) {\n        newItems.push({\n          json: {\n            ...json,\n            cleanPrompt: cleanText,\n            sourceField: key\n          }\n        });\n      }\n    }\n  }\n\n  // FORMAT 1: prompt1, prompt2, etc. (legacy)\n  if (newItems.length === 0) {\n    for (const key of Object.keys(json)) {\n      if (key.toLowerCase().startsWith('prompt') && typeof json[key] === 'string') {\n        let cleanText = json[key]\n          .replace(/^(visual|image|prompt\\s?\\d*|scene\\s?\\d*|option\\s?\\d*|concept\\s?\\d*|pattern interrupt)\\s*[:.-]\\s*/i, \"\")\n          .replace(/^[\"']|[\"']$/g, \"\")\n          .replace(/\\*\\*/g, \"\")\n          .trim();\n\n        if (cleanText.length > 5) {\n          newItems.push({\n            json: {\n              ...json,\n              cleanPrompt: cleanText,\n              sourceField: key\n            }\n          });\n        }\n      }\n    }\n  }\n}\n\nif (newItems.length === 0) {\n  return items.map(item => ({ json: { ...item.json, cleanPrompt: \"ERROR: No valid prompt fields found in input.\" }}));\n}\n\nreturn newItems;"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
@@ -2063,7 +2049,7 @@
             "__rl": true,
             "value": "appvPrfjiuXIhdNuW",
             "mode": "list",
-            "cachedResultName": "🎦Static Scaler 1000",
+            "cachedResultName": "\ud83c\udfa6Static Scaler 1000",
             "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW"
           },
           "table": {
@@ -2366,7 +2352,7 @@
             "__rl": true,
             "value": "appvPrfjiuXIhdNuW",
             "mode": "list",
-            "cachedResultName": "🎦Static Scaler 1000",
+            "cachedResultName": "\ud83c\udfa6Static Scaler 1000",
             "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW"
           },
           "table": {
@@ -2411,14 +2397,12 @@
         "parameters": {
           "method": "POST",
           "url": "https://platform.higgsfield.ai/higgsfield-ai/soul/standard",
-          "authentication": "genericCredentialType",
-          "genericAuthType": "httpHeaderAuth",
           "sendHeaders": true,
           "headerParameters": {
             "parameters": [
               {
                 "name": "Authorization",
-                "value": "Key 34474446-7b4f-4802-bbeb-376dc9f76f89:65785da94a84090b5fedaed17db2d88c0f736cf2f116808ace4ea62643dc7696"
+                "value": "={{ 'Key ' + $env.HIGGSFIELD_CLIENT_ID + ':' + $env.HIGGSFIELD_CLIENT_SECRET }}"
               }
             ]
           },
@@ -2440,20 +2424,21 @@
           624
         ],
         "id": "feaa9474-2493-4aa2-a6ab-f2cb8d4cab3f",
-        "name": "HTTP Request",
-        "credentials": {
-          "httpHeaderAuth": {
-            "id": "AmMgOpxnGeRUfLDq",
-            "name": "Higgsfield"
-          }
-        }
+        "name": "HTTP Request"
       },
       {
         "parameters": {
           "url": "={{ $json.status_url }}",
-          "authentication": "genericCredentialType",
-          "genericAuthType": "httpHeaderAuth",
-          "options": {}
+          "options": {},
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "={{ 'Key ' + $env.HIGGSFIELD_CLIENT_ID + ':' + $env.HIGGSFIELD_CLIENT_SECRET }}"
+              }
+            ]
+          }
         },
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.3,
@@ -2462,13 +2447,7 @@
           624
         ],
         "id": "968520a5-daec-419d-9868-1fe449330f6a",
-        "name": "HTTP Request1",
-        "credentials": {
-          "httpHeaderAuth": {
-            "id": "AmMgOpxnGeRUfLDq",
-            "name": "Higgsfield"
-          }
-        }
+        "name": "HTTP Request1"
       },
       {
         "parameters": {
@@ -2488,14 +2467,12 @@
         "parameters": {
           "method": "POST",
           "url": "https://platform.higgsfield.ai/higgsfield-ai/soul/standard",
-          "authentication": "genericCredentialType",
-          "genericAuthType": "httpHeaderAuth",
           "sendHeaders": true,
           "headerParameters": {
             "parameters": [
               {
                 "name": "Authorization",
-                "value": "Key 34474446-7b4f-4802-bbeb-376dc9f76f89:65785da94a84090b5fedaed17db2d88c0f736cf2f116808ace4ea62643dc7696"
+                "value": "={{ 'Key ' + $env.HIGGSFIELD_CLIENT_ID + ':' + $env.HIGGSFIELD_CLIENT_SECRET }}"
               }
             ]
           },
@@ -2517,20 +2494,21 @@
           400
         ],
         "id": "8cdab044-02cb-4070-94f0-54fbd4ab4f75",
-        "name": "HTTP Request2",
-        "credentials": {
-          "httpHeaderAuth": {
-            "id": "AmMgOpxnGeRUfLDq",
-            "name": "Higgsfield"
-          }
-        }
+        "name": "HTTP Request2"
       },
       {
         "parameters": {
           "url": "={{ $json.status_url }}",
-          "authentication": "genericCredentialType",
-          "genericAuthType": "httpHeaderAuth",
-          "options": {}
+          "options": {},
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "={{ 'Key ' + $env.HIGGSFIELD_CLIENT_ID + ':' + $env.HIGGSFIELD_CLIENT_SECRET }}"
+              }
+            ]
+          }
         },
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.3,
@@ -2539,13 +2517,7 @@
           400
         ],
         "id": "48a288ee-7edf-4bee-825c-72b7a1da4f06",
-        "name": "HTTP Request4",
-        "credentials": {
-          "httpHeaderAuth": {
-            "id": "AmMgOpxnGeRUfLDq",
-            "name": "Higgsfield"
-          }
-        }
+        "name": "HTTP Request4"
       },
       {
         "parameters": {
@@ -2668,7 +2640,7 @@
             "__rl": true,
             "value": "appvPrfjiuXIhdNuW",
             "mode": "list",
-            "cachedResultName": "🎦Static Scaler 1000",
+            "cachedResultName": "\ud83c\udfa6Static Scaler 1000",
             "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW"
           },
           "table": {
@@ -2698,7 +2670,7 @@
       },
       {
         "parameters": {
-          "jsCode": "// Classify Ad Type - Dynamic field handling\nconst items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  const data = item.json;\n  \n  // Convert any value (string, array, object) to searchable string\n  const getString = (val) => {\n    if (Array.isArray(val)) return val.join(' ').toLowerCase();\n    if (typeof val === 'object' && val !== null) return JSON.stringify(val).toLowerCase();\n    return (val || '').toLowerCase();\n  };\n  \n  // Dynamically combine ALL text fields for classification\n  // Excludes IDs, timestamps, URLs, and system fields\n  const excludeKeys = ['id', 'adCopyRecordId', 'recordId', 'createdTime', 'url', 'n8n'];\n  \n  let combined = '';\n  for (const [key, val] of Object.entries(data)) {\n    if (excludeKeys.some(ex => key.toLowerCase().includes(ex))) continue;\n    if (typeof val === 'string' || Array.isArray(val)) {\n      combined += ' ' + getString(val);\n    }\n  }\n  combined = combined.toLowerCase();\n  \n  // Classification rules - add new patterns here as needed\n  let adType = 'Lifestyle Composite';\n  \n  const rules = [\n    { type: 'Testimonial', pattern: /review|★|testimonial|ratings|quote|\"i was\"|\"i thought\"|\"finally\"|story|customer|said|told me/ },\n    { type: 'Comparison', pattern: /\\bvs\\b|comparison|old way|new way|side-by-side|competitor|versus|compared to/ },\n    { type: 'Before/After', pattern: /timeline|progression|before|transformation|journey|after using|results in/ },\n    { type: 'Benefits Wheel', pattern: /benefit|feature|breakdown|infographic|cost|mechanism|diagram|explainer|how it works|why it works/ },\n    { type: 'Product Hero', pattern: /product shot|hero|lineup|macro|packshot|unboxing|showcase|display/ }\n  ];\n  \n  for (const rule of rules) {\n    if (rule.pattern.test(combined)) {\n      adType = rule.type;\n      break;\n    }\n  }\n  \n  results.push({\n    json: {\n      ...data,\n      adType: adType\n    }\n  });\n}\n\nreturn results;"
+          "jsCode": "// Classify Ad Type - Dynamic field handling\nconst items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  const data = item.json;\n  \n  // Convert any value (string, array, object) to searchable string\n  const getString = (val) => {\n    if (Array.isArray(val)) return val.join(' ').toLowerCase();\n    if (typeof val === 'object' && val !== null) return JSON.stringify(val).toLowerCase();\n    return (val || '').toLowerCase();\n  };\n  \n  // Dynamically combine ALL text fields for classification\n  // Excludes IDs, timestamps, URLs, and system fields\n  const excludeKeys = ['id', 'adCopyRecordId', 'recordId', 'createdTime', 'url', 'n8n'];\n  \n  let combined = '';\n  for (const [key, val] of Object.entries(data)) {\n    if (excludeKeys.some(ex => key.toLowerCase().includes(ex))) continue;\n    if (typeof val === 'string' || Array.isArray(val)) {\n      combined += ' ' + getString(val);\n    }\n  }\n  combined = combined.toLowerCase();\n  \n  // Classification rules - add new patterns here as needed\n  let adType = 'Lifestyle Composite';\n  \n  const rules = [\n    { type: 'Testimonial', pattern: /review|\u2605|testimonial|ratings|quote|\"i was\"|\"i thought\"|\"finally\"|story|customer|said|told me/ },\n    { type: 'Comparison', pattern: /\\bvs\\b|comparison|old way|new way|side-by-side|competitor|versus|compared to/ },\n    { type: 'Before/After', pattern: /timeline|progression|before|transformation|journey|after using|results in/ },\n    { type: 'Benefits Wheel', pattern: /benefit|feature|breakdown|infographic|cost|mechanism|diagram|explainer|how it works|why it works/ },\n    { type: 'Product Hero', pattern: /product shot|hero|lineup|macro|packshot|unboxing|showcase|display/ }\n  ];\n  \n  for (const rule of rules) {\n    if (rule.pattern.test(combined)) {\n      adType = rule.type;\n      break;\n    }\n  }\n  \n  results.push({\n    json: {\n      ...data,\n      adType: adType\n    }\n  });\n}\n\nreturn results;"
         },
         "id": "d8f98816-8652-4cb9-9ba6-69e0d372bf4e",
         "name": "Classify Ad Type",
