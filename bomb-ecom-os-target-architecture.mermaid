@@ -1,0 +1,160 @@
+---
+title: "BOMB Ecom OS — Target Architecture (Functional Blocks)"
+---
+flowchart TB
+    subgraph ORCH["ORCHESTRATION — Dev & Strategy Layer"]
+        O1["Claude Code (terminal dev)"]
+        O2["Claude.ai (strategy chat)"]
+        O3["MCP Layer: Figma / Notion / Shopify / TrendTrack / Apify / n8n / Higgsfield"]
+    end
+
+    subgraph FE["FRONTEND MODULES — bom-ecom/client (React + Vite, port 5000)"]
+        FE1["Overview Dashboard /"]
+        FE2["Research Pipeline /research/products /avatars /angles /hooks-tags"]
+        FE3["Creative Lab /ad-generator /creative-lab /creative-lab/clone"]
+        FE4["Campaigns /campaigns /winning-ads"]
+        FE5["Operations /operations/orders /support /inventory /suppliers"]
+        FE6["Analytics /analytics/financial /creative /product"]
+        FE7["Automations + AI Agency /automations/* /agency/* /settings"]
+    end
+
+    subgraph API["API SURFACE — bom-ecom/server (Express)"]
+        A1["Airtable Proxy /api/airtable/products /ad-concepts /images /jobs"]
+        A2["DB CRUD — product-candidates / competitors / trend-items / criteria"]
+        A3["n8n Webhook Triggers /api/webhook/*"]
+        A4["S3 Asset API /api/s3/templates /renders /signed-url /upload"]
+        A5["Uploads /api/upload /api/uploads"]
+        A6["Notion Integration /api/notion/status /pages"]
+    end
+
+    subgraph N8N["N8N WORKFLOWS — port 5678 (Docker)"]
+        W1["WF1 Research Pipeline — Perplexity to Claude to Airtable"]
+        W2["WF2 Ad Copy Generator — Claude Sonnet 4"]
+        W3["WF3 Image Generation Pipeline — GPT-4o prompts + fal/Higgsfield + BannerBear"]
+        W4["WF4 Ad Concept — Shopify Style (Claude Vision)"]
+        W5["WF5 Ad Clone — Vision reference to adapted creative"]
+        W6["WF6 AI UGC Video Creator (SCALE) — Nano Banana + FAL"]
+        W7["WF7 Facebook Ad System (Nano Template) — Perplexity driven"]
+        W8["WF8 Nano Banana Unlimited (LM) — Box + GPT"]
+        W9["WF9 Static Scaler v3 — ComfyUI upscaling"]
+        W10["PLANNED: Consumer Intel Scraper — Apify driven"]
+    end
+
+    subgraph STORE["STORAGE LAYER"]
+        D1[("PostgreSQL bomb_ecom — Drizzle 10 tables (users / products / campaigns / adSets / ads / productCandidates / competitorIntel / trendItems / criteriaChecks / uploadedMedia)")]
+        D2[("Airtable appvPrfjiuXIhdNuW — Products / Avatars / Angles / Hooks / AdCopy / Images / Jobs")]
+        D3[("AWS S3 static-scaler-v2 + CloudFront CDN")]
+        D4[("Google Drive — Asset Library")]
+    end
+
+    subgraph AISVC["AI SERVICES"]
+        AI1["Anthropic Claude Sonnet 4 — research / copy / vision"]
+        AI2["OpenAI GPT-4o — image prompts / agent tasks"]
+        AI3["Perplexity API — deep research"]
+        AI4["Google Gemini — analysis (BannerBear guide)"]
+        AI5["Nano Banana LM — UGC video + image gen"]
+        AI6["ComfyUI local :8188 — static scaler image gen"]
+    end
+
+    subgraph IMG["IMAGE / ASSET PIPELINES"]
+        I1["fal.ai Flux Dev — scene generation"]
+        I2["Higgsfield Soul — scene gen w/ product reference"]
+        I3["BannerBear — text overlay compositing (headline + CTA)"]
+    end
+
+    subgraph SRC["DATA SOURCES / EXTERNAL"]
+        S1["Apify — TikTok / FB Ad Library / IG / Amazon Reviews"]
+        S2["PLANNED: Meta Ads API — campaign launch + metrics ingest"]
+        S3["PLANNED: TrendTrack.io — competitor intel"]
+        S4["PLANNED: GA4 — analytics ingest"]
+        S5["PLANNED: Google Ads + SEO"]
+        S6["Box / GitHub / Gumloop (auxiliary)"]
+    end
+
+    O2 -.->|"strategy decisions"| O1
+    O3 -.-> O1
+    O3 -.-> O2
+    O1 -.->|"builds + edits"| FE1
+    O1 -.->|"builds + edits"| A1
+    O1 -.->|"authors workflow JSONs"| W1
+
+    FE2 --> A1
+    FE2 --> A2
+    FE2 --> A3
+    FE3 --> A1
+    FE3 --> A3
+    FE3 --> A4
+    FE3 --> A5
+    FE4 --> A2
+    FE4 --> A3
+    FE5 --> A2
+    FE6 --> A1
+    FE6 --> A2
+    FE7 --> A3
+    FE7 --> A6
+
+    A3 -->|"POST /scrape/competitor-ads"| W10
+    A3 -->|"POST /scrape/tiktok-trends"| W10
+    A3 -->|"POST /scrape/product-data"| W10
+    A3 -->|"POST /concept/generate"| W4
+    A3 -->|"POST /assets/generate"| W3
+    A3 -->|"POST /research/ingest"| W1
+    A3 -->|"POST /campaign/launch"| S2
+    A3 -->|"POST /metrics/ingest"| S2
+    A3 -->|"POST /generate"| W2
+
+    A1 <--> D2
+    A2 <--> D1
+    A4 <--> D3
+    A5 <--> D3
+
+    W1 -.-> AI3
+    W1 -.-> AI1
+    W2 -.-> AI1
+    W3 -.-> AI2
+    W4 -.-> AI1
+    W5 -.-> AI1
+    W6 -.-> AI5
+    W7 -.-> AI3
+    W7 -.-> AI5
+    W8 -.-> AI5
+    W8 -.-> AI2
+    W9 -.-> AI6
+    W10 -.-> AI4
+
+    W3 --> I1
+    W3 --> I2
+    W3 --> I3
+    W4 --> I1
+    W4 --> I3
+    W5 --> I1
+    W5 --> I3
+    W6 --> I1
+
+    I1 --> D3
+    I2 --> D3
+    I3 --> D3
+    AI6 --> D3
+    W6 --> D4
+    W8 --> D4
+
+    W1 --> D2
+    W2 --> D2
+    W3 --> D2
+    W4 --> D2
+    W5 --> D2
+    W10 --> D2
+    W10 --> D1
+
+    S1 --> W10
+    S1 --> W7
+    S3 -.->|"future feed"| W10
+    S4 -.->|"future feed"| A2
+    S5 -.->|"future channels"| FE4
+    S6 --> W8
+
+    D1 -.->|"selective mirror"| D2
+
+    classDef planned fill:#FFF3C4,stroke:#B7791F,stroke-width:2px,color:#744210
+    classDef built fill:#E6F4EA,stroke:#137333,stroke-width:1px,color:#0F4F23
+    class W10,S2,S3,S4,S5 planned

@@ -1,0 +1,1965 @@
+{
+  "updatedAt": "2026-02-11T20:51:12.235Z",
+  "createdAt": "2026-02-10T05:51:23.251Z",
+  "name": "Static Scaler v3 (v3.2 ComfyUI)",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "// Split 3 concepts into individual items for the loop\n// Each item carries its concept data + the product image URL\nconst items = $input.all();\nconst results = [];\n\n// Get productImageUrl from upstream (preserved through the chain)\nconst contextData = $('image-prompt-context').first().json;\nconst productImageUrl = contextData?.productImageUrl || '';\nconst recordId = contextData?.recordId || '';\n\nfor (const item of items) {\n  const concepts = item.json.concepts || [];\n\n  for (const concept of concepts) {\n    results.push({\n      json: {\n        conceptId: concept.conceptId || 'X',\n        segment: concept.segment || '',\n        angle: concept.angle || '',\n        awarenessLevel: concept.awarenessLevel || '',\n        beliefsReinforced: concept.beliefsReinforced || [],\n        visualDirection: concept.visualDirection || {},\n        adCopy: concept.adCopy || {},\n        productImageUrl: productImageUrl,\n        recordId: recordId,\n        style: concept.visualDirection?.style || 'lifestyle'\n      }\n    });\n  }\n}\n\n// Ensure we always have at least 1 item\nif (results.length === 0) {\n  results.push({\n    json: {\n      error: 'No concepts parsed',\n      conceptId: 'A',\n      visualDirection: {\n        scene: 'PalmAura hand massager on a clean linen surface',\n        lighting: 'soft natural window light',\n        colorPalette: 'warm cream and white',\n        composition: 'centered product shot with negative space above',\n        productPlacement: 'device front-facing on neutral surface',\n        mood: 'calm and clean',\n        style: 'product-hero'\n      },\n      productImageUrl: productImageUrl,\n      recordId: recordId,\n      style: 'product-hero'\n    }\n  });\n}\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1488,
+        1456
+      ],
+      "id": "7814f2d6-6f17-4e28-a483-b1209702eac6",
+      "name": "Code in JavaScript4"
+    },
+    {
+      "parameters": {
+        "templateId": "=",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.bannerbear",
+      "typeVersion": 1,
+      "position": [
+        -208,
+        1696
+      ],
+      "id": "d66b6228-f2b5-4b7a-96fa-cc586ad1523f",
+      "name": "Create an image1",
+      "credentials": {
+        "bannerbearApi": {
+          "id": "2QlDbvK9YUkxhYC0",
+          "name": "Bannerbear account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -1376,
+        1344
+      ],
+      "id": "16b0a257-5da4-4f71-97dc-df2097e6be49",
+      "name": "Loop Over Items3"
+    },
+    {
+      "parameters": {
+        "path": "ca26a744-db15-42d4-9986-66154ab84cbb",
+        "options": {}
+      },
+      "id": "70af976f-6f20-4157-8f1e-d1227d6b9b89",
+      "name": "Webhook Trigger1",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -3232,
+        1296
+      ],
+      "webhookId": "ca26a744-db15-42d4-9986-66154ab84cbb",
+      "alwaysOutputData": false,
+      "executeOnce": false,
+      "notes": "Alternative trigger via Airtable automation or manual call"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {
+          "outputField": "data"
+        }
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -672,
+        1200
+      ],
+      "id": "7252870e-5fe8-47cf-ae78-8d57cd38cc04",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format aggregated image data for Airtable\n// Handles both ComfyUI and fal.ai response formats\nconst items = $input.all();\nconst output = {\n  'Ad Sets': '',\n  A: '',\n  B: '',\n  C: '',\n  Seed: '',\n  Width: 1024,\n  Height: 1024,\n  Model: 'flux/dev (ComfyUI)',\n  Status: 'Generated',\n  'Prompt Used': ''\n};\n\n// Get the aggregated data array\nconst data = items[0]?.json?.data || items;\nconst imageUrls = [];\nconst prompts = [];\n\nfor (const entry of data) {\n  const json = entry.json || entry;\n\n  // Extract image URL (works for both ComfyUI and fal.ai format)\n  if (json.images && json.images.length > 0) {\n    imageUrls.push(json.images[0].url);\n    if (json.images[0].width) output.Width = json.images[0].width;\n    if (json.images[0].height) output.Height = json.images[0].height;\n  } else if (json.url) {\n    imageUrls.push(json.url);\n  } else if (json.imageUrl) {\n    imageUrls.push(json.imageUrl);\n  }\n\n  // Collect prompts and seeds\n  if (json.prompt) prompts.push(json.prompt);\n  if (json.seed) output.Seed = String(json.seed);\n}\n\n// Map to A, B, C\noutput.A = imageUrls[0] || '';\noutput.B = imageUrls[1] || '';\noutput.C = imageUrls[2] || '';\noutput['Ad Sets'] = 'Generated ' + imageUrls.length + ' variants';\noutput['Prompt Used'] = prompts.join(' | ');\n\n// Get record ID from upstream\nconst contextData = $('image-prompt-context').first().json;\noutput.recordId = contextData?.recordId || '';\n\nreturn [{ json: output }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -512,
+        1200
+      ],
+      "id": "294d2538-115c-42f1-bf03-1a17b25d2ebf",
+      "name": "Format Image Data"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appvPrfjiuXIhdNuW",
+          "mode": "list",
+          "cachedResultName": "🎦Static Scaler 1000",
+          "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblt1dje94IcK4kT2",
+          "mode": "list",
+          "cachedResultName": "Images",
+          "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW/tblt1dje94IcK4kT2"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Ad Sets": "={{ $json[\"Ad Sets\"] }}",
+            "A": "={{ $json.A }}",
+            "B": "={{ $json.B }}",
+            "C": "={{ $json.C }}",
+            "Model": "={{ $json.Model }}",
+            "Width": "={{ $json.Width }}",
+            "Height": "={{ $json.Height }}",
+            "Status": "={{ $json.Status }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Ad Sets",
+              "displayName": "Ad Sets",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "A",
+              "displayName": "A",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Image Prompts",
+              "displayName": "Image Prompts",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Product",
+              "displayName": "Product",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Ad Copy",
+              "displayName": "Ad Copy",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "recordId",
+              "displayName": "recordId",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "B",
+              "displayName": "B",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "C",
+              "displayName": "C",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Prompt Index",
+              "displayName": "Prompt Index",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Prompt Used",
+              "displayName": "Prompt Used",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Seed",
+              "displayName": "Seed",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Model",
+              "displayName": "Model",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Width",
+              "displayName": "Width",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Height",
+              "displayName": "Height",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Generated",
+                  "value": "Generated"
+                },
+                {
+                  "name": "Approved",
+                  "value": "Approved"
+                },
+                {
+                  "name": "Rejected",
+                  "value": "Rejected"
+                },
+                {
+                  "name": "Used",
+                  "value": "Used"
+                },
+                {
+                  "name": "Failed",
+                  "value": "Failed"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Generated At",
+              "displayName": "Generated At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Error",
+              "displayName": "Error",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": "={{ false }}"
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        -352,
+        1200
+      ],
+      "id": "fe0c17f9-13f0-4ea9-ae07-8fddd45be23e",
+      "name": "Create Ad URLs",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "DQz0c1qORXGaW82y",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "base": {
+          "__rl": true,
+          "value": "appvPrfjiuXIhdNuW",
+          "mode": "list",
+          "cachedResultName": "🎦Static Scaler 1000",
+          "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblh0GaqQOpBVbCLP",
+          "mode": "list",
+          "cachedResultName": "Ad Copy",
+          "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW/tblh0GaqQOpBVbCLP"
+        },
+        "id": "={{ $json.query.recordId }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        -3104,
+        1360
+      ],
+      "id": "80fc69f4-d08b-4019-9cf2-9062ce5c511e",
+      "name": "Get Ad Copy",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "DQz0c1qORXGaW82y",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Creative Director JSON output from OpenAI Chat Completions API\nconst items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  let text = '';\n\n  // Primary: Standard Chat Completions response (HTTP Request node)\n  if (item.json?.choices?.[0]?.message?.content) {\n    text = item.json.choices[0].message.content;\n  }\n  // Fallback: Direct text field\n  else if (item.json?.text) {\n    text = item.json.text;\n  }\n  // Fallback: Responses API format\n  else if (item.json?.output?.[0]?.content?.[0]?.text) {\n    text = item.json.output[0].content[0].text;\n  }\n  // Fallback: Raw string\n  else if (typeof item.json === 'string') {\n    text = item.json;\n  }\n\n  // Clean markdown code blocks\n  text = text.replace(/```json\\s*/gi, '').replace(/```\\s*/g, '').trim();\n\n  // Find the JSON array\n  const arrayMatch = text.match(/\\[[\\s\\S]*\\]/);\n  if (!arrayMatch) {\n    try {\n      const parsed = JSON.parse(text);\n      if (Array.isArray(parsed)) {\n        results.push({ json: { concepts: parsed, raw: text } });\n      } else {\n        results.push({ json: { concepts: [parsed], raw: text } });\n      }\n    } catch (e) {\n      results.push({ json: { error: 'Could not parse JSON', raw: text } });\n    }\n    continue;\n  }\n\n  try {\n    const concepts = JSON.parse(arrayMatch[0]);\n    results.push({ json: { concepts, raw: text } });\n  } catch (e) {\n    results.push({ json: { error: 'JSON parse failed', raw: text } });\n  }\n}\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1648,
+        1456
+      ],
+      "id": "22527227-a2fa-4128-9663-f18ebbe621ed",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://platform.higgsfield.ai/higgsfield-ai/soul/standard",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Key 34474446-7b4f-4802-bbeb-376dc9f76f89:65785da94a84090b5fedaed17db2d88c0f736cf2f116808ace4ea62643dc7696"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"higgsfield-ai/soul/standard\",\n  \"prompt\": \"{{ $json.cleanPrompt }} . The product is the 'PalmAura', a sleek, mitten-shaped hand massager in a matte 'Greige' (warm light gray) color. Material finish is soft PU leather with a structured fabric wrist cuff. Key Feature: A prominent, vertical oval control panel on the top center with a metallic rose-gold rim. Inside the rose-gold oval, there are 4 small, vertically stacked circular buttons. The device looks premium, ergonomic, and cozy. High-end commercial product photography, 8k resolution.\",\n  \"aspect_ratio\": \"1:1\",\n  \"negative_prompt\": \"blurry, low quality, distorted\"\n}",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1472,
+        624
+      ],
+      "id": "feaa9474-2493-4aa2-a6ab-f2cb8d4cab3f",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "AmMgOpxnGeRUfLDq",
+          "name": "Higgsfield"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.status_url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1824,
+        624
+      ],
+      "id": "968520a5-daec-419d-9868-1fe449330f6a",
+      "name": "HTTP Request1",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "AmMgOpxnGeRUfLDq",
+          "name": "Higgsfield"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1632,
+        624
+      ],
+      "id": "4bc8c153-7104-4745-a419-7f6d61d4a1fb",
+      "name": "Wait",
+      "webhookId": "70337874-0b51-4d55-81fe-5e74d4b56c10"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://platform.higgsfield.ai/higgsfield-ai/soul/standard",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Key 34474446-7b4f-4802-bbeb-376dc9f76f89:65785da94a84090b5fedaed17db2d88c0f736cf2f116808ace4ea62643dc7696"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"bytedance/seedream/v4/edit\",\n  \"prompt\": \"{{ $json.cleanPrompt }}\",\n  \"image_urls\": [\n    \"YOUR_PRODUCT_IMAGE_URL_HERE\"\n  ],\n  \"aspect_ratio\": \"1:1\",\n  \"negative_prompt\": \"blurry, low quality, distorted\"\n}",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1456,
+        400
+      ],
+      "id": "8cdab044-02cb-4070-94f0-54fbd4ab4f75",
+      "name": "HTTP Request2",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "AmMgOpxnGeRUfLDq",
+          "name": "Higgsfield"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.status_url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1792,
+        400
+      ],
+      "id": "48a288ee-7edf-4bee-825c-72b7a1da4f06",
+      "name": "HTTP Request4",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "AmMgOpxnGeRUfLDq",
+          "name": "Higgsfield"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1648,
+        400
+      ],
+      "id": "0f014ce9-86e5-491b-9f96-ddab893ab80d",
+      "name": "Wait1",
+      "webhookId": "ba0e1dc2-af57-47fb-8255-25c5b29435b3"
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "bucketName": "static-scaler-v2",
+        "fileName": "ad-phase1-product-bckgrnd/{{ $json.id }}.jpg",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.awsS3",
+      "typeVersion": 2,
+      "position": [
+        -16,
+        1200
+      ],
+      "id": "130f7bcf-bfa9-4720-b861-70779aed649a",
+      "name": "Upload a file",
+      "credentials": {
+        "aws": {
+          "id": "wB0AVObrmWcEXu3V",
+          "name": "AWS (IAM) account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "recordId",
+              "name": "adCopyRecordId",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "headline",
+              "name": "headline",
+              "value": "={{ $json.headline }}",
+              "type": "string"
+            },
+            {
+              "id": "cta",
+              "name": "cta",
+              "value": "={{ $json.CTA }}",
+              "type": "string"
+            },
+            {
+              "id": "concept",
+              "name": "concept",
+              "value": "={{ $json.Concept }}",
+              "type": "string"
+            },
+            {
+              "id": "265c2bbe-4786-455c-a6fe-2d5f38162389",
+              "name": "Product",
+              "value": "={{ $json.Product }}",
+              "type": "array"
+            },
+            {
+              "id": "8e0aa2ff-567b-40b8-b846-b02c30038a5f",
+              "name": "Angle",
+              "value": "={{ $json.Angle }}",
+              "type": "string"
+            },
+            {
+              "id": "3a32f144-be89-4ddf-94f8-feb31ffec313",
+              "name": "Awareness Level",
+              "value": "={{ $json[\"Awareness Level\"] }}",
+              "type": "array"
+            },
+            {
+              "id": "27553fc8-0bbb-41ca-9fe7-01b53c5dbc48",
+              "name": "CTA strength",
+              "value": "={{ $json[\"CTA strength\"] }}",
+              "type": "array"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "e04429b9-387c-4d50-a0bd-8621c98325cb",
+      "name": "Preserve Ad Copy Context",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        -2944,
+        1360
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the input data - fields are directly on $input.item.json\nconst data = $input.item.json;\n\n// Get Product Images field\nconst productImages = data[\"Product Images\"];\n\n// Validation\nif (!productImages || !Array.isArray(productImages) || productImages.length === 0) {\n  throw new Error('NO product images found - add images to Products table');\n}\n\n// Extract first image\nconst productImageUrl = productImages[0].url;\nconst productFilename = productImages[0].filename;\n\n// Return merged data\nreturn {\n  ...data,\n  productImageUrl: productImageUrl,\n  productFilename: productFilename\n};"
+      },
+      "id": "80043507-62c4-4e9b-b10b-a7450a7f01b5",
+      "name": "Extract Product Image URL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2320,
+        1504
+      ]
+    },
+    {
+      "parameters": {
+        "base": {
+          "__rl": true,
+          "value": "appvPrfjiuXIhdNuW",
+          "mode": "list",
+          "cachedResultName": "🎦Static Scaler 1000",
+          "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblBnVh4S8suptxct",
+          "mode": "list",
+          "cachedResultName": "Products",
+          "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW/tblBnVh4S8suptxct"
+        },
+        "id": "={{ $('Preserve Ad Copy Context').item.json.Product[0] }}",
+        "options": {}
+      },
+      "id": "107c2b42-26a4-45b8-a80d-b325744b652f",
+      "name": "Get Product Record",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        -2496,
+        1504
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "DQz0c1qORXGaW82y",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Classify Ad Type - Dynamic field handling\nconst items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  const data = item.json;\n  \n  // Convert any value (string, array, object) to searchable string\n  const getString = (val) => {\n    if (Array.isArray(val)) return val.join(' ').toLowerCase();\n    if (typeof val === 'object' && val !== null) return JSON.stringify(val).toLowerCase();\n    return (val || '').toLowerCase();\n  };\n  \n  // Dynamically combine ALL text fields for classification\n  // Excludes IDs, timestamps, URLs, and system fields\n  const excludeKeys = ['id', 'adCopyRecordId', 'recordId', 'createdTime', 'url', 'n8n'];\n  \n  let combined = '';\n  for (const [key, val] of Object.entries(data)) {\n    if (excludeKeys.some(ex => key.toLowerCase().includes(ex))) continue;\n    if (typeof val === 'string' || Array.isArray(val)) {\n      combined += ' ' + getString(val);\n    }\n  }\n  combined = combined.toLowerCase();\n  \n  // Classification rules - add new patterns here as needed\n  let adType = 'Lifestyle Composite';\n  \n  const rules = [\n    { type: 'Testimonial', pattern: /review|★|testimonial|ratings|quote|\"i was\"|\"i thought\"|\"finally\"|story|customer|said|told me/ },\n    { type: 'Comparison', pattern: /\\bvs\\b|comparison|old way|new way|side-by-side|competitor|versus|compared to/ },\n    { type: 'Before/After', pattern: /timeline|progression|before|transformation|journey|after using|results in/ },\n    { type: 'Benefits Wheel', pattern: /benefit|feature|breakdown|infographic|cost|mechanism|diagram|explainer|how it works|why it works/ },\n    { type: 'Product Hero', pattern: /product shot|hero|lineup|macro|packshot|unboxing|showcase|display/ }\n  ];\n  \n  for (const rule of rules) {\n    if (rule.pattern.test(combined)) {\n      adType = rule.type;\n      break;\n    }\n  }\n  \n  results.push({\n    json: {\n      ...data,\n      adType: adType\n    }\n  });\n}\n\nreturn results;"
+      },
+      "id": "d8f98816-8652-4cb9-9ba6-69e0d372bf4e",
+      "name": "Classify Ad Type",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2784,
+        1360
+      ],
+      "notes": "Classifies each ad record into: Lifestyle Composite, Testimonial, Comparison, Before/After, Benefits Wheel, or Product Hero based on Concept, Angle, and Tags fields."
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "=appvPrfjiuXIhdNuW",
+          "mode": "id"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblh0GaqQOpBVbCLP",
+          "mode": "list",
+          "cachedResultName": "Ad Copy",
+          "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW/tblh0GaqQOpBVbCLP"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.id }}",
+            "Ad Type": "={{ $json.adType }}",
+            "Product": "={{ $json.Product }}"
+          },
+          "matchingColumns": [
+            "id",
+            "Ad Type",
+            "Product"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Concept",
+              "displayName": "Concept",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "headline",
+              "displayName": "headline",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Angle",
+              "displayName": "Angle",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Curiosity",
+                  "value": "Curiosity"
+                },
+                {
+                  "name": "Identity",
+                  "value": "Identity"
+                },
+                {
+                  "name": "Pain",
+                  "value": "Pain"
+                },
+                {
+                  "name": "Social Proof",
+                  "value": "Social Proof"
+                },
+                {
+                  "name": "Us vs Them",
+                  "value": "Us vs Them"
+                },
+                {
+                  "name": "Urgency",
+                  "value": "Urgency"
+                },
+                {
+                  "name": "Gift",
+                  "value": "Gift"
+                },
+                {
+                  "name": "Cost",
+                  "value": "Cost"
+                },
+                {
+                  "name": "Science",
+                  "value": "Science"
+                },
+                {
+                  "name": "Transformation",
+                  "value": "Transformation"
+                },
+                {
+                  "name": "Risk Reversal",
+                  "value": "Risk Reversal"
+                },
+                {
+                  "name": "Scarcity",
+                  "value": "Scarcity"
+                },
+                {
+                  "name": "Direct Offer",
+                  "value": "Direct Offer"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Avatar Target",
+              "displayName": "Avatar Target",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Desk Workers",
+                  "value": "Desk Workers"
+                },
+                {
+                  "name": "Women 45+",
+                  "value": "Women 45+"
+                },
+                {
+                  "name": "Gift Buyers",
+                  "value": "Gift Buyers"
+                },
+                {
+                  "name": "Hobbyists",
+                  "value": "Hobbyists"
+                },
+                {
+                  "name": "Professionals",
+                  "value": "Professionals"
+                },
+                {
+                  "name": "General",
+                  "value": "General"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Awareness Level",
+              "displayName": "Awareness Level",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "options": [
+                {
+                  "name": "Unaware",
+                  "value": "Unaware"
+                },
+                {
+                  "name": "Problem Aware",
+                  "value": "Problem Aware"
+                },
+                {
+                  "name": "Solution Aware",
+                  "value": "Solution Aware"
+                },
+                {
+                  "name": "Product Aware",
+                  "value": "Product Aware"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Ad Type",
+              "displayName": "Ad Type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Lifestyle Composite",
+                  "value": "Lifestyle Composite"
+                },
+                {
+                  "name": "Testimonial",
+                  "value": "Testimonial"
+                },
+                {
+                  "name": "Comparison",
+                  "value": "Comparison"
+                },
+                {
+                  "name": "Benefits Wheel",
+                  "value": "Benefits Wheel"
+                },
+                {
+                  "name": "Before/After",
+                  "value": "Before/After"
+                },
+                {
+                  "name": "Product Hero",
+                  "value": "Product Hero"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "CTA",
+              "displayName": "CTA",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Product",
+              "displayName": "Product",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "n8n",
+              "displayName": "n8n",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Generate Image Prompt",
+              "displayName": "Generate Image Prompt",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Image Prompt Status",
+              "displayName": "Image Prompt Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Running",
+                  "value": "Running"
+                },
+                {
+                  "name": "Completed",
+                  "value": "Completed"
+                },
+                {
+                  "name": "Generated",
+                  "value": "Generated"
+                },
+                {
+                  "name": "Approved",
+                  "value": "Approved"
+                },
+                {
+                  "name": "Rejected",
+                  "value": "Rejected"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Full Analysis Json",
+              "displayName": "Full Analysis Json",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Generate Image Prompts",
+              "displayName": "Generate Image Prompts",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Ready",
+                  "value": "Ready"
+                },
+                {
+                  "name": "Run",
+                  "value": "Run"
+                },
+                {
+                  "name": "Running",
+                  "value": "Running"
+                },
+                {
+                  "name": "Done",
+                  "value": "Done"
+                },
+                {
+                  "name": "Error",
+                  "value": "Error"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Prompt 1",
+              "displayName": "Prompt 1",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Prompt 2",
+              "displayName": "Prompt 2",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Prompt 3",
+              "displayName": "Prompt 3",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Last Generated At",
+              "displayName": "Last Generated At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Generation Notes",
+              "displayName": "Generation Notes",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Image Prompts Link",
+              "displayName": "Image Prompts Link",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Images",
+              "displayName": "Images",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Visual Directions",
+              "displayName": "Visual Directions",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Ad Templates",
+              "displayName": "Ad Templates",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Tags",
+              "displayName": "Tags",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "options": [
+                {
+                  "name": "Question",
+                  "value": "Question"
+                },
+                {
+                  "name": "Story",
+                  "value": "Story"
+                },
+                {
+                  "name": "Stat",
+                  "value": "Stat"
+                },
+                {
+                  "name": "Pattern Interrupt",
+                  "value": "Pattern Interrupt"
+                },
+                {
+                  "name": "Direct Benefit",
+                  "value": "Direct Benefit"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "CTA strength",
+              "displayName": "CTA strength",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "options": [
+                {
+                  "name": "Strong",
+                  "value": "Strong"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "recordId",
+              "displayName": "recordId",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "c2d757c0-2c5d-4301-8118-b6e3ad0ea4c4",
+      "name": "Update Ad Type",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        -2608,
+        1360
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "DQz0c1qORXGaW82y",
+          "name": "Airtable Personal Access Token account"
+        }
+      },
+      "notes": "Writes the classified Ad Type back to the Ad Copy table in Airtable"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -1984,
+        1296
+      ],
+      "id": "6b0762df-48a0-400b-839e-7db3ae4dc153",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\n// Find S3 data (has Location field)\nconst s3Item = items.find(i => i.json.Location);\nconst s3Url = s3Item?.json?.Location || '';\n\n// Find ad copy data (has fields object)\nconst adItem = items.find(i => i.json.fields);\nconst fields = adItem?.json?.fields || {};\nconst adType = adItem?.json?.adType || 'Lifestyle Composite';\n\nconst getString = (val) => {\n  if (Array.isArray(val)) return val.join(', ');\n  return val || '';\n};\n\nreturn [{\n  json: {\n    adType,\n    headline: fields.headline || '',\n    concept: fields.Concept || '',\n    cta: fields.CTA || '',\n    angle: fields.Angle || '',\n    avatarTarget: getString(fields['Avatar Target']),\n    awarenessLevel: getString(fields['Awareness Level']),\n    tags: getString(fields.Tags),\n    productImageUrl: s3Url,\n    recordId: adItem?.json?.id || ''\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1824,
+        1296
+      ],
+      "id": "9cd2b1d4-f0b7-4474-a686-0e8d42254f69",
+      "name": "image-prompt-context"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.productImageUrl }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -2208,
+        1440
+      ],
+      "id": "0b372be5-3f0e-4af9-96ae-39d0790f9061",
+      "name": "get-binary-pa"
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "bucketName": "static-scaler-v2",
+        "fileName": "=products/{{ $json[\"Product Name\"].toLowerCase() }}_{{ $json.recordId }}.jpg",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.awsS3",
+      "typeVersion": 2,
+      "position": [
+        -2096,
+        1360
+      ],
+      "id": "036b4cdf-f148-42a1-9315-fcb895a94359",
+      "name": "upload-image",
+      "credentials": {
+        "aws": {
+          "id": "wB0AVObrmWcEXu3V",
+          "name": "AWS (IAM) account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.gumloop.com/api/v1/start_pipeline?api_key={{ $env.GUMLOOP_API_KEY }}&user_id={{ $env.GUMLOOP_USER_ID }}&saved_item_id={{ $env.GUMLOOP_SAVED_ITEM_ID }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ adType: $json.adType, headline: $json.headline, concept: $json.concept, cta: $json.cta, angle: $json.angle, avatarTarget: $json.avatarTarget, awarenessLevel: $json.awarenessLevel, tags: $json.tags, productImageUrl: $json.productImageUrl, recordId: $json.recordId }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1536,
+        1232
+      ],
+      "id": "975920e3-a98a-4950-9fe1-20c587d04f71",
+      "name": "HTTP Request5"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://fal.run/fal-ai/flux/dev",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"prompt\":{{ $json.cleanPrompt }} ,\n  \"image_size\": \"square_hd\",\n  \"num_inference_steps\": 28,\n  \"guidance_scale\": 3.5,\n  \"num_images\": 1,\n  \"enable_safety_checker\": false\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2608,
+        544
+      ],
+      "id": "95e34ada-20ae-49ce-bd0e-868391403740",
+      "name": "HTTP Request6",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "mvUTay4l3qzPwJ95",
+          "name": "fal.ai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.fields.A }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -192,
+        1200
+      ],
+      "id": "a1b2c3d4-download-fal-image-node",
+      "name": "Download fal Image"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Image Prompt Engineer output from OpenAI Chat Completions API\n// and prepare the payload for ComfyUI image generation\nconst items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  let text = '';\n\n  // Primary: Standard Chat Completions response\n  if (item.json?.choices?.[0]?.message?.content) {\n    text = item.json.choices[0].message.content;\n  }\n  // Fallback: Direct text\n  else if (item.json?.text) {\n    text = item.json.text;\n  }\n  // Fallback: Responses API\n  else if (item.json?.output?.[0]?.content?.[0]?.text) {\n    text = item.json.output[0].content[0].text;\n  }\n  // Fallback: message content\n  else if (item.json?.message?.content) {\n    text = item.json.message.content;\n  }\n\n  // Clean markdown\n  text = text.replace(/\\`\\`\\`json\\\\s*/gi, '').replace(/\\`\\`\\`\\\\s*/g, '').trim();\n\n  let promptData;\n  try {\n    const objMatch = text.match(/\\{[\\s\\S]*\\}/);\n    promptData = JSON.parse(objMatch ? objMatch[0] : text);\n  } catch (e) {\n    promptData = {\n      prompt: text.substring(0, 500),\n      negativePrompt: 'text, words, letters, logos, watermarks, blurry, low quality',\n      strength: 0.55\n    };\n  }\n\n  // Get upstream data preserved through the loop\n  const loopItem = $('Loop Over Items3').first().json;\n  const productImageUrl = loopItem?.productImageUrl || item.json?.productImageUrl || '';\n  const conceptId = loopItem?.conceptId || item.json?.conceptId || 'X';\n  const adCopy = loopItem?.adCopy || item.json?.adCopy || {};\n  const recordId = loopItem?.recordId || item.json?.recordId || '';\n\n  results.push({\n    json: {\n      prompt: promptData.prompt || '',\n      negativePrompt: promptData.negativePrompt || 'text, words, letters, logos',\n      strength: promptData.strength || 0.55,\n      productImageUrl: productImageUrl,\n      conceptId: conceptId,\n      adCopy: adCopy,\n      recordId: recordId\n    }\n  });\n}\n\nreturn results;",
+        "mode": "runOnceForAllItems"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1352,
+        1360
+      ],
+      "id": "parse-prompt-001",
+      "name": "Parse Prompt"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build OpenAI Chat Completions payload for Creative Director\nconst systemPrompt = \"You are a senior direct-response creative director for Abundria, trained in Eugene Schwartz (awareness stages, desire amplification, one dominant desire per ad) and David Ogilvy (clarity, specificity, visual simplicity, headlines do 80% of selling).\\r\\n\\r\\n## PRODUCT\\r\\nPalmAura Smart Warm Compress Hand Massager\\r\\n- 4 temperature modes (113-140F), multiple air compression modes\\r\\n- Cordless, USB-C, 10-20 min sessions, full-hand coverage (fingers + palm + wrist)\\r\\n- Unique mechanism: \\\"Adaptive 360 Warm Compression Cycle\\\"\\r\\n- Problem it solves: \\\"The Hand Stress Loop\\\" (micro-strain + poor circulation + incomplete relaxation)\\r\\n- Brand tone: calm, reassuring, precise, therapy-inspired. NOT hype, NOT gimmicky.\\r\\n- Aesthetic: Arrae/Seed style — minimal, warm, clinical-clean, earth tones\\r\\n\\r\\n## THE 6 BELIEFS (reinforce 1-3 per concept)\\r\\n1. Hand Stress Loop won't resolve without consistent intervention\\r\\n2. Warm 360 compression is the best at-home way to break the loop\\r\\n3. PalmAura is meaningfully different from generic massagers\\r\\n4. People like them get tangible outcomes in 10-15 min/day\\r\\n5. Safe, simple, fits real routines, backed by guarantee\\r\\n6. Smarter investment than staying stuck with pain, meds, or one-off treatments\\r\\n\\r\\n## TARGET SEGMENTS (use one per concept, never repeat)\\r\\nA) Remote workers 25-45: hands = livelihood, fear RSI/career loss, measure pain in lost productivity\\r\\nB) 45+ mobility seekers: fear losing independence, \\\"feeling 80 at 50\\\", want to feel capable again\\r\\nC) Caregivers/grandparents: fear becoming a burden, can't hold grandkids, identity tied to nurturing\\r\\nD) Gamers/creators: fear losing flow state, hands = their instrument, obsessive about performance\\r\\n\\r\\n## ANGLE PILLARS (rotate, never repeat across concepts)\\r\\n- 10-Minute Reset Ritual\\r\\n- Keyboard Athlete Recovery\\r\\n- Warm Therapy at Home\\r\\n- Relief Without Appointments\\r\\n- Gift for Hands That Do Everything\\r\\n- Daily Pain Reset\\r\\n\\r\\n## TASK\\r\\nGenerate exactly 3 ad concepts. Each concept targets a DIFFERENT segment and uses a DIFFERENT angle. Vary visual styles: one lifestyle scene, one product close-up/hero, one emotional/story scene.\\r\\n\\r\\nCRITICAL: The \\\"adCopy\\\" section is stored separately and overlaid LATER in post-production. It must NEVER appear in the visual direction. The visual direction describes ONLY what the camera sees — no text, no headlines, no logos, no words of any kind in the image.\\r\\n\\r\\n## OUTPUT FORMAT\\r\\nReturn ONLY a valid JSON array. No markdown. No explanation. No code blocks.\\r\\n\\r\\n[\\r\\n  {\\r\\n    \\\"conceptId\\\": \\\"A\\\",\\r\\n    \\\"segment\\\": \\\"which target segment\\\",\\r\\n    \\\"angle\\\": \\\"which angle pillar\\\",\\r\\n    \\\"awarenessLevel\\\": \\\"Problem Aware or Solution Aware or Product Aware\\\",\\r\\n    \\\"beliefsReinforced\\\": [1, 3],\\r\\n    \\\"visualDirection\\\": {\\r\\n      \\\"scene\\\": \\\"Detailed scene description. Environment, props, surfaces, context. Be specific about materials, textures, and spatial arrangement. The PalmAura device must be clearly visible and recognizable.\\\",\\r\\n      \\\"lighting\\\": \\\"Specific lighting. Example: soft diffused window light from camera-left, warm 3200K, subtle rim light on device\\\",\\r\\n      \\\"colorPalette\\\": \\\"Specific hex-adjacent colors. Example: warm cream background (#F5F0E8), sage green accent (#8FAE8B), device white (#FFFFFF)\\\",\\r\\n      \\\"composition\\\": \\\"Camera angle, lens, framing. Example: 45-degree overhead, 85mm equivalent, device at center-right with negative space in upper-left for text overlay\\\",\\r\\n      \\\"productPlacement\\\": \\\"Exactly how the PalmAura appears. Example: device on hand of 50-year-old woman, fingers visible entering the device, warm glow visible from heat indicator\\\",\\r\\n      \\\"mood\\\": \\\"One-line emotional tone. Example: quiet confidence, morning calm, gentle relief\\\",\\r\\n      \\\"style\\\": \\\"lifestyle or product-hero or emotional-story\\\"\\r\\n    },\\r\\n    \\\"adCopy\\\": {\\r\\n      \\\"headline\\\": \\\"6-8 words max. Benefit-focused. Mobile-legible.\\\",\\r\\n      \\\"subheadline\\\": \\\"One supporting line with specificity.\\\",\\r\\n      \\\"bodyBullets\\\": [\\\"benefit 1 with specifics\\\", \\\"benefit 2 with specifics\\\", \\\"benefit 3 with specifics\\\"],\\r\\n      \\\"cta\\\": \\\"Clear action phrase\\\"\\r\\n    }\\r\\n  }\\r\\n]\\r\\n\\r\\n## RULES\\r\\n- Each concept must feel like a completely different ad, not a variation\\r\\n- Visual direction uses rich sensory language (textures, materials, light quality, atmosphere)\\r\\n- Leave clean negative space in composition for text overlay (specify where)\\r\\n- Product must be the clear focal point in every concept\\r\\n- Headlines use specifics over generalities (\\\"10-minute hand reset\\\" not \\\"feel better\\\")\\r\\n- Copy compliance: use \\\"supports/helps/promotes\\\" never \\\"cures/treats/heals\\\"\\r\\n- No medical claims. Focus on: comfort, relief, stiffness, fatigue, warmth, relaxation\";\n\nconst userMessage = `Here is the product and ad context. Generate 3 ad concepts.\n\nProduct: PalmAura Smart Warm Compress Hand Massager\nProduct Image URL: ${$json.productImageUrl}\nAd Type: ${$json.adType}\nHeadline from brief: ${$json.headline}\nConcept from brief: ${$json.concept}\nCTA from brief: ${$json.cta}\nAngle from brief: ${$json.angle}\nAvatar Target: ${$json.avatarTarget}\nAwareness Level: ${$json.awarenessLevel}\nTags: ${$json.tags}\nRecord ID: ${$json.recordId}`;\n\nreturn [{\n  json: {\n    model: 'gpt-4o',\n    messages: [\n      { role: 'system', content: systemPrompt },\n      { role: 'user', content: userMessage }\n    ],\n    temperature: 0.8,\n    max_tokens: 3000\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1936,
+        1456
+      ],
+      "id": "build-cd-payload-001",
+      "name": "Build CD Payload"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1736,
+        1456
+      ],
+      "id": "call-cd-api-001",
+      "name": "Call Creative Director",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "openai-bearer-001",
+          "name": "OpenAI Bearer"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build OpenAI Chat Completions payload for Image Prompt Engineer\nconst systemPrompt = \"You are an expert AI image prompt engineer specializing in DTC product advertising photography. Your job: convert a visual concept brief into a precise, production-ready prompt for fal.ai Flux image generation.\\r\\n\\r\\n## ABSOLUTE RULES — VIOLATIONS WILL RUIN THE AD\\r\\n1. NEVER include text, words, letters, numbers, logos, headlines, watermarks, captions, labels, brand names, or ANY typography in the prompt. The image is a VISUAL CANVAS — copy is added in post-production.\\r\\n2. The PalmAura device MUST be the clear focal point. It is a white/cream smooth rounded enclosed hand massager device. If a hand is shown, the hand should be inside or interacting with the device.\\r\\n3. Keep the prompt under 120 words. Precise, not verbose.\\r\\n4. Always leave clean negative space for text overlay (top third or bottom third).\\r\\n\\r\\n## PRODUCT PHYSICAL DESCRIPTION\\r\\n- White/cream colored enclosed device that wraps around the entire hand\\r\\n- Smooth, rounded exterior with subtle LED indicator\\r\\n- Glove-like shape, approximately the size of a boxing glove but sleeker\\r\\n- When in use: a real human hand is inserted, fingers go into individual channels\\r\\n- Warm ambient glow suggests the heat function is active\\r\\n\\r\\n## STYLE TARGETS\\r\\nHigh-end DTC aesthetic (Arrae, Seed, Jolie):\\r\\n- Clean, uncluttered compositions with intentional negative space\\r\\n- Soft natural or studio lighting, never harsh\\r\\n- Earth tones: warm cream, sage, soft teal, natural wood, linen\\r\\n- Product always sharp, well-lit, and hero of the frame\\r\\n- Professional commercial photography quality\\r\\n\\r\\n## INPUT\\r\\nYou receive a JSON object with:\\r\\n- scene, lighting, colorPalette, composition, productPlacement, mood, style\\r\\n- productImageUrl (the S3 URL of the actual product photo to use as reference)\\r\\n\\r\\n## OUTPUT\\r\\nReturn ONLY valid JSON. No markdown. No explanation. No code blocks.\\r\\n\\r\\n{\\r\\n  \\\"prompt\\\": \\\"the complete positive prompt, under 120 words\\\",\\r\\n  \\\"negativePrompt\\\": \\\"text, words, letters, writing, typography, logos, watermarks, labels, captions, numbers, symbols, brand names, headlines, artifacts, distortions, blurry, low quality, extra fingers, floating objects, cluttered background, busy composition, cartoon, illustration, anime, painting, sketch, drawing\\\",\\r\\n  \\\"strength\\\": 0.55\\r\\n}\\r\\n\\r\\n## PROMPT STRUCTURE (follow this exact order)\\r\\n1. \\\"Commercial product photography of\\\" + product in scene\\r\\n2. Hand interaction detail (if lifestyle)\\r\\n3. Environment and setting specifics\\r\\n4. Lighting specification\\r\\n5. Color palette as visual descriptors (not hex codes)\\r\\n6. Camera angle and lens equivalent\\r\\n7. Negative space note: \\\"clean open space in [top/bottom] third of frame\\\"\\r\\n8. Quality anchors: \\\"professional product photography, commercial advertising, 8k, sharp focus, shallow depth of field, studio quality\\\"\\r\\n\\r\\n## STRENGTH GUIDE\\r\\n- 0.45-0.55: Strong reference to product image (recommended for product-hero shots)\\r\\n- 0.55-0.65: Balanced blend (recommended for lifestyle scenes)\\r\\n- 0.65-0.75: More creative generation (recommended for emotional/story scenes)\\r\\nChoose strength based on the \\\"style\\\" field in the input.\";\n\nconst userMessage = `Convert this visual direction into an image generation prompt.\n\nVisual Direction:\n${JSON.stringify($json.visualDirection)}\n\nProduct Image URL: ${$json.productImageUrl}\nStyle: ${$json.style}`;\n\nreturn [{\n  json: {\n    model: 'gpt-4o-mini',\n    messages: [\n      { role: 'system', content: systemPrompt },\n      { role: 'user', content: userMessage }\n    ],\n    temperature: 0.4,\n    max_tokens: 500\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1552,
+        1360
+      ],
+      "id": "build-ipe-payload-001",
+      "name": "Build IPE Payload"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1352,
+        1360
+      ],
+      "id": "call-ipe-api-001",
+      "name": "Call Image Prompt Engineer",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "openai-bearer-001",
+          "name": "OpenAI Bearer"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Download product image from S3 and prepare for ComfyUI upload\n// The actual upload happens in the next HTTP Request node\nconst productImageUrl = $json.productImageUrl || '';\nconst conceptId = $json.conceptId || 'X';\n\n// Generate a unique filename for this upload\nconst filename = 'n8n_product_' + Date.now() + '_' + conceptId + '.jpg';\n\nreturn [{\n  json: {\n    ...($json),\n    comfyui_image_filename: filename,\n    comfyui_product_url: productImageUrl\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1202,
+        1360
+      ],
+      "id": "comfyui-prep-001",
+      "name": "Prepare ComfyUI Input"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build ComfyUI API payload for Flux Dev img2img\n// The workflow template is loaded from the embedded JSON below.\n// To customize: export a new workflow from ComfyUI in API format\n// and replace the template object.\n\nconst prompt = $json.prompt || 'professional product photography';\nconst negativePrompt = $json.negativePrompt || 'text, words, letters, logos, watermarks';\nconst strength = $json.strength || 0.55;\nconst seed = Math.floor(Math.random() * 2147483647);\nconst imageFilename = $json.comfyui_image_filename || 'input.jpg';\n\n// ═══ ComfyUI Workflow Template (Flux Dev img2img) ═══\n// IMPORTANT: Replace this template with your actual ComfyUI workflow\n// exported in API format from the ComfyUI browser UI.\n// This is a standard Flux txt2img template as a starting point.\n// To get the correct template:\n//   1. Build your workflow in ComfyUI at http://127.0.0.1:8188\n//   2. Enable Dev Mode in Settings\n//   3. Click \"Save (API Format)\"\n//   4. Replace the workflowTemplate below with the exported JSON\nconst workflowTemplate = {\n  \"4\": {\n    \"class_type\": \"CheckpointLoaderSimple\",\n    \"inputs\": {\n      \"ckpt_name\": \"flux1-dev.safetensors\"\n    }\n  },\n  \"5\": {\n    \"class_type\": \"EmptyLatentImage\",\n    \"inputs\": {\n      \"width\": 1024,\n      \"height\": 1024,\n      \"batch_size\": 1\n    }\n  },\n  \"6\": {\n    \"class_type\": \"CLIPTextEncode\",\n    \"inputs\": {\n      \"text\": prompt,\n      \"clip\": [\"4\", 1]\n    }\n  },\n  \"7\": {\n    \"class_type\": \"CLIPTextEncode\",\n    \"inputs\": {\n      \"text\": negativePrompt,\n      \"clip\": [\"4\", 1]\n    }\n  },\n  \"3\": {\n    \"class_type\": \"KSampler\",\n    \"inputs\": {\n      \"seed\": seed,\n      \"steps\": 28,\n      \"cfg\": 3.5,\n      \"sampler_name\": \"euler\",\n      \"scheduler\": \"normal\",\n      \"denoise\": strength,\n      \"model\": [\"4\", 0],\n      \"positive\": [\"6\", 0],\n      \"negative\": [\"7\", 0],\n      \"latent_image\": [\"5\", 0]\n    }\n  },\n  \"8\": {\n    \"class_type\": \"VAEDecode\",\n    \"inputs\": {\n      \"samples\": [\"3\", 0],\n      \"vae\": [\"4\", 2]\n    }\n  },\n  \"9\": {\n    \"class_type\": \"SaveImage\",\n    \"inputs\": {\n      \"filename_prefix\": \"n8n_staticscaler_\" + $json.conceptId,\n      \"images\": [\"8\", 0]\n    }\n  }\n};\n\n// Build the ComfyUI API request\nconst clientId = 'n8n-ss-' + Date.now();\n\nreturn [{\n  json: {\n    comfyui_payload: {\n      prompt: workflowTemplate,\n      client_id: clientId\n    },\n    // Preserve upstream data for downstream nodes\n    conceptId: $json.conceptId,\n    adCopy: $json.adCopy,\n    recordId: $json.recordId,\n    originalPrompt: prompt,\n    seed: seed\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1052,
+        1360
+      ],
+      "id": "comfyui-build-001",
+      "name": "Build ComfyUI Payload"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8188/prompt",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.comfyui_payload) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -902,
+        1360
+      ],
+      "id": "comfyui-queue-001",
+      "name": "Queue ComfyUI"
+    },
+    {
+      "parameters": {
+        "amount": 90
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -992,
+        1344
+      ],
+      "id": "comfyui-wait-001",
+      "name": "Wait for Generation",
+      "webhookId": "comfyui-wait-webhook-001"
+    },
+    {
+      "parameters": {
+        "url": "=http://host.docker.internal:8188/history/{{ $json.prompt_id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -816,
+        1344
+      ],
+      "id": "comfyui-check-001",
+      "name": "Check ComfyUI Result"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract generated image from ComfyUI history response\nconst data = $json;\nconst promptId = Object.keys(data)[0]; // First key is the prompt_id\nlet images = [];\n\nif (data[promptId] && data[promptId].outputs) {\n  const outputs = data[promptId].outputs;\n  for (const nodeId in outputs) {\n    const nodeOutput = outputs[nodeId];\n    if (nodeOutput.images) {\n      for (const img of nodeOutput.images) {\n        images.push(img);\n      }\n    }\n  }\n}\n\nif (images.length === 0) {\n  // Return error with enough data for downstream to handle gracefully\n  return [{\n    json: {\n      error: 'No images in ComfyUI output',\n      images: [{ url: '' }],\n      prompt: '',\n      seed: 0\n    }\n  }];\n}\n\nconst image = images[0];\nconst COMFYUI = 'http://host.docker.internal:8188';\nconst imageUrl = COMFYUI + '/view?filename=' + encodeURIComponent(image.filename) + '&subfolder=' + encodeURIComponent(image.subfolder || '') + '&type=' + encodeURIComponent(image.type || 'output');\n\n// Return in a format compatible with the downstream Format Image Data node\n// (same shape as fal.ai response for compatibility)\nreturn [{\n  json: {\n    images: [{ url: imageUrl, width: 1024, height: 1024 }],\n    prompt: $('Build ComfyUI Payload').first().json.originalPrompt || '',\n    seed: $('Build ComfyUI Payload').first().json.seed || 0,\n    conceptId: $('Build ComfyUI Payload').first().json.conceptId || 'X',\n    recordId: $('Build ComfyUI Payload').first().json.recordId || ''\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -656,
+        1344
+      ],
+      "id": "comfyui-extract-001",
+      "name": "Extract Output Image"
+    }
+  ],
+  "connections": {
+    "Code in JavaScript4": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an image1": {
+      "main": [
+        [
+          {
+            "node": "Create an image1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items3": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build IPE Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Get Ad Copy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Format Image Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Image Data": {
+      "main": [
+        [
+          {
+            "node": "Create Ad URLs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Ad Copy": {
+      "main": [
+        [
+          {
+            "node": "Preserve Ad Copy Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Ad URLs": {
+      "main": [
+        [
+          {
+            "node": "Download fal Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preserve Ad Copy Context": {
+      "main": [
+        [
+          {
+            "node": "Classify Ad Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Product Image URL": {
+      "main": [
+        [
+          {
+            "node": "get-binary-pa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Product Record": {
+      "main": [
+        [
+          {
+            "node": "Extract Product Image URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify Ad Type": {
+      "main": [
+        [
+          {
+            "node": "Update Ad Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Ad Type": {
+      "main": [
+        [
+          {
+            "node": "Get Product Record",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "image-prompt-context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get-binary-pa": {
+      "main": [
+        [
+          {
+            "node": "upload-image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "upload-image": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "image-prompt-context": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request5",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Build CD Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download fal Image": {
+      "main": [
+        [
+          {
+            "node": "Upload a file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Prompt": {
+      "main": [
+        [
+          {
+            "node": "Prepare ComfyUI Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build CD Payload": {
+      "main": [
+        [
+          {
+            "node": "Call Creative Director",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Creative Director": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build IPE Payload": {
+      "main": [
+        [
+          {
+            "node": "Call Image Prompt Engineer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Image Prompt Engineer": {
+      "main": [
+        [
+          {
+            "node": "Parse Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare ComfyUI Input": {
+      "main": [
+        [
+          {
+            "node": "Build ComfyUI Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build ComfyUI Payload": {
+      "main": [
+        [
+          {
+            "node": "Queue ComfyUI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Queue ComfyUI": {
+      "main": [
+        [
+          {
+            "node": "Wait for Generation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for Generation": {
+      "main": [
+        [
+          {
+            "node": "Check ComfyUI Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check ComfyUI Result": {
+      "main": [
+        [
+          {
+            "node": "Extract Output Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Output Image": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "triggerCount": 1
+}

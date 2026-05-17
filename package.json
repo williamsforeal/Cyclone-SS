@@ -3,25 +3,32 @@
     "version": "1.0.0",
     "description": "n8n workflow automation with triggers",
     "scripts": {
-      "start": "n8n start",
-      "n8n": "n8n",
-      "dev": "n8n start"
+        "start": "n8n start",
+        "n8n": "n8n",
+        "dev": "n8n start"
     },
     "keywords": [
-      "n8n",
-      "automation",
-      "workflow"
+        "n8n",
+        "automation",
+        "workflow"
     ],
     "dependencies": {
-      "n8n": "^1.72.0"
+        "@modelcontextprotocol/sdk": "^1.26.0",
+        "apify": "^3.7.2",
+        "better-sqlite3": "^12.6.2",
+        "crawlee": "^3.16.0",
+        "dotenv": "^16.6.1",
+        "express": "^5.2.1",
+        "n8n": "^1.72.0",
+        "node-cron": "^4.2.1",
+        "playwright": "^1.60.0"
     },
     "pnpm": {
-      "overrides": {
-        "xlsx": "npm:xlsx-js-style@^1.2.0"
-      }
+        "overrides": {
+            "xlsx": "npm:xlsx-js-style@^1.2.0"
+        }
     },
     "overrides": {
-      "xlsx": "npm:xlsx-js-style@^1.2.0"
+        "xlsx": "npm:xlsx-js-style@^1.2.0"
     }
-  }
-  
+}

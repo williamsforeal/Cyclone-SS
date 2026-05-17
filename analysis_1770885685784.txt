@@ -1,0 +1,338 @@
+```json
+{
+  "image_analysis": {
+    "layout_composition": {
+      "overall_dimensions_aspect_ratio": "Square (e.g., 1:1 aspect ratio). Common for social media posts. Assuming a base resolution like 1080x1080px for calculations.",
+      "main_sections": [
+        {
+          "name": "Primary Headline Area",
+          "approx_height_percentage": "Top 35-40%",
+          "content_alignment": "Left-aligned text."
+        },
+        {
+          "name": "Feature List Area",
+          "approx_height_percentage": "Middle 25-30%",
+          "content_alignment": "Left-aligned text, connected to product via arrows."
+        },
+        {
+          "name": "Product & Foreground Detail Area",
+          "approx_height_percentage": "Bottom 30-40%",
+          "content_alignment": "Product angled in the right, supporting elements in the left/bottom."
+        }
+      ],
+      "grid_system_used": "Not a strict grid in the traditional sense, but clear left-alignment for all primary text elements. The product image occupies a significant portion of the right/bottom area, creating a visual balance with the text-heavy left side. Elements are deliberately placed to guide the eye."
+    },
+    "text_elements": [
+      {
+        "content": "Not some drug store body wash",
+        "position": "Top-left, approx. 12% from top, 10% from left",
+        "font_size_category": "Heading",
+        "font_weight": "Bold",
+        "color": "#FFFFFF",
+        "additional_style": "None"
+      },
+      {
+        "content": "Give your body a completely different vibe.",
+        "position": "Below heading, approx. 28% from top, 10% from left",
+        "font_size_category": "Subheading",
+        "font_weight": "Regular",
+        "color": "#EBEBEB",
+        "additional_style": "None"
+      },
+      {
+        "content": "Removes dryness",
+        "position": "Mid-left, approx. 46% from top, 10% from left",
+        "font_size_category": "Body",
+        "font_weight": "Bold",
+        "color": "#EBEBEB",
+        "additional_style": "Underlined"
+      },
+      {
+        "content": "Fights body acne",
+        "position": "Mid-left, approx. 60% from top, 10% from left",
+        "font_size_category": "Body",
+        "font_weight": "Bold",
+        "color": "#EBEBEB",
+        "additional_style": "Underlined"
+      },
+      {
+        "content": "invigorating scent",
+        "position": "Lower-left, approx. 74% from top, 10% from left",
+        "font_size_category": "Body",
+        "font_weight": "Bold",
+        "color": "#EBEBEB",
+        "additional_style": "Underlined"
+      },
+      {
+        "content": "vibe.",
+        "position": "On bottle, angled, approx. 48% from top, 65% from left (relative to image)",
+        "font_size_category": "Subheading/Logo",
+        "font_weight": "Bold",
+        "color": "#000000",
+        "additional_style": "None"
+      },
+      {
+        "content": "body wash",
+        "position": "On bottle, angled, approx. 77% from top, 70% from left (relative to image)",
+        "font_size_category": "Caption",
+        "font_weight": "Regular",
+        "color": "#000000",
+        "additional_style": "None"
+      },
+      {
+        "content": "invigorating scent",
+        "position": "On bottle, angled, approx. 80% from top, 70% from left (relative to image)",
+        "font_size_category": "Caption",
+        "font_weight": "Regular",
+        "color": "#000000",
+        "additional_style": "None"
+      },
+      {
+        "content": "11.25 FL. OZ (340 mL)",
+        "position": "On bottle, angled, approx. 84% from top, 70% from left (relative to image)",
+        "font_size_category": "Caption",
+        "font_weight": "Regular",
+        "color": "#000000",
+        "additional_style": "None"
+      }
+    ],
+    "visual_elements": {
+      "icons": [
+        {
+          "description": "Arrow pointing right, from 'Removes dryness' to bottle",
+          "style": "Simple line, solid color",
+          "position_relative_to_text": "To the right of 'Removes dryness', angled towards the bottle",
+          "size": "Approx. 10% of image width",
+          "color": "#26294B"
+        },
+        {
+          "description": "Arrow pointing right, from 'Fights body acne' to bottle",
+          "style": "Simple line, solid color",
+          "position_relative_to_text": "To the right of 'Fights body acne', angled towards the bottle",
+          "size": "Approx. 10% of image width",
+          "color": "#26294B"
+        },
+        {
+          "description": "Arrow pointing right, from 'invigorating scent' to bottle",
+          "style": "Simple line, solid color",
+          "position_relative_to_text": "To the right of 'invigorating scent', angled towards the bottle",
+          "size": "Approx. 10% of image width",
+          "color": "#26294B"
+        }
+      ],
+      "images": [
+        {
+          "description": "Main product photo: Light blue 'vibe.' body wash bottle",
+          "arrangement_layout": "Angled (leaning slightly left), positioned in the mid-right to bottom-right section of the canvas, overlapping the background.",
+          "size_positioning": "Occupies approx. 35% of image width and 60% of image height. Starts around 40% from the top and 50% from the left, extending to the bottom right."
+        },
+        {
+          "description": "Foreground element: Light blue/white marbled soap dish or tray",
+          "arrangement_layout": "Partially visible in the bottom-left corner, slightly blurred.",
+          "size_positioning": "Occupies approx. 30% of image width and 20% of image height. Starts around 70% from the top and 0% from the left."
+        },
+        {
+          "description": "Surface background: Light wooden/beige countertop",
+          "arrangement_layout": "Partially visible as a horizontal strip in the lower foreground, behind the product bottle and marble dish. Moderately blurred.",
+          "size_positioning": "Occupies approx. 100% of image width, approx. 30% of image height. Starts around 70% from the top."
+        },
+        {
+          "description": "Blurred background: Warm, light beige/tan wall or soft surface",
+          "arrangement_layout": "Fills the entire background, heavily blurred to put focus on foreground elements and text.",
+          "size_positioning": "Full canvas background."
+        }
+      ],
+      "badges_certifications": "None visible."
+    },
+    "color_palette": {
+      "background_color": "#C3BBAC"
+      "primary_text_color": "#FFFFFF",
+      "secondary_text_color": "#EBEBEB",
+      "accent_colors": {
+        "product_bottle_blue": "#8BCBE2",
+        "arrow_dark_blue": "#26294B",
+        "foreground_marble_teal": "#B4D0D0",
+        "product_label_text": "#000000"
+      }
+    },
+    "design_style": {
+      "overall_style": "Modern, clean, professional, minimalist with a touch of warmth.",
+      "key_design_principles_used": [
+        "**Hierarchy:** Clear visual hierarchy established by text size and contrast (main heading is largest and purest white).",
+        "**Balance:** Asymmetrical balance achieved by placing heavy text on the left and a prominent product image on the right/bottom.",
+        "**Contrast:** Strong contrast between white/light text and the slightly darker background. Dark text on the light bottle. Subtle color contrast between the product blue and the warm background.",
+        "**Repetition:** Consistent font style and color for feature points. Consistent arrow style.",
+        "**Emphasis:** The product bottle is emphasized through its placement, sharp focus, and connection via arrows from the feature list.",
+        "**Whitespace:** Generous use of whitespace around the main text blocks enhances readability and gives a premium feel."
+      ],
+      "white_space_usage": "Effectively used to separate text blocks, provide breathing room around the product, and contribute to a clean, uncluttered aesthetic. The blurring of the background elements also enhances the perception of depth and focus."
+    }
+  },
+  "bannerbear_template_structure": {
+    "layer_structure": [
+      {
+        "name": "Background Image (Static)",
+        "type": "image",
+        "description": "Full-size blurred image of the warm tan wall/surface and the wooden countertop. Can be a single combined image or multiple background elements layered.",
+        "editable": false
+      },
+      {
+        "name": "Foreground Marble Dish (Static/Optional Image)",
+        "type": "image",
+        "description": "The partially visible, blurred marble-patterned dish in the bottom-left.",
+        "position": "bottom-left",
+        "editable": false
+      },
+      {
+        "name": "Product Image (Editable Image)",
+        "type": "image",
+        "description": "The 'vibe.' body wash bottle. This should be an image layer with a mask or transparent background if the product itself changes frequently.",
+        "position": { "x": "55%", "y": "55%", "width": "40%", "height": "70%" },
+        "rotation": -10,
+        "editable": true,
+        "default_value": "url_to_default_bottle_image.png"
+      },
+      {
+        "name": "Headline Text",
+        "type": "text",
+        "content_key": "headline",
+        "position": { "x": "10%", "y": "12%", "width": "70%", "height": "18%" },
+        "font_size_category": "Heading",
+        "font_weight": "Bold",
+        "color": "#FFFFFF",
+        "text_align": "left",
+        "line_height": 1.2,
+        "default_value": "Not some drug store body wash"
+      },
+      {
+        "name": "Subheading Text",
+        "type": "text",
+        "content_key": "subheading",
+        "position": { "x": "10%", "y": "30%", "width": "70%", "height": "6%" },
+        "font_size_category": "Subheading",
+        "font_weight": "Regular",
+        "color": "#EBEBEB",
+        "text_align": "left",
+        "default_value": "Give your body a completely different vibe."
+      },
+      {
+        "name": "Feature 1 Text",
+        "type": "text",
+        "content_key": "feature_1",
+        "position": { "x": "10%", "y": "46%", "width": "30%", "height": "4%" },
+        "font_size_category": "Body",
+        "font_weight": "Bold",
+        "color": "#EBEBEB",
+        "text_align": "left",
+        "underline": true,
+        "default_value": "Removes dryness"
+      },
+      {
+        "name": "Feature 2 Text",
+        "type": "text",
+        "content_key": "feature_2",
+        "position": { "x": "10%", "y": "60%", "width": "30%", "height": "4%" },
+        "font_size_category": "Body",
+        "font_weight": "Bold",
+        "color": "#EBEBEB",
+        "text_align": "left",
+        "underline": true,
+        "default_value": "Fights body acne"
+      },
+      {
+        "name": "Feature 3 Text",
+        "type": "text",
+        "content_key": "feature_3",
+        "position": { "x": "10%", "y": "74%", "width": "30%", "height": "4%" },
+        "font_size_category": "Body",
+        "font_weight": "Bold",
+        "color": "#EBEBEB",
+        "text_align": "left",
+        "underline": true,
+        "default_value": "invigorating scent"
+      },
+      {
+        "name": "Product Logo Text (on bottle)",
+        "type": "text",
+        "content_key": "product_logo_text",
+        "position": { "x": "60%", "y": "48%", "width": "20%", "height": "5%" },
+        "font_size_category": "Subheading/Logo",
+        "font_weight": "Bold",
+        "color": "#000000",
+        "text_align": "left",
+        "rotation": -10,
+        "default_value": "vibe."
+      },
+      {
+        "name": "Product Type Text (on bottle)",
+        "type": "text",
+        "content_key": "product_type_text",
+        "position": { "x": "67%", "y": "77%", "width": "20%", "height": "3%" },
+        "font_size_category": "Caption",
+        "font_weight": "Regular",
+        "color": "#000000",
+        "text_align": "left",
+        "rotation": -10,
+        "default_value": "body wash"
+      },
+      {
+        "name": "Product Scent Text (on bottle)",
+        "type": "text",
+        "content_key": "product_scent_text",
+        "position": { "x": "67%", "y": "80%", "width": "20%", "height": "3%" },
+        "font_size_category": "Caption",
+        "font_weight": "Regular",
+        "color": "#000000",
+        "text_align": "left",
+        "rotation": -10,
+        "default_value": "invigorating scent"
+      },
+      {
+        "name": "Product Volume Text (on bottle)",
+        "type": "text",
+        "content_key": "product_volume_text",
+        "position": { "x": "67%", "y": "84%", "width": "20%", "height": "3%" },
+        "font_size_category": "Caption",
+        "font_weight": "Regular",
+        "color": "#000000",
+        "text_align": "left",
+        "rotation": -10,
+        "default_value": "11.25 FL. OZ (340 mL)"
+      },
+      {
+        "name": "Arrow 1 (Editable Image/Icon)",
+        "type": "image",
+        "content_key": "arrow_1",
+        "description": "Arrow icon pointing from feature 1 to the bottle. Could be an SVG icon.",
+        "position": { "x": "40%", "y": "47%", "width": "10%", "height": "3%" },
+        "rotation": -15,
+        "color": "#26294B",
+        "editable": true,
+        "default_value": "url_to_default_arrow_icon.svg"
+      },
+      {
+        "name": "Arrow 2 (Editable Image/Icon)",
+        "type": "image",
+        "content_key": "arrow_2",
+        "description": "Arrow icon pointing from feature 2 to the bottle.",
+        "position": { "x": "40%", "y": "61%", "width": "10%", "height": "3%" },
+        "rotation": -10,
+        "color": "#26294B",
+        "editable": true,
+        "default_value": "url_to_default_arrow_icon.svg"
+      },
+      {
+        "name": "Arrow 3 (Editable Image/Icon)",
+        "type": "image",
+        "content_key": "arrow_3",
+        "description": "Arrow icon pointing from feature 3 to the bottle.",
+        "position": { "x": "40%", "y": "75%", "width": "10%", "height": "3%" },
+        "rotation": -5,
+        "color": "#26294B",
+        "editable": true,
+        "default_value": "url_to_default_arrow_icon.svg"
+      }
+    ]
+  }
+}
+```

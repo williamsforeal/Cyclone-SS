@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/Jake/.cursor/worktrees/Cyclone-SS/**)",
+      "mcp__claude_ai_Airtable__list_bases",
+      "mcp__claude_ai_N8N_MCP__n8n_health_check",
+      "mcp__claude_ai_N8N_MCP__n8n_list_workflows",
+      "mcp__MCP_DOCKER__n8n_diagnostic",
+      "Bash(docker mcp *)"
+    ]
+  }
+}
