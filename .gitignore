@@ -157,3 +157,18 @@ public/tiktok-images/
 # bom-ecom runtime uploads and Replit prompt artifacts
 bom-ecom/uploads/
 bom-ecom/attached_assets/
+
+# Global skills — excluded items (personal/binary/junk that ended up in ~/.claude/skills/)
+global-skills/Clawdbot-setup/
+global-skills/_master-prompts/
+global-skills/excalidraw-visuals/
+global-skills/seedance-ugc-ads (1).skill
+global-skills/Ultimate Media Agent Army (1)/
+global-skills/CLAUDE front end des.md
+global-skills/CLAUDE.md - ui design.md
+global-skills/claude code bus_DNA.txt
+global-skills/Executive Assistant Initialize Prompt (1).txt
+global-skills/gemini project org.md
+global-skills/image to json.md
+global-skills/mcp.json
+global-skills/trigger-ref.md
