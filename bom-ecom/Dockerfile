@@ -1,23 +1,33 @@
 # Bomb Ecom OS - Docker Configuration
-# Multi-stage: build with all deps, run with production only
-FROM node:20-alpine AS builder
+FROM node:20-alpine
 
+# Install build dependencies
 RUN apk add --no-cache python3 make g++
+
+# Set working directory
 WORKDIR /app
+
+# Copy package files
 COPY package*.json ./
-# Install ALL deps (including devDeps like tsx needed for build)
-RUN npm ci
+
+# Install dependencies
+RUN npm ci --only=production
+
+# Copy application code
 COPY . .
+
+# Build the application
 RUN npm run build
 
-# --- Production stage ---
-FROM node:20-alpine AS runner
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
-COPY --from=builder /app/dist ./dist
+# Expose port
 EXPOSE 5000
+
+# Set environment to production
 ENV NODE_ENV=production
-HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
   CMD node -e "require('http').get('http://localhost:5000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+
+# Start the application
 CMD ["npm", "start"]

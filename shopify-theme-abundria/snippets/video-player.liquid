@@ -1,0 +1,54 @@
+{% liquid
+  assign no_play_button = false
+  if block.settings.display_play_btn == false and block.settings.muted_autoplay
+    assign no_play_button = true
+  endif
+%}
+<div class="video-container">
+  {% if block.settings.video != blank %}
+    <internal-video
+      class="internal-video{% if block.settings.muted_autoplay %} internal-video--playing internal-video--muted{% endif %}"
+      data-autoplay="{{ block.settings.muted_autoplay }}"
+      data-no-play-btn="{{ no_play_button }}"
+      {% if action_on_inactive != blank %}
+        data-action-on-inactive='{{ action_on_inactive }}'
+      {% endif %}
+    >
+      {% liquid
+        if block.settings.thumbnail != blank
+          assign thumbnail = block.settings.thumbnail
+        else
+          assign thumbnail = block.settings.video.preview_image
+        endif
+      %}
+      <video
+        width="100%"
+        height="auto"
+        preload="metadata"
+        poster="{{ thumbnail | image_url }}"
+        {% if block.settings.loop %}
+          loop
+        {% endif %}
+        {% if block.settings.muted_autoplay %}
+          muted
+        {% endif %}
+        playsinline
+        disablepictureinpicture
+      >
+        {% for source in block.settings.video.sources %}
+          <source
+            {% if block.settings.muted_autoplay %}data-{% endif -%}src="{{ source.url }}"
+            type="{{ source.mime_type }}"
+          >
+        {% endfor %}
+      </video>
+      <button class="internal-video__play"{% if no_play_button %} style='visibility: hidden;'{% endif %}>
+        <div class="play-button color-{{ block.settings.btn_color_scheme }}{% if block.settings.btn_animation %} ripple-animation{% endif %}">
+          {%- render 'icon-play' -%}
+        </div>
+      </button>
+    </internal-video>
+  {% else %}
+    {{ 'image' | placeholder_svg_tag: 'placeholder-svg placeholder' }}
+  {% endif %}
+</div>

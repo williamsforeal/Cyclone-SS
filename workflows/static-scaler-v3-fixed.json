@@ -1317,7 +1317,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.gumloop.com/api/v1/start_pipeline?api_key=769876a7f6164317a7e024b3e22525e1&user_id=Po4tsiByVANmPe33wJygwM6qNJG3&saved_item_id=dNsctfmdNCdpvk6UWhdGHC",
+        "url": "=https://api.gumloop.com/api/v1/start_pipeline?api_key={{ $env.GUMLOOP_API_KEY }}&user_id={{ $env.GUMLOOP_USER_ID }}&saved_item_id={{ $env.GUMLOOP_SAVED_ITEM_ID }}",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"adType\": $json.adType,\n  \"headline\": $json.headline,\n  \"concept\": $json.concept,\n  \"cta\": $json.cta,\n  \"angle\": $json.angle,\n  \"avatarTarget\": $json.avatarTarget,\n  \"awarenessLevel\": $json.awarenessLevel,\n  \"tags\": $json.tags,\n  \"productImageUrl\": $json.productImageUrl,\n  \"recordId\": $json.recordId\n}",

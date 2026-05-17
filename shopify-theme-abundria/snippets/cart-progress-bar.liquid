@@ -1,0 +1,50 @@
+{% liquid
+  assign is_quantity = false
+  if settings.cart_progress_goal_type == 'quantity'
+    assign is_quantity = true
+  endif
+
+  if is_quantity
+    assign goal_multiplier = 1.0
+    assign goal_max_reference = cart.item_count
+  else
+    assign goal_multiplier = 100.00
+    assign goal_max_reference = cart.total_price
+  endif
+  
+  assign goal = settings.cart_progress_threshold | times: goal_multiplier
+  assign goal_progress = goal_max_reference | divided_by: goal | times: 100.0
+
+  assign goal_reached = false
+  if goal_progress >= 100.00
+    assign goal_reached = true
+    assign goal_progress = 100
+  endif
+%}
+
+{% capture goal_difference_html %}
+  {% if is_quantity %}
+    {{ goal | minus: cart.item_count | round }}
+  {% else %}
+    <span>{{ goal | minus: cart.total_price | money_without_trailing_zeros }}</span>
+  {% endif %}
+{% endcapture %}
+
+<div class="cart-progress">
+  <p class="cart-progress__text">
+    {% if goal_reached == false %}
+      {{ settings.cart_progress_message | replace: '[amount]', goal_difference_html }}
+    {% else %}
+      {{ settings.cart_progress_success_message }}
+    {% endif %}
+  </p>
+  <div class="cart-progress__bar">
+    <div class="cart-progress__bar__progress" style="width: {{ goal_progress }}%;">
+      <div class="cart-progress__bar__badge">
+        {%- unless settings.cart_progress_icon == 'none' -%}
+          {% render 'icon-accordion', icon: settings.cart_progress_icon %}
+        {%- endunless -%}
+      </div>
+    </div>
+  </div>
+</div>

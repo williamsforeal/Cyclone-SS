@@ -1,0 +1,14 @@
+.related-products {
+  display: block;
+}
+
+.related-products__heading {
+  margin: 0 0 3rem;
+}
+.grid--stretch,
+.grid--stretch ul.splide__list {
+  align-items: stretch;
+}
+.grid--stretch .splide__slide__container {
+  height: 100%;
+}

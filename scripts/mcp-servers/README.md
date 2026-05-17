@@ -37,19 +37,6 @@ Interact with the Static Scaler 1000 Airtable base.
 "Create a new concept in Airtable with these fields: ..."
 ```
 
-### 3. Gumloop Server (`bomb-ecom-gumloop`)
-Trigger and manage Gumloop pipelines.
-
-**Tools:**
-- `trigger_pipeline` - Start a Gumloop pipeline with data
-- `get_pipeline_status` - Check pipeline run status
-
-**Example Usage:**
-```
-"Trigger the Gumloop pipeline with this ad data: ..."
-"Check the status of run ID abc123"
-```
-
 ## Configuration
 
 All servers are configured in `~/.claude/mcp.json` with environment variables from the project's `.env` file.
@@ -61,7 +48,6 @@ To test if the servers are working, restart Claude Code and try:
 ```
 "List my n8n workflows"
 "Show me records from the Ad Copy table in Airtable"
-"Trigger the Gumloop pipeline with test data"
 ```
 
 ## Troubleshooting
@@ -84,7 +70,7 @@ To modify a server:
 ```
 Claude Code
     ↓
-MCP Servers (n8n, Airtable, Gumloop)
+MCP Servers (n8n, Airtable)
     ↓
 Local APIs & Cloud Services
     ↓

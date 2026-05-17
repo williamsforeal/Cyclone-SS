@@ -366,6 +366,25 @@
     },
     {
       "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "chatgpt-4o-latest",
+          "mode": "list",
+          "cachedResultName": "CHATGPT-4O-LATEST"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=You are a prompt compiler for high-converting DTC image ads.\n\nDo not explain. Do not ask questions.\nReturn only valid JSON as instructed.\n\nCONTEXT OBJECT (AUTHORITATIVE):\n{{$json.image-prompt-context}}\n\nTASK:\nUsing the context object above:\n- Generate A/B/C image prompt variants\n- A = Control (same concept, better execution)\n- B = Angle variation\n- C = StoryBrand narrative\n\nRULES:\n- Do not invent product features\n- Do not alter product design\n- Assume the product image URL is a reference image\n- One dominant emotional promise per variant\n\nOUTPUT FORMAT:\n{ ...schema... }\n\n"
+            },
+            {
+              "type": "image",
+              "imageUrl": "={{ $('Extract Product Image URL').item.json.productImageUrl }}"
+            }
+          ]
+        },
+        "simplify": false,
+        "builtInTools": {},
         "options": {
           "temperature": 0.8,
           "maxTokens": 3000
@@ -386,8 +405,7 @@
           "__rl": true,
           "value": "chatgpt-4o-latest",
           "mode": "list"
-        },
-        "simplifyOutput": false
+        }
       },
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 2.1,
@@ -1359,7 +1377,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.gumloop.com/api/v1/start_pipeline?api_key=769876a7f6164317a7e024b3e22525e1&user_id=Po4tsiByVANmPe33wJygwM6qNJG3&saved_item_id=dNsctfmdNCdpvk6UWhdGHC",
+        "url": "=https://api.gumloop.com/api/v1/start_pipeline?api_key={{ $env.GUMLOOP_API_KEY }}&user_id={{ $env.GUMLOOP_USER_ID }}&saved_item_id={{ $env.GUMLOOP_SAVED_ITEM_ID }}",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ adType: $json.adType, headline: $json.headline, concept: $json.concept, cta: $json.cta, angle: $json.angle, avatarTarget: $json.avatarTarget, awarenessLevel: $json.awarenessLevel, tags: $json.tags, productImageUrl: $json.productImageUrl, recordId: $json.recordId }) }}",
@@ -1492,7 +1510,7 @@
         "messages": {
           "values": [
             {
-              "content": "You are an expert AI image prompt engineer specializing in DTC product advertising photography. Your job: convert a visual concept brief into a precise, production-ready prompt for fal.ai Flux image generation.\r\n\r\n## ABSOLUTE RULES — VIOLATIONS WILL RUIN THE AD\r\n1. NEVER include text, words, letters, numbers, logos, headlines, watermarks, captions, labels, brand names, or ANY typography in the prompt. The image is a VISUAL CANVAS — copy is added in post-production.\r\n2. The PalmAura device MUST be the clear focal point. It is a white/cream smooth rounded enclosed hand massager device. If a hand is shown, the hand should be inside or interacting with the device.\r\n3. Keep the prompt under 120 words. Precise, not verbose.\r\n4. Always leave clean negative space for text overlay (top third or bottom third).\r\n\r\n## PRODUCT PHYSICAL DESCRIPTION\r\n- White/cream colored enclosed device that wraps around the entire hand\r\n- Smooth, rounded exterior with subtle LED indicator\r\n- Glove-like shape, approximately the size of a boxing glove but sleeker\r\n- When in use: a real human hand is inserted, fingers go into individual channels\r\n- Warm ambient glow suggests the heat function is active\r\n\r\n## STYLE TARGETS\r\nHigh-end DTC aesthetic (Arrae, Seed, Jolie):\r\n- Clean, uncluttered compositions with intentional negative space\r\n- Soft natural or studio lighting, never harsh\r\n- Earth tones: warm cream, sage, soft teal, natural wood, linen\r\n- Product always sharp, well-lit, and hero of the frame\r\n- Professional commercial photography quality\r\n\r\n## INPUT\r\nYou receive a JSON object with:\r\n- scene, lighting, colorPalette, composition, productPlacement, mood, style\r\n- productImageUrl (the S3 URL of the actual product photo to use as reference)\r\n\r\n## OUTPUT\r\nReturn ONLY valid JSON. No markdown. No explanation. No code blocks.\r\n\r\n{\r\n  \"prompt\": \"the complete positive prompt, under 120 words\",\r\n  \"negativePrompt\": \"text, words, letters, writing, typography, logos, watermarks, labels, captions, numbers, symbols, brand names, headlines, artifacts, distortions, blurry, low quality, extra fingers, floating objects, cluttered background, busy composition, cartoon, illustration, anime, painting, sketch, drawing\",\r\n  \"strength\": 0.55\r\n}\r\n\r\n## PROMPT STRUCTURE (follow this exact order)\r\n1. \"Commercial product photography of\" + product in scene\r\n2. Hand interaction detail (if lifestyle)\r\n3. Environment and setting specifics\r\n4. Lighting specification\r\n5. Color palette as visual descriptors (not hex codes)\r\n6. Camera angle and lens equivalent\r\n7. Negative space note: \"clean open space in [top/bottom] third of frame\"\r\n8. Quality anchors: \"professional product photography, commercial advertising, 8k, sharp focus, shallow depth of field, studio quality\"\r\n\r\n## STRENGTH GUIDE\r\n- 0.45-0.55: Strong reference to product image (recommended for product-hero shots)\r\n- 0.55-0.65: Balanced blend (recommended for lifestyle scenes)\r\n- 0.65-0.75: More creative generation (recommended for emotional/story scenes)\r\nChoose strength based on the \"style\" field in the input.",
+              "content": "You are an expert AI image prompt engineer specializing in DTC product advertising photography. Your job: convert a visual concept brief into a scene description for Bria Product Shot — a model that places the actual product photo into a generated scene.\r\n\r\nIMPORTANT: Bria Product Shot receives the product image separately. NEVER describe the product itself in the scene description. The model places the product automatically. Describe the SCENE the product will be placed into.\r\n\r\n## ABSOLUTE RULES\r\n1. NEVER include text, words, letters, numbers, logos, headlines, watermarks, or ANY typography.\r\n2. NEVER describe the product. The product is placed automatically from its photo.\r\n3. Keep the scene description under 80 words.\r\n4. The scene MUST directly relate to the ad concept's target segment and angle — no generic backgrounds.\r\n\r\n## SCENE STYLE BY CONCEPT TYPE\r\n\r\n**Lifestyle scenes** (style: \"lifestyle\"):\r\n- MUST include a person relevant to the target segment doing an activity that connects to the ad angle\r\n- Examples: \"Woman in her 30s working at a minimal home desk with laptop, soft window light, modern apartment, warm cream and sage tones, close-up composition at desk level\"\r\n- The person and their activity ARE the scene — the product will be placed near them\r\n- Frame TIGHT — desk/table level close-up, not a wide room shot\r\n\r\n**Product-hero scenes** (style: \"product-hero\"):\r\n- Close-up surface composition — NO wide room shots\r\n- Tight framing on a surface with 1-2 contextual props that relate to the target segment\r\n- Examples: \"Close-up of light oak desk surface with open notebook and reading glasses, soft morning window light, warm cream tones, shallow depth of field\"\r\n- Fill the frame — the surface should feel close and intimate\r\n\r\n**Emotional-story scenes** (style: \"emotional-story\"):\r\n- MUST include a person in an emotionally resonant moment relevant to the ad angle\r\n- Examples: \"Grandmother sitting in a cozy armchair holding a grandchild's hand, warm afternoon light through sheer curtains, soft earth tones, intimate close framing\"\r\n- The emotion and human connection ARE the scene\r\n\r\n## CRITICAL: MATCH THE AD CONCEPT\r\nThe scene must visually tell the story of the ad concept:\r\n- Remote workers segment → home office, desk, laptop, focused work\r\n- 45+ mobility seekers → cozy home, morning routine, garden\r\n- Caregivers/grandparents → family setting, nurturing moment, warmth\r\n- Gamers/creators → gaming setup, creative workspace, dark/focused mood\r\n\r\nThe scene is NOT a random background — it's the visual context that makes the ad concept land.\r\n\r\n## STYLE TARGETS\r\nHigh-end DTC aesthetic (Arrae, Seed, Jolie):\r\n- Clean compositions with intentional negative space for text overlay\r\n- Soft natural or studio lighting, never harsh\r\n- Earth tones: warm cream, sage, soft teal, natural wood, linen\r\n- Professional commercial photography quality\r\n\r\n## INPUT\r\nYou receive a JSON object with:\r\n- scene, lighting, colorPalette, composition, productPlacement, mood, style\r\n- productImageUrl (the S3 URL of the actual product photo — sent separately to Bria)\r\n\r\n## OUTPUT\r\nReturn ONLY valid JSON. No markdown. No explanation. No code blocks.\r\n\r\n{\r\n  \"scene_description\": \"Lifestyle scene or tight surface composition matching the ad concept. Under 80 words. No product description.\",\r\n  \"placement_type\": \"automatic\"\r\n}\r\n\r\n## PLACEMENT TYPE\r\n- Always use \"automatic\" — Bria will find the natural placement in the scene",
               "role": "system"
             },
             {
@@ -1524,7 +1542,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Parse Image Prompt Engineer output and prepare fal.ai payload\nconst items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  let text = '';\n\n  // Extract from OpenAI output formats\n  if (item.json?.output?.[0]?.content?.[0]?.text) {\n    text = item.json.output[0].content[0].text;\n  } else if (item.json?.text) {\n    text = item.json.text;\n  } else if (item.json?.content?.[0]?.text) {\n    text = item.json.content[0].text;\n  } else if (item.json?.message?.content) {\n    text = item.json.message.content;\n  }\n\n  // Clean markdown\n  text = text.replace(/\\`\\`\\`json\\\\s*/gi, '').replace(/\\`\\`\\`\\\\s*/g, '').trim();\n\n  let promptData;\n  try {\n    // Find JSON object in text\n    const objMatch = text.match(/\\{[\\s\\S]*\\}/);\n    promptData = JSON.parse(objMatch ? objMatch[0] : text);\n  } catch (e) {\n    // Fallback: use the text as the prompt directly\n    promptData = {\n      prompt: text.substring(0, 500),\n      negativePrompt: 'text, words, letters, logos, watermarks, blurry, low quality',\n      strength: 0.55\n    };\n  }\n\n  // Get upstream data preserved through the loop\n  const upstreamItem = $('Loop Over Items3').first().json;\n  const productImageUrl = upstreamItem?.productImageUrl || item.json?.productImageUrl || '';\n  const conceptId = upstreamItem?.conceptId || item.json?.conceptId || 'X';\n  const adCopy = upstreamItem?.adCopy || item.json?.adCopy || {};\n  const recordId = upstreamItem?.recordId || item.json?.recordId || '';\n\n  results.push({\n    json: {\n      prompt: promptData.prompt || '',\n      negativePrompt: promptData.negativePrompt || 'text, words, letters, logos',\n      strength: promptData.strength || 0.55,\n      productImageUrl: productImageUrl,\n      conceptId: conceptId,\n      adCopy: adCopy,\n      recordId: recordId\n    }\n  });\n}\n\nreturn results;",
+        "jsCode": "// Parse Image Prompt Engineer output and prepare fal.ai payload\nconst items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  let text = '';\n\n  // Extract from OpenAI output formats\n  if (item.json?.output?.[0]?.content?.[0]?.text) {\n    text = item.json.output[0].content[0].text;\n  } else if (item.json?.text) {\n    text = item.json.text;\n  } else if (item.json?.content?.[0]?.text) {\n    text = item.json.content[0].text;\n  } else if (item.json?.message?.content) {\n    text = item.json.message.content;\n  }\n\n  // Clean markdown\n  text = text.replace(/```json\\s*/gi, '').replace(/```\\s*/g, '').trim();\n\n  let promptData;\n  try {\n    // Find JSON object in text\n    const objMatch = text.match(/\\{[\\s\\S]*\\}/);\n    promptData = JSON.parse(objMatch ? objMatch[0] : text);\n  } catch (e) {\n    // Fallback: use the text as the prompt directly\n    promptData = {\n      prompt: text.substring(0, 500),\n      negativePrompt: 'text, words, letters, logos, watermarks, blurry, low quality',\n      strength: 0.55\n    };\n  }\n\n  // Get upstream data preserved through the loop\n  const upstreamItem = $('Loop Over Items3').first().json;\n  const productImageUrl = upstreamItem?.productImageUrl || item.json?.productImageUrl || '';\n  const conceptId = upstreamItem?.conceptId || item.json?.conceptId || 'X';\n  const adCopy = upstreamItem?.adCopy || item.json?.adCopy || {};\n  const recordId = upstreamItem?.recordId || item.json?.recordId || '';\n\n  results.push({\n    json: {\n      prompt: promptData.prompt || '',\n      negativePrompt: promptData.negativePrompt || 'text, words, letters, logos',\n      strength: promptData.strength || 0.55,\n      productImageUrl: productImageUrl,\n      conceptId: conceptId,\n      adCopy: adCopy,\n      recordId: recordId\n    }\n  });\n}\n\nreturn results;",
         "mode": "runOnceForAllItems"
       },
       "type": "n8n-nodes-base.code",
@@ -3315,7 +3333,7 @@
       {
         "parameters": {
           "method": "POST",
-          "url": "https://api.gumloop.com/api/v1/start_pipeline?api_key=769876a7f6164317a7e024b3e22525e1&user_id=Po4tsiByVANmPe33wJygwM6qNJG3&saved_item_id=dNsctfmdNCdpvk6UWhdGHC",
+          "url": "=https://api.gumloop.com/api/v1/start_pipeline?api_key={{ $env.GUMLOOP_API_KEY }}&user_id={{ $env.GUMLOOP_USER_ID }}&saved_item_id={{ $env.GUMLOOP_SAVED_ITEM_ID }}",
           "sendBody": true,
           "specifyBody": "json",
           "jsonBody": "={{ JSON.stringify({ adType: $json.adType, headline: $json.headline, concept: $json.concept, cta: $json.cta, angle: $json.angle, avatarTarget: $json.avatarTarget, awarenessLevel: $json.awarenessLevel, tags: $json.tags, productImageUrl: $json.productImageUrl, recordId: $json.recordId }) }}",

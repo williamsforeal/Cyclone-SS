@@ -14,11 +14,14 @@
     ],
     "dependencies": {
         "@modelcontextprotocol/sdk": "^1.26.0",
+        "apify": "^3.7.2",
         "better-sqlite3": "^12.6.2",
+        "crawlee": "^3.16.0",
         "dotenv": "^16.6.1",
         "express": "^5.2.1",
         "n8n": "^1.72.0",
-        "node-cron": "^4.2.1"
+        "node-cron": "^4.2.1",
+        "playwright": "^1.60.0"
     },
     "pnpm": {
         "overrides": {

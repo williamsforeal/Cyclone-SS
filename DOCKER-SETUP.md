@@ -262,9 +262,6 @@ OPENAI_API_KEY=sk-proj-xxx
 # fal.ai (image generation)
 FAL_AI_API_KEY=your_key
 
-# BannerBear (ad creative)
-BANNERBEAR_API_KEY=your_key
-
 # Notion (optional)
 NOTION_API_KEY=your_key
 NOTION_DATABASE_ID=your_id

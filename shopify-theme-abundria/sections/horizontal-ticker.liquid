@@ -1,0 +1,334 @@
+{{ 'component-tickers.css' | asset_url | stylesheet_tag }}
+
+{%- style -%}
+  .section-{{ section.id }}-padding {
+    padding-top: {{ section.settings.padding_top | times: 0.75 | round: 0 }}px;
+    padding-bottom: {{ section.settings.padding_bottom | times: 0.75 | round: 0 }}px;
+  }
+
+  @media screen and (min-width: 750px) {
+    .section-{{ section.id }}-padding {
+      padding-top: {{ section.settings.padding_top }}px;
+      padding-bottom: {{ section.settings.padding_bottom }}px;
+    }
+  }
+
+  .horizontal-ticker-{{ section.id }} .horizontal-ticker__item, .horizontal-ticker-{{ section.id }} .horizontal-ticker__image {
+    font-size: {{ section.settings.text_size }}rem;
+  }
+
+  @media screen and (min-width: 750px) {
+    .horizontal-ticker-{{ section.id }} .horizontal-ticker__container {
+      column-gap: {{ section.settings.desktop_spacing }}px;
+      animation-name: desktopHorTicker{{ section.id }};
+    }
+  }
+  
+  .horizontal-ticker-{{ section.id }} .horizontal-ticker__container {
+    animation: mobileHorTicker{{ section.id }} {{ 150 | divided_by: section.settings.speed }}s linear infinite forwards;
+    column-gap: {{ section.settings.mobile_spacing }}px;
+  }
+
+  .horizontal-ticker-{{ section.id }}.color-custom {
+    --color-background: {{ section.settings.custom_colors_background.red }}, {{ section.settings.custom_colors_background.green }}, {{ section.settings.custom_colors_background.blue }};
+    --gradient-background: {% if section.settings.custom_gradient_background != blank %}{{ section.settings.custom_gradient_background }}{% else %}{{ section.settings.custom_colors_background }}{% endif %};
+    --color-foreground: {{ section.settings.custom_colors_text.red }}, {{ section.settings.custom_colors_text.green }}, {{ section.settings.custom_colors_text.blue }};
+  }
+
+  {% liquid
+    assign is_rtl = false
+    if settings.enable_rtl == true
+      assign is_rtl = true
+    elsif settings.rtl_enabled_languages != blank
+      assign lang_array_trim = settings.rtl_enabled_languages | replace: ' ', '' | split: ','
+      if lang_array_trim contains localization.language.iso_code
+        assign is_rtl = true
+      endif
+    endif
+  %}
+  @keyframes mobileHorTicker{{ section.id }} {
+    to {
+      transform: translateX(calc({% unless is_rtl %}-{% endunless %}50% {% if is_rtl %}+{% else %}-{% endif %} {{ section.settings.mobile_spacing | divided_by: 2.0}}px));
+    }
+  }
+  @keyframes desktopHorTicker{{ section.id }} {
+    to {
+      transform: translateX(calc({% unless is_rtl %}-{% endunless %}50% {% if is_rtl %}+{% else %}-{% endif %} {{ section.settings.desktop_spacing | divided_by: 2.0}}px));
+    }
+  }
+{%- endstyle -%}
+
+<div class="horizontal-ticker horizontal-ticker-{{ section.id }} color-{{ section.settings.color_scheme }} section-{{ section.id }}-padding {{ section.settings.visibility }}">
+  <div class="horizontal-ticker__container">
+    {% assign unique_blocks_total = section.blocks | size %}
+    {% assign target_multiply = 20 | divided_by: unique_blocks_total | floor %}
+    {% assign target_total = unique_blocks_total | times: target_multiply | times: 2 %}
+    {% assign block_counter = 0 %}
+
+    {%- for block in section.blocks -%}
+      {% case block.type %}
+        {% when 'text' %}
+          <p class="horizontal-ticker__item
+            {% if section.settings.italic_text %} horizontal-ticker__item--italic{% endif %}
+            {% if section.settings.uppercase_text %} horizontal-ticker__item--uppercase{% endif %}
+            {% if section.settings.bold_text %} horizontal-ticker__item--bold{% endif %}
+          ">
+            {{ block.settings.title }}
+          </p>
+
+        {% when 'image' %}
+          <div
+            class='horizontal-ticker__image media media--transparent media--fit-contain custom-image-height custom-image-width'
+            style="--mobile-width: {{ section.settings.mobile_image_height | times: block.settings.image.aspect_ratio | divided_by: 10.0 }}rem;
+                   --desktop-width: {{ section.settings.desktop_image_height | times: block.settings.image.aspect_ratio | divided_by: 10.0 }}rem;">
+            <img
+              src="{{ block.settings.image | image_url }}"
+              {% if block.settings.image.alt != blank %}
+                alt="{{ block.settings.image.alt | escape }}"
+              {% else %}
+                role="presentation"
+              {% endif %}
+              height="auto"
+              width="auto"
+              loading="lazy"
+            >
+          </div>
+      {% endcase %}
+      {% assign block_counter = block_counter | plus: 1 %}
+    {%- endfor -%}
+
+    {%- if block_counter < target_total -%}
+      {% for i in (1..15) %}
+        {% for block in section.blocks %}
+          {% case block.type %}
+            {% when 'text' %}
+              <p class="horizontal-ticker__item
+                {% if section.settings.italic_text %} horizontal-ticker__item--italic{% endif %}
+                {% if section.settings.uppercase_text %} horizontal-ticker__item--uppercase{% endif %}
+                {% if section.settings.bold_text %} horizontal-ticker__item--bold{% endif %}
+              ">
+                {{ block.settings.title }}
+              </p>
+
+            {% when 'image' %}
+              <div
+                class='horizontal-ticker__image media media--transparent media--fit-contain custom-image-height custom-image-width'
+                style="--mobile-width: {{ section.settings.mobile_image_height | times: block.settings.image.aspect_ratio | divided_by: 10.0 }}rem;
+                       --desktop-width: {{ section.settings.desktop_image_height | times: block.settings.image.aspect_ratio | divided_by: 10.0 }}rem;">
+                <img
+                  src="{{ block.settings.image | image_url }}"
+                  {% if block.settings.image.alt != blank %}
+                    alt="{{ block.settings.image.alt | escape }}"
+                  {% else %}
+                    role="presentation"
+                  {% endif %}
+                  height="auto"
+                  width="auto"
+                  loading="lazy"
+                >
+              </div>
+          {% endcase %}
+
+          {% assign block_counter = block_counter | plus: 1 %}
+          {% if block_counter >= target_total %}
+            {% break %}
+          {% endif %}
+        {% endfor %}
+        {% if block_counter >= target_total %}
+          {% break %}
+        {% endif %}
+      {% endfor %}
+    {%- endif -%}
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Horizontal Ticker",
+  "settings": [
+    {
+      "type": "select",
+      "id": "visibility",
+      "options": [
+        { "value": "desktop-hidden", "label": "Mobile only" },
+        { "value": "mobile-hidden", "label": "Desktop only" },
+        { "value": "always-display", "label": "All devices" }
+      ],
+      "label": "Display on",
+      "default": "always-display"
+    },
+    {
+      "type": "header",
+      "content": "Ticker"
+    },
+    {
+      "type": "range",
+      "id": "speed",
+      "label": "Ticker speed",
+      "min": 1,
+      "max": 5,
+      "default": 3,
+      "step": 0.5
+    },
+    {
+      "type": "number",
+      "id": "mobile_spacing",
+      "label": "Mobile spacing (px)",
+      "default": 60
+    },
+    {
+      "type": "number",
+      "id": "desktop_spacing",
+      "label": "Desktop spacing (px)",
+      "default": 100
+    },
+    {
+      "type": "select",
+      "id": "color_scheme",
+      "label": "Color scheme",
+      "options": [
+        { "value": "accent-1", "label": "Accent 1" },
+        { "value": "accent-2", "label": "Accent 2" },
+        { "value": "background-1", "label": "Background 1" },
+        { "value": "background-2", "label": "Background 2" },
+        { "value": "inverse", "label": "Inverse" },
+        { "value": "custom", "label": "Custom" }
+      ],
+      "default": "accent-1"
+    },
+    {
+      "type": "header",
+      "content": "Text"
+    },
+    {
+      "type": "select",
+      "id": "text_size",
+      "label": "Text size",
+      "options": [
+        { "value": "1.25", "label": "Extra small" },
+        { "value": "1.5", "label": "Small" },
+        { "value": "1.75", "label": "Medium" },
+        { "value": "2", "label": "Large" },
+        { "value": "2.5", "label": "Extra large" }
+      ],
+      "default": "1.75"
+    },
+    {
+      "type": "checkbox",
+      "id": "italic_text",
+      "label": "Italic text",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "uppercase_text",
+      "label": "Uppercase text",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "bold_text",
+      "label": "Bold text",
+      "default": false
+    },
+    {
+      "type": "header",
+      "content": "Images"
+    },
+    {
+      "type": "number",
+      "id": "mobile_image_height",
+      "default": 26,
+      "label": "Mobile image height"
+    },
+    {
+      "type": "number",
+      "id": "desktop_image_height",
+      "default": 40,
+      "label": "Desktop image height"
+    },
+    {
+      "type": "header",
+      "content": "Section spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "label": "Top padding",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "label": "Bottom padding",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "header",
+      "content": "Custom color scheme",
+      "info": "Applied only if 'Color scheme' is set to Custom."
+    },
+    {
+      "type": "color",
+      "id": "custom_colors_background",
+      "label": "Background color",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "color_background",
+      "id": "custom_gradient_background",
+      "label": "Gradient background",
+      "info": "Overrides background color if used."
+    },
+    {
+      "type": "color",
+      "id": "custom_colors_text",
+      "label": "Text color",
+      "default": "#2E2A39"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "text",
+      "name": "Text",
+      "settings": [
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Text",
+          "default": "Shrine Theme"
+        }
+      ]
+    },
+    {
+      "type": "image",
+      "name": "Image",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Image"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Horizontal Ticker",
+      "blocks": [
+        { "type": "text" },
+        { "type": "text" },
+        { "type": "text" }
+      ]
+    }
+  ]
+}
+{% endschema %}

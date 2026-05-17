@@ -1,0 +1,246 @@
+.icons-with-content__image,
+.icons-with-content__image img {
+  max-width: 100%;
+  height: auto;
+  vertical-align: bottom;
+}
+
+.icon-with-content__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  column-gap: 8rem;
+  align-items: center;
+  row-gap: 3rem;
+}
+
+.icons-with-text__icon-item {
+  --line-height: 1.5;
+  display: flex;
+  align-items: center;
+  margin-bottom: 3rem;
+}
+
+.icons-with-text__icon-item:last-child {
+  margin-bottom: 0;
+}
+
+.icons-with-text__icon-item--center {
+  text-align: center;
+}
+
+.icons-with-text__icon-item--center.icons-with-text__icon-item--next-to-title
+  .icons-with-text__icon__title {
+  justify-content: center;
+}
+
+.icons-with-text__icon-item--right {
+  text-align: right;
+}
+
+.icons-with-text__icon-item--center.icons-with-text__icon-item--next-to-title
+  .icons-with-text__icon__title {
+  justify-content: flex-end;
+}
+
+.icons-with-text__icon__icon--xs {
+  --icon-size: 1.6rem;
+  --margin: 1rem;
+}
+
+.icons-with-text__icon__icon--s {
+  --icon-size: 2.3rem;
+  --margin: 1.25rem;
+}
+
+.icons-with-text__icon__icon--m {
+  --icon-size: 2.5rem;
+  --margin: 1.4rem;
+}
+
+.icons-with-text__icon__icon--l {
+  --icon-size: 3.5rem;
+  --margin: 1.5rem;
+}
+
+.icons-with-text__icon__icon--xl {
+  --icon-size: 5rem;
+}
+
+.icons-with-text__icon__icon--xxl {
+  --icon-size: 7rem;
+}
+
+.icons-with-text__icon__icon--xl,
+.icons-with-text__icon__icon--xxl {
+  --margin: calc((var(--icon-size)) * 0.35);
+}
+
+.icons-with-text__icon__icon {
+  flex-shrink: 0;
+  width: var(--icon-size);
+  height: var(--icon-size);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: var(--margin);
+  background: none;
+}
+
+.icons-with-text__icon__icon img,
+.icons-with-text__icon__icon svg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center center;
+  color: rgb(var(--color-background));
+  fill: currentColor;
+}
+
+.icons-with-text__icon__title {
+  margin: 0;
+  line-height: 1.3;
+  margin-bottom: 0.4em;
+}
+.icons-with-text__icon-item--next-to-title .icons-with-text__icon__title {
+  display: flex;
+  align-items: center;
+}
+.icons-with-text__icon__title.h5 {
+  font-size: 1.75rem;
+}
+.icons-with-text__icon__title.h4 {
+  font-size: 1.9remem;
+}
+.icons-with-text__icon__title.h3 {
+  font-size: 2.25rem;
+}
+.icons-with-text__icon__title.h2 {
+  font-size: 2.65rem;
+}
+
+.icons-with-text__icon__text p {
+  line-height: var(--line-height);
+}
+
+.icon-with-text__icon__text--small {
+  font-size: 1.2rem;
+}
+
+.icons-with-text__icon-item--above {
+  flex-direction: column;
+  text-align: center;
+}
+
+.icons-with-text__icon-item--above .icons-with-text__icon__icon {
+  margin-right: 0;
+  margin-bottom: var(--margin);
+}
+
+.icon-with-content__content > * {
+  margin-top: 2rem;
+  margin-bottom: 0;
+}
+
+.icon-with-content__content > *:first-child {
+  margin-top: 0;
+}
+
+.icon-with-content__content
+  .icon-with-content__text--caption
+  + .icon-with-content__heading {
+  margin-top: 0;
+}
+
+@media screen and (max-width: 749px) {
+  .icon-with-content__grid {
+    grid-template-columns: repeat(1, 1fr);
+  }
+  .icon-with-content__mobile-grid--reverse .icon-with-content__content {
+    order: -1;
+  }
+  .icon-with-content__content--hide-on-mobile {
+    display: none;
+  }
+  .icon-with-content__content {
+    text-align: center;
+  }
+  .icons-with-text__icon__icon--xs {
+    --icon-size: 1.5rem;
+    --margin: 0.75rem;
+  }
+
+  .icons-with-text__icon__icon--s {
+    --icon-size: 1.75rem;
+    --margin: 0.85rem;
+  }
+
+  .icons-with-text__icon__icon--m {
+    --icon-size: 2.1rem;
+    --margin: 1rem;
+  }
+
+  .icons-with-text__icon__icon--l {
+    --icon-size: 3rem;
+    --margin: 1.3rem;
+  }
+
+  .icons-with-text__icon__icon--xl {
+    --icon-size: 4.25rem;
+  }
+
+  .icons-with-text__icon__icon--xxl {
+    --icon-size: 5.5rem;
+  }
+  .icons-with-text__icon__title.h5 {
+    font-size: 1.4rem;
+  }
+  .icons-with-text__icon__title.h4 {
+    font-size: 1.6rem;
+  }
+  .icons-with-text__icon__title.h3 {
+    font-size: 1.8rem;
+  }
+  .icons-with-text__icon__title.h2 {
+    font-size: 2.25rem;
+  }
+  .icon-with-content__icons--mobile-2-columns {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    align-items: flex-start;
+    column-gap: 1.75rem;
+    row-gap: 2rem;
+  }
+  .icon-with-content__icons--mobile-2-columns ..icons-with-text__icon-item {
+    margin-bottom: 0;
+  }
+  .icon-with-content__icons--mobile-2-columns .icons-with-text__icon__title {
+    font-size: 1.4rem;
+  }
+  .icon-with-content__icons--mobile-2-columns .rte {
+    font-size: 1.2rem;
+  }
+  .icon-with-content__icons--mobile-2-columns .icons-with-text__icon__icon {
+    width: calc(var(--icon-size) * 0.7);
+    height: calc(var(--icon-size) * 0.7);
+    margin-bottom: 1rem;
+  }
+}
+
+@media screen and (min-width: 750px) {
+  .icon-with-content__grid--desktop-reverse {
+    column-gap: 9rem;
+  }
+  .icon-with-content__grid--desktop-reverse .icon-with-content__content {
+    order: -1;
+  }
+  .icon-with-content__icons--desktop-2-columns {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    align-items: flex-start;
+    column-gap: 3rem;
+    row-gap: 3rem;
+  }
+  .icon-with-content__icons--desktop-2-columns ..icons-with-text__icon-item {
+    margin-bottom: 0;
+  }
+}

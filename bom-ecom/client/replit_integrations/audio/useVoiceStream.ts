@@ -2,7 +2,7 @@
  * React hook for handling SSE voice streaming responses.
  * Converts audio blob to base64 and sends as JSON to match server expectations.
  */
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useAudioPlayback } from "./useAudioPlayback";
 
 interface StreamCallbacks {
@@ -12,13 +12,20 @@ interface StreamCallbacks {
   onError?: (error: Error) => void;
 }
 
-export function useVoiceStream(callbacks: StreamCallbacks = {}) {
-  const playback = useAudioPlayback();
+const EMPTY_STREAM_CALLBACKS: StreamCallbacks = {};
+
+export function useVoiceStream(callbacks: StreamCallbacks = EMPTY_STREAM_CALLBACKS) {
+  const { state, init, clear, pushAudio, signalComplete } = useAudioPlayback();
+  const callbacksRef = useRef(callbacks);
+
+  useEffect(() => {
+    callbacksRef.current = callbacks;
+  }, [callbacks]);
 
   const streamVoiceResponse = useCallback(
     async (url: string, audioBlob: Blob) => {
-      await playback.init();
-      playback.clear();
+      await init();
+      clear();
 
       // Convert blob to base64 for JSON body (server expects express.json())
       const base64Audio = await new Promise<string>((resolve) => {
@@ -60,32 +67,32 @@ export function useVoiceStream(callbacks: StreamCallbacks = {}) {
 
             switch (event.type) {
               case "user_transcript":
-                callbacks.onUserTranscript?.(event.data);
+                callbacksRef.current.onUserTranscript?.(event.data);
                 break;
               case "transcript":
                 fullTranscript += event.data;
-                callbacks.onTranscript?.(event.data, fullTranscript);
+                callbacksRef.current.onTranscript?.(event.data, fullTranscript);
                 break;
               case "audio":
-                playback.pushAudio(event.data);
+                pushAudio(event.data);
                 break;
               case "done":
-                playback.signalComplete();
-                callbacks.onComplete?.(fullTranscript);
+                signalComplete();
+                callbacksRef.current.onComplete?.(fullTranscript);
                 break;
               case "error":
                 throw new Error(event.error);
             }
           } catch (e) {
             if (!(e instanceof SyntaxError)) {
-              callbacks.onError?.(e as Error);
+              callbacksRef.current.onError?.(e as Error);
             }
           }
         }
       }
     },
-    [playback, callbacks]
+    [clear, init, pushAudio, signalComplete]
   );
 
-  return { streamVoiceResponse, playbackState: playback.state };
+  return { streamVoiceResponse, playbackState: state };
 }

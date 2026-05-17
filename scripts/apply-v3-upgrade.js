@@ -296,7 +296,7 @@ for (const item of items) {
   }
 
   // Clean markdown
-  text = text.replace(/\\\`\\\`\\\`json\\\\s*/gi, '').replace(/\\\`\\\`\\\`\\\\s*/g, '').trim();
+  text = text.replace(/\`\`\`json\\s*/gi, '').replace(/\`\`\`\\s*/g, '').trim();
 
   let promptData;
   try {

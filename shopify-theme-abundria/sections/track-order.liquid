@@ -1,0 +1,262 @@
+{{ 'section-contact-form.css' | asset_url | stylesheet_tag }}
+
+{%- style -%}
+  .section-{{ section.id }}-padding {
+    padding-top: {{ section.settings.padding_top | times: 0.75 | round: 0 }}px;
+    padding-bottom: {{ section.settings.padding_bottom | times: 0.75 | round: 0 }}px;
+  }
+
+  @media screen and (min-width: 750px) {
+    .section-{{ section.id }}-padding {
+      padding-top: {{ section.settings.padding_top }}px;
+      padding-bottom: {{ section.settings.padding_bottom }}px;
+    }
+  }
+
+  .color-scheme-{{ section.id }}.color-custom {
+    --color-background: {{ section.settings.custom_colors_background.red }}, {{ section.settings.custom_colors_background.green }}, {{ section.settings.custom_colors_background.blue }};
+    --gradient-background: {% if section.settings.custom_gradient_background != blank %}{{ section.settings.custom_gradient_background }}{% else %}{{ section.settings.custom_colors_background }}{% endif %};
+    --color-foreground: {{ section.settings.custom_colors_text.red }}, {{ section.settings.custom_colors_text.green }}, {{ section.settings.custom_colors_text.blue }};
+    --color-button: {{ section.settings.custom_colors_solid_button_background.red }}, {{ section.settings.custom_colors_solid_button_background.green }}, {{ section.settings.custom_colors_solid_button_background.blue }};
+    --color-button-text: {{ section.settings.custom_colors_solid_button_text.red }}, {{ section.settings.custom_colors_solid_button_text.green }}, {{ section.settings.custom_colors_solid_button_text.blue }};
+  }
+{%- endstyle -%}
+
+<div class="{{ section.settings.visibility }} color-scheme-{{ section.id }} color-{{ section.settings.color_scheme }} gradient ">
+  <div class="page-width section-{{ section.id }}-padding">
+    <div class="track-order-form">
+      <div class="center">
+        {%- if section.settings.heading != blank -%}
+          <h2 class="title title-wrapper--no-top-margin {{ section.settings.heading_size }}">
+            {{ section.settings.heading }}
+          </h2>
+        {%- endif -%}
+        {{ section.settings.text }}
+      </div>
+      <!-- Tracking number input box. -->
+      <div class="field">
+        <input
+          type="text"
+          id="YQNum"
+          class="field__input"
+          name="track-order-number"
+          maxlength="50"
+          placeholder='{{ section.settings.input_label }}'
+        >
+        <label class="field__label" for="track-order-number">{{ section.settings.input_label }}</label>
+      </div>
+      <!-- The button is used to call script method. -->
+      <div class="contact__button">
+        <input
+          type="button"
+          class="button{% if section.settings.button_full_width %} button--full-width{% endif %}"
+          value="{{ section.settings.button_label }}"
+          onclick="doTrack()"
+        >
+      </div>
+    </div>
+    <!-- Container to display the tracking result. -->
+    <div id="YQContainer"></div>
+  </div>
+</div>
+
+<!-- Script code can be put in the bottom of the page, wait until the page is loaded then execute. -->
+<script type="text/javascript" src="//www.17track.net/externalcall.js"></script>
+<script type="text/javascript">
+  function doTrack() {
+      var num = document.getElementById("YQNum").value;
+      if(num===""){
+          alert("Enter your number.");
+          return;
+      }
+      YQV5.trackSingle({
+          //Required, Specify the container ID of the carrier content.
+          YQ_ContainerId:"YQContainer",
+          //Optional, specify tracking result height, max height 800px, default is 560px.
+          YQ_Height:560,
+          //Optional, select carrier, default to auto identify.
+          YQ_Fc:"0",
+          //Optional, specify UI language, default language is automatically detected based on the browser settings.
+          YQ_Lang:"en",
+          //Required, specify the number needed to be tracked.
+          YQ_Num:num
+      });
+  }
+</script>
+
+{% schema %}
+{
+  "name": "Track order",
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  },
+  "settings": [
+            {
+      "type": "select",
+      "id": "visibility",
+      "options": [
+        {
+          "value": "desktop-hidden",
+          "label": "Mobile only"
+        },
+        {
+          "value": "mobile-hidden",
+          "label": "Desktop only"
+        },
+        {
+          "value": "always-display",
+          "label": "All devices"
+        }
+      ],
+      "label": "Display on",
+      "default": "always-display"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "default": "Track Order",
+      "label": "Heading"
+    },
+    {
+      "type": "richtext",
+      "id": "text",
+      "label": "Text",
+      "default": "<p>Please enter you tracking number below. if your tracking number doesn't work feel free to contact us at [shop email]</p>"
+    },
+    {
+      "type": "select",
+      "id": "heading_size",
+      "options": [
+        {
+          "value": "h2",
+          "label": "t:sections.all.heading_size.options__1.label"
+        },
+        {
+          "value": "h1",
+          "label": "t:sections.all.heading_size.options__2.label"
+        },
+        {
+          "value": "h0",
+          "label": "t:sections.all.heading_size.options__3.label"
+        }
+      ],
+      "default": "h2",
+      "label": "t:sections.all.heading_size.label"
+    },
+    {
+      "type": "text",
+      "id": "input_label",
+      "label": "Input label",
+      "default": "Tracking number"
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "Button label",
+      "default": "TRACK"
+    },
+    {
+      "type": "checkbox",
+      "id": "button_full_width",
+      "label": "Use full width button style",
+      "default": true
+    },
+    {
+      "type": "select",
+      "id": "color_scheme",
+      "options": [
+        {
+          "value": "accent-1",
+          "label": "t:sections.all.colors.accent_1.label"
+        },
+        {
+          "value": "accent-2",
+          "label": "t:sections.all.colors.accent_2.label"
+        },
+        {
+          "value": "background-1",
+          "label": "t:sections.all.colors.background_1.label"
+        },
+        {
+          "value": "background-2",
+          "label": "t:sections.all.colors.background_2.label"
+        },
+        {
+          "value": "inverse",
+          "label": "t:sections.all.colors.inverse.label"
+        },
+        {
+          "value": "custom",
+          "label": "Custom"
+        }
+      ],
+      "default": "background-1",
+      "label": "t:sections.all.colors.label"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_padding_heading"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_top",
+      "default": 36
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_bottom",
+      "default": 36
+    },
+    {
+      "type": "header",
+      "content": "Custom color scheme",
+      "info": "Applied if Color scheme setting is set to Custom."
+    },
+    {
+      "type": "color",
+      "id": "custom_colors_background",
+      "default": "#FFFFFF",
+      "label": "Background color"
+    },
+    {
+      "type": "color_background",
+      "id": "custom_gradient_background",
+      "label": "Gradient background",
+      "info": "If added, replaces Background color when applicable."
+    },
+    {
+      "type": "color",
+      "id": "custom_colors_text",
+      "default": "#2E2A39",
+      "label": "Text"
+    },
+    {
+      "type": "color",
+      "id": "custom_colors_solid_button_background",
+      "default": "#dd1d1d",
+      "label": "Solid button background"
+    },
+    {
+      "type": "color",
+      "id": "custom_colors_solid_button_text",
+      "default": "#ffffff",
+      "label": "Solid button label"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Track order"
+    }
+  ]
+}
+{% endschema %}

@@ -31,7 +31,7 @@ Your `.env` file now contains:
 
 ```bash
 GOOGLE_CLIENT_ID=231888702387-kft4apfrq7ut50ac9h73kb7ina9ljodk.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=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
+GOOGLE_CLIENT_SECRET=GOCSPX-xxxxxxxxxxxxxxxxxxxxxxxx
 GOOGLE_REDIRECT_URI=http://localhost:5678/rest/oauth2-credential/callback
 GOOGLE_PROJECT_ID=gen-lang-client-0234791928
 ```
@@ -54,7 +54,7 @@ docker-compose up -d
 5. Fill in:
    - **Name**: `Google Drive - Product Research`
    - **Client ID**: `231888702387-kft4apfrq7ut50ac9h73kb7ina9ljodk.apps.googleusercontent.com`
-   - **Client Secret**: `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`
+   - **Client Secret**: `GOCSPX-xxxxxxxxxxxxxxxxxxxxxxxx`
 6. Click **Connect my account**
 7. Sign in with Google
 8. Grant permissions

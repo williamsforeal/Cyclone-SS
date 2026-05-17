@@ -1,0 +1,188 @@
+{
+  "name": "WF10b Firecrawl Scraper",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "scrape-firecrawl",
+        "authentication": "headerAuth",
+        "options": {
+          "responseMode": "responseNode"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-800, 0],
+      "id": "wf10b-webhook",
+      "name": "Webhook",
+      "webhookId": "wf10b-firecrawl-scraper",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REPLACE_WITH_N8N_CREDENTIAL_ID",
+          "name": "n8n Webhook Token"
+        }
+      },
+      "notes": "Header Auth credential expects: name=X-Webhook-Token, value=${N8N_WEBHOOK_TOKEN}"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { job_id: $json.body.job_id, status: 'accepted' } }}",
+        "options": {
+          "responseCode": 202
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [-560, -160],
+      "id": "wf10b-ack",
+      "name": "Respond 202"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.firecrawl.dev/v1/scrape",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.FIRECRAWL_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ url: $('Webhook').item.json.body.source.url, formats: ['markdown','json'], jsonOptions: { schema: { type: 'object', properties: { title: { type: 'string' }, price: { type: 'number' }, claims: { type: 'array', items: { type: 'string' } }, image_urls: { type: 'array', items: { type: 'string' } }, description: { type: 'string' } } } } }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-560, 80],
+      "id": "wf10b-firecrawl",
+      "name": "Firecrawl /v1/scrape"
+    },
+    {
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// Normalize Firecrawl /v1/scrape response into ScrapedItem shape\nconst webhookData = $('Webhook').item.json.body;\nconst fc = $input.first().json;\n\nconst extracted = fc?.data?.json ?? {};\nconst markdown = fc?.data?.markdown ?? '';\nconst metadata = fc?.data?.metadata ?? {};\n\nconst item = {\n  source_run_id: fc?.data?.metadata?.sourceURL || webhookData.source.url,\n  source_url: webhookData.source.url,\n  scraped_at: new Date().toISOString(),\n  payload: {\n    kind: 'product_page',\n    brand: metadata.ogSiteName || metadata.siteName,\n    title: extracted.title || metadata.title || '',\n    description_md: markdown.slice(0, 8000),\n    price: extracted.price,\n    image_urls: extracted.image_urls || [],\n    claims: extracted.claims || [],\n  },\n  destination: webhookData.destination,\n  job_id: webhookData.job_id,\n  callback_url: webhookData.callback_url,\n  raw: fc?.data ?? {},\n};\n\nreturn [{ json: item }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-320, 80],
+      "id": "wf10b-normalize",
+      "name": "Normalize to ScrapedItem"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "REPLACE_WITH_AIRTABLE_BASE_ID",
+          "mode": "id"
+        },
+        "table": {
+          "__rl": true,
+          "value": "REPLACE_WITH_SCRAPED_INTEL_TABLE_ID",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Source URL": "={{ $json.source_url }}",
+            "Scraped At": "={{ $json.scraped_at }}",
+            "Kind": "={{ $json.payload.kind }}",
+            "Title": "={{ $json.payload.title }}",
+            "Description": "={{ $json.payload.description_md }}",
+            "Destination Kind": "={{ $json.destination.kind }}",
+            "Destination Ref": "={{ $json.destination.product_id || $json.destination.brand_handle || $json.destination.niche }}",
+            "Job ID": "={{ $json.job_id }}",
+            "Raw JSON": "={{ JSON.stringify($json.raw) }}"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [-80, 80],
+      "id": "wf10b-airtable",
+      "name": "Airtable: Scraped_Intel",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "REPLACE_WITH_N8N_AIRTABLE_CREDENTIAL_ID",
+          "name": "Airtable PAT"
+        }
+      },
+      "notes": "Create a table 'Scraped_Intel' in Airtable with columns: Source URL (URL), Scraped At (Date), Kind (Single select: product_page,competitor_ad,trend_item,review), Title, Description (Long text), Destination Kind, Destination Ref, Job ID (Number), Raw JSON (Long text)"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://host.docker.internal:5000/api/scrape/callback",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Webhook-Token",
+              "value": "={{ $env.N8N_WEBHOOK_TOKEN }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ job_id: $('Normalize to ScrapedItem').item.json.job_id, status: 'success', item_count: 1, airtable_record_ids: [$json.id] }) }}",
+        "options": {
+          "timeout": 8000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [160, 80],
+      "id": "wf10b-callback",
+      "name": "Callback bom-ecom"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          { "node": "Respond 202", "type": "main", "index": 0 },
+          { "node": "Firecrawl /v1/scrape", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Firecrawl /v1/scrape": {
+      "main": [[{ "node": "Normalize to ScrapedItem", "type": "main", "index": 0 }]]
+    },
+    "Normalize to ScrapedItem": {
+      "main": [[{ "node": "Airtable: Scraped_Intel", "type": "main", "index": 0 }]]
+    },
+    "Airtable: Scraped_Intel": {
+      "main": [[{ "node": "Callback bom-ecom", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCreatedBy": "WF10 scraper pipeline — Firecrawl variant",
+    "importInstructions": [
+      "1. Create 'Scraped_Intel' table in Airtable (see Airtable node notes for columns)",
+      "2. Replace REPLACE_WITH_AIRTABLE_BASE_ID with your base ID (e.g. appvPrfjiuXIhdNuW)",
+      "3. Replace REPLACE_WITH_SCRAPED_INTEL_TABLE_ID with the table ID",
+      "4. Set Airtable PAT credential (use existing 'Airtable account' credential if present)",
+      "5. Set Header Auth credential 'n8n Webhook Token' with name=X-Webhook-Token, value=$N8N_WEBHOOK_TOKEN",
+      "6. Confirm n8n container has FIRECRAWL_API_KEY and N8N_WEBHOOK_TOKEN env vars (restart container after .env update)",
+      "7. Activate workflow"
+    ]
+  }
+}
