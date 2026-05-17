@@ -1,1 +1,3652 @@
-{"updatedAt": "2026-02-10T08:23:52.229Z", "createdAt": "2026-02-10T05:51:23.251Z", "id": "ivINFwTVVJU0XKp6jTAwN", "name": "Static Scaler v3", "description": null, "active": true, "isArchived": false, "nodes": [{"parameters": {"jsCode": "// ── n8n Code Node: The Splitter ──\n// Handles both formats:\n//   Format 1: { prompt1: \"...\", prompt2: \"...\" }\n//   Format 2: { A: { description: \"...\" }, B: { description: \"...\" }, C: { description: \"...\" } }\n\nconst newItems = [];\nconst items = $input.all();\n\nfor (const item of items) {\n  const json = item.json;\n\n  // FORMAT 2: A/B/C variant objects (from GPT-4o)\n  for (const key of ['A', 'B', 'C', 'D', 'E']) {\n    if (json[key] && typeof json[key] === 'object' && json[key].description) {\n      const cleanText = json[key].description\n        .replace(/^(visual|image|prompt\\s?\\d*|scene\\s?\\d*|option\\s?\\d*|concept\\s?\\d*|pattern interrupt)\\s*[:.-]\\s*/i, \"\")\n        .replace(/^[\"']|[\"']$/g, \"\")\n        .replace(/\\*\\*/g, \"\")\n        .trim();\n\n      if (cleanText.length > 5) {\n        newItems.push({\n          json: {\n            ...json,\n            cleanPrompt: cleanText,\n            sourceField: key\n          }\n        });\n      }\n    }\n  }\n\n  // FORMAT 1: prompt1, prompt2, etc. (legacy)\n  if (newItems.length === 0) {\n    for (const key of Object.keys(json)) {\n      if (key.toLowerCase().startsWith('prompt') && typeof json[key] === 'string') {\n        let cleanText = json[key]\n          .replace(/^(visual|image|prompt\\s?\\d*|scene\\s?\\d*|option\\s?\\d*|concept\\s?\\d*|pattern interrupt)\\s*[:.-]\\s*/i, \"\")\n          .replace(/^[\"']|[\"']$/g, \"\")\n          .replace(/\\*\\*/g, \"\")\n          .trim();\n\n        if (cleanText.length > 5) {\n          newItems.push({\n            json: {\n              ...json,\n              cleanPrompt: cleanText,\n              sourceField: key\n            }\n          });\n        }\n      }\n    }\n  }\n}\n\nif (newItems.length === 0) {\n  return items.map(item => ({ json: { ...item.json, cleanPrompt: \"ERROR: No valid prompt fields found in input.\" }}));\n}\n\nreturn newItems;"}, "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [-1488, 1456], "id": "7814f2d6-6f17-4e28-a483-b1209702eac6", "name": "Code in JavaScript4"}, {"parameters": {"templateId": "=", "additionalFields": {}}, "type": "n8n-nodes-base.bannerbear", "typeVersion": 1, "position": [-208, 1696], "id": "d66b6228-f2b5-4b7a-96fa-cc586ad1523f", "name": "Create an image1", "credentials": {"bannerbearApi": {"id": "2QlDbvK9YUkxhYC0", "name": "Bannerbear account"}}, "disabled": true}, {"parameters": {"options": {}}, "type": "n8n-nodes-base.splitInBatches", "typeVersion": 3, "position": [-1376, 1344], "id": "16b0a257-5da4-4f71-97dc-df2097e6be49", "name": "Loop Over Items3"}, {"parameters": {"path": "ca26a744-db15-42d4-9986-66154ab84cbb", "options": {}}, "id": "70af976f-6f20-4157-8f1e-d1227d6b9b89", "name": "Webhook Trigger1", "type": "n8n-nodes-base.webhook", "typeVersion": 2, "position": [-3232, 1296], "webhookId": "ca26a744-db15-42d4-9986-66154ab84cbb", "alwaysOutputData": false, "executeOnce": false, "notes": "Alternative trigger via Airtable automation or manual call"}, {"parameters": {"aggregate": "aggregateAllItemData", "include": "specifiedFields", "fieldsToInclude": "images, images, images", "options": {}}, "type": "n8n-nodes-base.aggregate", "typeVersion": 1, "position": [-672, 1200], "id": "7252870e-5fe8-47cf-ae78-8d57cd38cc04", "name": "Aggregate"}, {"parameters": {"jsCode": "// Get aggregated items\nconst raw = $input.first().json;\nconst aggregatedData = raw.data || [raw];\n\nif (!aggregatedData || aggregatedData.length === 0) {\n  return [{ json: { \"Ad Sets\": \"Error - No Data\", \"Status\": \"Failed\", \"Error\": \"No aggregated image data found\" } }];\n}\n\n// Extract URLs from each fal.ai image response\nconst urls = [];\nfor (const item of aggregatedData) {\n  const url = item.images?.[0]?.url || null;\n  if (url) urls.push(url);\n}\n\n// Get metadata from first item\nconst first = aggregatedData[0] || {};\nconst firstImg = first.images?.[0] || {};\n\nconst output = {\n  \"Ad Sets\": \"Generated \" + new Date().toISOString().split('T')[0],\n  \"A\": urls[0] || null,\n  \"B\": urls[1] || null,\n  \"C\": urls[2] || null,\n  \"Seed\": first.seed || null,\n  \"Width\": firstImg.width || 1024,\n  \"Height\": firstImg.height || 1024,\n  \"Model\": \"fal-ai/flux/dev\",\n  \"Status\": urls.length > 0 ? \"Generated\" : \"Failed\",\n  \"Prompt Used\": first.prompt || null\n};\n\nreturn [{ json: output }];"}, "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [-512, 1200], "id": "294d2538-115c-42f1-bf03-1a17b25d2ebf", "name": "Format Image Data"}, {"parameters": {"operation": "create", "base": {"__rl": true, "value": "appvPrfjiuXIhdNuW", "mode": "list", "cachedResultName": "🎦Static Scaler 1000", "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW"}, "table": {"__rl": true, "value": "tblt1dje94IcK4kT2", "mode": "list", "cachedResultName": "Images", "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW/tblt1dje94IcK4kT2"}, "columns": {"mappingMode": "defineBelow", "value": {"Ad Sets": "={{ $json[\"Ad Sets\"] }}", "A": "={{ $json.A }}", "B": "={{ $json.B }}", "C": "={{ $json.C }}", "Model": "={{ $json.Model }}", "Width": "={{ $json.Width }}", "Height": "={{ $json.Height }}", "Status": "={{ $json.Status }}"}, "matchingColumns": [], "schema": [{"id": "Ad Sets", "displayName": "Ad Sets", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": false, "removed": false}, {"id": "A", "displayName": "A", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": false, "removed": false}, {"id": "Image Prompts", "displayName": "Image Prompts", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "array", "readOnly": false, "removed": true}, {"id": "Product", "displayName": "Product", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "array", "readOnly": false, "removed": true}, {"id": "Ad Copy", "displayName": "Ad Copy", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "array", "readOnly": false, "removed": true}, {"id": "recordId", "displayName": "recordId", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": true, "removed": true}, {"id": "B", "displayName": "B", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": false, "removed": false}, {"id": "C", "displayName": "C", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": false, "removed": false}, {"id": "Prompt Index", "displayName": "Prompt Index", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "number", "readOnly": false, "removed": true}, {"id": "Prompt Used", "displayName": "Prompt Used", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": false, "removed": true}, {"id": "Seed", "displayName": "Seed", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "number", "readOnly": false, "removed": true}, {"id": "Model", "displayName": "Model", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": false, "removed": false}, {"id": "Width", "displayName": "Width", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "number", "readOnly": false, "removed": false}, {"id": "Height", "displayName": "Height", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "number", "readOnly": false, "removed": false}, {"id": "Status", "displayName": "Status", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "options", "options": [{"name": "Generated", "value": "Generated"}, {"name": "Approved", "value": "Approved"}, {"name": "Rejected", "value": "Rejected"}, {"name": "Used", "value": "Used"}, {"name": "Failed", "value": "Failed"}], "readOnly": false, "removed": false}, {"id": "Generated At", "displayName": "Generated At", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "dateTime", "readOnly": false, "removed": true}, {"id": "Error", "displayName": "Error", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": false, "removed": false}], "attemptToConvertTypes": false, "convertFieldsToString": false}, "options": {"typecast": "={{ false }}"}}, "type": "n8n-nodes-base.airtable", "typeVersion": 2.1, "position": [-352, 1200], "id": "fe0c17f9-13f0-4ea9-ae07-8fddd45be23e", "name": "Create Ad URLs", "credentials": {"airtableTokenApi": {"id": "DQz0c1qORXGaW82y", "name": "Airtable Personal Access Token account"}}}, {"parameters": {"modelId": {"__rl": true, "value": "chatgpt-4o-latest", "mode": "list", "cachedResultName": "CHATGPT-4O-LATEST"}, "responses": {"values": [{"content": "=You are a prompt compiler for high-converting DTC image ads.\n\nDo not explain. Do not ask questions.\nReturn only valid JSON as instructed.\n\nCONTEXT OBJECT (AUTHORITATIVE):\n{{$json.image-prompt-context}}\n\nTASK:\nUsing the context object above:\n- Generate A/B/C image prompt variants\n- A = Control (same concept, better execution)\n- B = Angle variation\n- C = StoryBrand narrative\n\nRULES:\n- Do not invent product features\n- Do not alter product design\n- Assume the product image URL is a reference image\n- One dominant emotional promise per variant\n\nOUTPUT FORMAT:\n{ ...schema... }\n\n"}, {"type": "image", "imageUrl": "={{ $('Extract Product Image URL').item.json.productImageUrl }}"}]}, "simplify": false, "builtInTools": {}, "options": {"metadata": "{}", "parallelToolCalls": false}}, "type": "@n8n/n8n-nodes-langchain.openAi", "typeVersion": 2.1, "position": [-1936, 1456], "id": "fa517799-3465-4635-9fe1-986cf9c74a75", "name": "Message a model1", "credentials": {"openAiApi": {"id": "CZNu744TpA78SZOC", "name": "OpenAi account"}}}, {"parameters": {"base": {"__rl": true, "value": "appvPrfjiuXIhdNuW", "mode": "list", "cachedResultName": "🎦Static Scaler 1000", "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW"}, "table": {"__rl": true, "value": "tblh0GaqQOpBVbCLP", "mode": "list", "cachedResultName": "Ad Copy", "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW/tblh0GaqQOpBVbCLP"}, "id": "={{ $json.query.recordId }}", "options": {}}, "type": "n8n-nodes-base.airtable", "typeVersion": 2.1, "position": [-3104, 1360], "id": "80fc69f4-d08b-4019-9cf2-9062ce5c511e", "name": "Get Ad Copy", "credentials": {"airtableTokenApi": {"id": "DQz0c1qORXGaW82y", "name": "Airtable Personal Access Token account"}}}, {"parameters": {"jsCode": "const results = [];\n\nfor (const item of $input.all()) {\n  try {\n    let rawText;\n\n    // PATH 1: The \"Deep Nested\" Output (This is what your screenshot shows)\n    if (item.json.output && item.json.output[0] && item.json.output[0].content && item.json.output[0].content[0].text) {\n      rawText = item.json.output[0].content[0].text;\n    }\n    // PATH 2: Simple Text (Simplify Output = ON)\n    else if (item.json.text) {\n      rawText = item.json.text;\n    } \n    // PATH 3: Standard Content (Simplify Output = OFF)\n    else if (item.json.content && item.json.content[0] && item.json.content[0].text) {\n      rawText = item.json.content[0].text;\n    }\n    // PATH 4: Chat Message\n    else if (item.json.message && item.json.message.content) {\n      rawText = item.json.message.content;\n    }\n\n    if (!rawText) throw new Error(\"Could not find any text in the OpenAI output.\");\n\n    // CLEANUP: Remove markdown (```json)\n    const cleanJson = rawText.replace(/```json/g, \"\").replace(/```/g, \"\").trim();\n\n    // PARSE: Turn text into data\n    const parsedData = JSON.parse(cleanJson);\n\n    results.push({\n      json: parsedData\n    });\n\n  } catch (error) {\n    results.push({\n      json: {\n        error: \"PARSING FAILED: \" + error.message,\n        debug_input: item.json\n      }\n    });\n  }\n}\n\nreturn results;"}, "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [-1648, 1456], "id": "22527227-a2fa-4128-9663-f18ebbe621ed", "name": "Code in JavaScript1"}, {"parameters": {"method": "POST", "url": "https://platform.higgsfield.ai/higgsfield-ai/soul/standard", "authentication": "genericCredentialType", "genericAuthType": "httpHeaderAuth", "sendHeaders": true, "headerParameters": {"parameters": [{"name": "Authorization", "value": "Key 34474446-7b4f-4802-bbeb-376dc9f76f89:65785da94a84090b5fedaed17db2d88c0f736cf2f116808ace4ea62643dc7696"}]}, "sendBody": true, "specifyBody": "json", "jsonBody": "={\n  \"model\": \"higgsfield-ai/soul/standard\",\n  \"prompt\": \"{{ $json.cleanPrompt }} . The product is the 'PalmAura', a sleek, mitten-shaped hand massager in a matte 'Greige' (warm light gray) color. Material finish is soft PU leather with a structured fabric wrist cuff. Key Feature: A prominent, vertical oval control panel on the top center with a metallic rose-gold rim. Inside the rose-gold oval, there are 4 small, vertically stacked circular buttons. The device looks premium, ergonomic, and cozy. High-end commercial product photography, 8k resolution.\",\n  \"aspect_ratio\": \"1:1\",\n  \"negative_prompt\": \"blurry, low quality, distorted\"\n}", "options": {"batching": {"batch": {"batchSize": 1}}}}, "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.3, "position": [1472, 624], "id": "feaa9474-2493-4aa2-a6ab-f2cb8d4cab3f", "name": "HTTP Request", "credentials": {"httpHeaderAuth": {"id": "AmMgOpxnGeRUfLDq", "name": "Higgsfield"}}}, {"parameters": {"url": "={{ $json.status_url }}", "authentication": "genericCredentialType", "genericAuthType": "httpHeaderAuth", "options": {}}, "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.3, "position": [1824, 624], "id": "968520a5-daec-419d-9868-1fe449330f6a", "name": "HTTP Request1", "credentials": {"httpHeaderAuth": {"id": "AmMgOpxnGeRUfLDq", "name": "Higgsfield"}}}, {"parameters": {"amount": 30}, "type": "n8n-nodes-base.wait", "typeVersion": 1.1, "position": [1632, 624], "id": "4bc8c153-7104-4745-a419-7f6d61d4a1fb", "name": "Wait", "webhookId": "70337874-0b51-4d55-81fe-5e74d4b56c10"}, {"parameters": {"method": "POST", "url": "https://platform.higgsfield.ai/higgsfield-ai/soul/standard", "authentication": "genericCredentialType", "genericAuthType": "httpHeaderAuth", "sendHeaders": true, "headerParameters": {"parameters": [{"name": "Authorization", "value": "Key 34474446-7b4f-4802-bbeb-376dc9f76f89:65785da94a84090b5fedaed17db2d88c0f736cf2f116808ace4ea62643dc7696"}]}, "sendBody": true, "specifyBody": "json", "jsonBody": "={\n  \"model\": \"bytedance/seedream/v4/edit\",\n  \"prompt\": \"{{ $json.cleanPrompt }}\",\n  \"image_urls\": [\n    \"YOUR_PRODUCT_IMAGE_URL_HERE\"\n  ],\n  \"aspect_ratio\": \"1:1\",\n  \"negative_prompt\": \"blurry, low quality, distorted\"\n}", "options": {"batching": {"batch": {"batchSize": 1}}}}, "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.3, "position": [1456, 400], "id": "8cdab044-02cb-4070-94f0-54fbd4ab4f75", "name": "HTTP Request2", "credentials": {"httpHeaderAuth": {"id": "AmMgOpxnGeRUfLDq", "name": "Higgsfield"}}}, {"parameters": {"url": "={{ $json.status_url }}", "authentication": "genericCredentialType", "genericAuthType": "httpHeaderAuth", "options": {}}, "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.3, "position": [1792, 400], "id": "48a288ee-7edf-4bee-825c-72b7a1da4f06", "name": "HTTP Request4", "credentials": {"httpHeaderAuth": {"id": "AmMgOpxnGeRUfLDq", "name": "Higgsfield"}}}, {"parameters": {"amount": 30}, "type": "n8n-nodes-base.wait", "typeVersion": 1.1, "position": [1648, 400], "id": "0f014ce9-86e5-491b-9f96-ddab893ab80d", "name": "Wait1", "webhookId": "ba0e1dc2-af57-47fb-8255-25c5b29435b3"}, {"parameters": {"operation": "upload", "bucketName": "static-scaler-v2", "fileName": "=ads/{{ new Date().toISOString().split('T')[0] }}/{{ $json.id }}.jpg", "additionalFields": {}}, "type": "n8n-nodes-base.awsS3", "typeVersion": 2, "position": [-16, 1200], "id": "130f7bcf-bfa9-4720-b861-70779aed649a", "name": "Upload a file", "credentials": {"aws": {"id": "wB0AVObrmWcEXu3V", "name": "AWS (IAM) account"}}}, {"parameters": {"assignments": {"assignments": [{"id": "recordId", "name": "adCopyRecordId", "value": "={{ $json.id }}", "type": "string"}, {"id": "headline", "name": "headline", "value": "={{ $json.headline }}", "type": "string"}, {"id": "cta", "name": "cta", "value": "={{ $json.CTA }}", "type": "string"}, {"id": "concept", "name": "concept", "value": "={{ $json.Concept }}", "type": "string"}, {"id": "265c2bbe-4786-455c-a6fe-2d5f38162389", "name": "Product", "value": "={{ $json.Product }}", "type": "array"}, {"id": "8e0aa2ff-567b-40b8-b846-b02c30038a5f", "name": "Angle", "value": "={{ $json.Angle }}", "type": "string"}, {"id": "3a32f144-be89-4ddf-94f8-feb31ffec313", "name": "Awareness Level", "value": "={{ $json[\"Awareness Level\"] }}", "type": "array"}, {"id": "27553fc8-0bbb-41ca-9fe7-01b53c5dbc48", "name": "CTA strength", "value": "={{ $json[\"CTA strength\"] }}", "type": "array"}]}, "includeOtherFields": true, "options": {}}, "id": "e04429b9-387c-4d50-a0bd-8621c98325cb", "name": "Preserve Ad Copy Context", "type": "n8n-nodes-base.set", "typeVersion": 3.3, "position": [-2944, 1360]}, {"parameters": {"jsCode": "// Get the input data - fields are directly on $input.item.json\nconst data = $input.item.json;\n\n// Get Product Images field\nconst productImages = data[\"Product Images\"];\n\n// Validation\nif (!productImages || !Array.isArray(productImages) || productImages.length === 0) {\n  throw new Error('NO product images found - add images to Products table');\n}\n\n// Extract first image\nconst productImageUrl = productImages[0].url;\nconst productFilename = productImages[0].filename;\n\n// Return merged data\nreturn {\n  ...data,\n  productImageUrl: productImageUrl,\n  productFilename: productFilename\n};"}, "id": "80043507-62c4-4e9b-b10b-a7450a7f01b5", "name": "Extract Product Image URL", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [-2320, 1504]}, {"parameters": {"base": {"__rl": true, "value": "appvPrfjiuXIhdNuW", "mode": "list", "cachedResultName": "🎦Static Scaler 1000", "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW"}, "table": {"__rl": true, "value": "tblBnVh4S8suptxct", "mode": "list", "cachedResultName": "Products", "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW/tblBnVh4S8suptxct"}, "id": "={{ $('Preserve Ad Copy Context').item.json.Product[0] }}", "options": {}}, "id": "107c2b42-26a4-45b8-a80d-b325744b652f", "name": "Get Product Record", "type": "n8n-nodes-base.airtable", "typeVersion": 2.1, "position": [-2496, 1504], "credentials": {"airtableTokenApi": {"id": "DQz0c1qORXGaW82y", "name": "Airtable Personal Access Token account"}}}, {"parameters": {"jsCode": "// Classify Ad Type - Dynamic field handling\nconst items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  const data = item.json;\n  \n  // Convert any value (string, array, object) to searchable string\n  const getString = (val) => {\n    if (Array.isArray(val)) return val.join(' ').toLowerCase();\n    if (typeof val === 'object' && val !== null) return JSON.stringify(val).toLowerCase();\n    return (val || '').toLowerCase();\n  };\n  \n  // Dynamically combine ALL text fields for classification\n  // Excludes IDs, timestamps, URLs, and system fields\n  const excludeKeys = ['id', 'adCopyRecordId', 'recordId', 'createdTime', 'url', 'n8n'];\n  \n  let combined = '';\n  for (const [key, val] of Object.entries(data)) {\n    if (excludeKeys.some(ex => key.toLowerCase().includes(ex))) continue;\n    if (typeof val === 'string' || Array.isArray(val)) {\n      combined += ' ' + getString(val);\n    }\n  }\n  combined = combined.toLowerCase();\n  \n  // Classification rules - add new patterns here as needed\n  let adType = 'Lifestyle Composite';\n  \n  const rules = [\n    { type: 'Testimonial', pattern: /review|★|testimonial|ratings|quote|\"i was\"|\"i thought\"|\"finally\"|story|customer|said|told me/ },\n    { type: 'Comparison', pattern: /\\bvs\\b|comparison|old way|new way|side-by-side|competitor|versus|compared to/ },\n    { type: 'Before/After', pattern: /timeline|progression|before|transformation|journey|after using|results in/ },\n    { type: 'Benefits Wheel', pattern: /benefit|feature|breakdown|infographic|cost|mechanism|diagram|explainer|how it works|why it works/ },\n    { type: 'Product Hero', pattern: /product shot|hero|lineup|macro|packshot|unboxing|showcase|display/ }\n  ];\n  \n  for (const rule of rules) {\n    if (rule.pattern.test(combined)) {\n      adType = rule.type;\n      break;\n    }\n  }\n  \n  results.push({\n    json: {\n      ...data,\n      adType: adType\n    }\n  });\n}\n\nreturn results;"}, "id": "d8f98816-8652-4cb9-9ba6-69e0d372bf4e", "name": "Classify Ad Type", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [-2784, 1360], "notes": "Classifies each ad record into: Lifestyle Composite, Testimonial, Comparison, Before/After, Benefits Wheel, or Product Hero based on Concept, Angle, and Tags fields."}, {"parameters": {"operation": "update", "base": {"__rl": true, "value": "=appvPrfjiuXIhdNuW", "mode": "id"}, "table": {"__rl": true, "value": "tblh0GaqQOpBVbCLP", "mode": "list", "cachedResultName": "Ad Copy", "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW/tblh0GaqQOpBVbCLP"}, "columns": {"mappingMode": "defineBelow", "value": {"id": "={{ $json.id }}", "Ad Type": "={{ $json.adType }}", "Product": "={{ $json.Product }}"}, "matchingColumns": ["id", "Ad Type", "Product"], "schema": [{"id": "id", "displayName": "id", "required": false, "defaultMatch": true, "display": true, "type": "string", "readOnly": true, "removed": false}, {"id": "Concept", "displayName": "Concept", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": false, "removed": true}, {"id": "headline", "displayName": "headline", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": false, "removed": true}, {"id": "Angle", "displayName": "Angle", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "options", "options": [{"name": "Curiosity", "value": "Curiosity"}, {"name": "Identity", "value": "Identity"}, {"name": "Pain", "value": "Pain"}, {"name": "Social Proof", "value": "Social Proof"}, {"name": "Us vs Them", "value": "Us vs Them"}, {"name": "Urgency", "value": "Urgency"}, {"name": "Gift", "value": "Gift"}, {"name": "Cost", "value": "Cost"}, {"name": "Science", "value": "Science"}, {"name": "Transformation", "value": "Transformation"}, {"name": "Risk Reversal", "value": "Risk Reversal"}, {"name": "Scarcity", "value": "Scarcity"}, {"name": "Direct Offer", "value": "Direct Offer"}], "readOnly": false, "removed": true}, {"id": "Avatar Target", "displayName": "Avatar Target", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "options", "options": [{"name": "Desk Workers", "value": "Desk Workers"}, {"name": "Women 45+", "value": "Women 45+"}, {"name": "Gift Buyers", "value": "Gift Buyers"}, {"name": "Hobbyists", "value": "Hobbyists"}, {"name": "Professionals", "value": "Professionals"}, {"name": "General", "value": "General"}], "readOnly": false, "removed": true}, {"id": "Awareness Level", "displayName": "Awareness Level", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "array", "options": [{"name": "Unaware", "value": "Unaware"}, {"name": "Problem Aware", "value": "Problem Aware"}, {"name": "Solution Aware", "value": "Solution Aware"}, {"name": "Product Aware", "value": "Product Aware"}], "readOnly": false, "removed": true}, {"id": "Ad Type", "displayName": "Ad Type", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "options", "options": [{"name": "Lifestyle Composite", "value": "Lifestyle Composite"}, {"name": "Testimonial", "value": "Testimonial"}, {"name": "Comparison", "value": "Comparison"}, {"name": "Benefits Wheel", "value": "Benefits Wheel"}, {"name": "Before/After", "value": "Before/After"}, {"name": "Product Hero", "value": "Product Hero"}], "readOnly": false, "removed": false}, {"id": "CTA", "displayName": "CTA", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": false, "removed": true}, {"id": "Product", "displayName": "Product", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "array", "readOnly": false, "removed": false}, {"id": "n8n", "displayName": "n8n", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": true, "removed": true}, {"id": "Generate Image Prompt", "displayName": "Generate Image Prompt", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "boolean", "readOnly": false, "removed": true}, {"id": "Image Prompt Status", "displayName": "Image Prompt Status", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "options", "options": [{"name": "Running", "value": "Running"}, {"name": "Completed", "value": "Completed"}, {"name": "Generated", "value": "Generated"}, {"name": "Approved", "value": "Approved"}, {"name": "Rejected", "value": "Rejected"}], "readOnly": false, "removed": true}, {"id": "Full Analysis Json", "displayName": "Full Analysis Json", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": false, "removed": true}, {"id": "Generate Image Prompts", "displayName": "Generate Image Prompts", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "options", "options": [{"name": "Ready", "value": "Ready"}, {"name": "Run", "value": "Run"}, {"name": "Running", "value": "Running"}, {"name": "Done", "value": "Done"}, {"name": "Error", "value": "Error"}], "readOnly": false, "removed": true}, {"id": "Prompt 1", "displayName": "Prompt 1", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": false, "removed": true}, {"id": "Prompt 2", "displayName": "Prompt 2", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": false, "removed": true}, {"id": "Prompt 3", "displayName": "Prompt 3", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": false, "removed": true}, {"id": "Last Generated At", "displayName": "Last Generated At", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "dateTime", "readOnly": false, "removed": true}, {"id": "Generation Notes", "displayName": "Generation Notes", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": false, "removed": true}, {"id": "Image Prompts Link", "displayName": "Image Prompts Link", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "array", "readOnly": false, "removed": true}, {"id": "Images", "displayName": "Images", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "array", "readOnly": false, "removed": true}, {"id": "Visual Directions", "displayName": "Visual Directions", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "array", "readOnly": false, "removed": true}, {"id": "Ad Templates", "displayName": "Ad Templates", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "array", "readOnly": false, "removed": false}, {"id": "Tags", "displayName": "Tags", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "array", "options": [{"name": "Question", "value": "Question"}, {"name": "Story", "value": "Story"}, {"name": "Stat", "value": "Stat"}, {"name": "Pattern Interrupt", "value": "Pattern Interrupt"}, {"name": "Direct Benefit", "value": "Direct Benefit"}], "readOnly": false, "removed": true}, {"id": "CTA strength", "displayName": "CTA strength", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "array", "options": [{"name": "Strong", "value": "Strong"}], "readOnly": false, "removed": true}, {"id": "recordId", "displayName": "recordId", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": true, "removed": true}], "attemptToConvertTypes": false, "convertFieldsToString": false}, "options": {}}, "id": "c2d757c0-2c5d-4301-8118-b6e3ad0ea4c4", "name": "Update Ad Type", "type": "n8n-nodes-base.airtable", "typeVersion": 2.1, "position": [-2608, 1360], "alwaysOutputData": true, "credentials": {"airtableTokenApi": {"id": "DQz0c1qORXGaW82y", "name": "Airtable Personal Access Token account"}}, "notes": "Writes the classified Ad Type back to the Ad Copy table in Airtable"}, {"parameters": {"mode": "combine", "combineBy": "combineByPosition", "options": {}}, "type": "n8n-nodes-base.merge", "typeVersion": 3.2, "position": [-1984, 1296], "id": "6b0762df-48a0-400b-839e-7db3ae4dc153", "name": "Merge"}, {"parameters": {"jsCode": "const items = $input.all();\n\n// Find S3 data (has Location field)\nconst s3Item = items.find(i => i.json.Location);\nconst s3Url = s3Item?.json?.Location || '';\n\n// Find ad copy data (has fields object)\nconst adItem = items.find(i => i.json.fields);\nconst fields = adItem?.json?.fields || {};\nconst adType = adItem?.json?.adType || 'Lifestyle Composite';\n\nconst getString = (val) => {\n  if (Array.isArray(val)) return val.join(', ');\n  return val || '';\n};\n\nreturn [{\n  json: {\n    adType,\n    headline: fields.headline || '',\n    concept: fields.Concept || '',\n    cta: fields.CTA || '',\n    angle: fields.Angle || '',\n    avatarTarget: getString(fields['Avatar Target']),\n    awarenessLevel: getString(fields['Awareness Level']),\n    tags: getString(fields.Tags),\n    productImageUrl: s3Url,\n    recordId: adItem?.json?.id || ''\n  }\n}];"}, "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [-1824, 1296], "id": "9cd2b1d4-f0b7-4474-a686-0e8d42254f69", "name": "image-prompt-context"}, {"parameters": {"url": "={{ $json.productImageUrl }}", "options": {"response": {"response": {"responseFormat": "file"}}}}, "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.3, "position": [-2208, 1440], "id": "0b372be5-3f0e-4af9-96ae-39d0790f9061", "name": "get-binary-pa"}, {"parameters": {"operation": "upload", "bucketName": "static-scaler-v2", "fileName": "=products/{{ $json[\"Product Name\"].toLowerCase() }}_{{ $json.recordId }}.jpg", "additionalFields": {}}, "type": "n8n-nodes-base.awsS3", "typeVersion": 2, "position": [-2096, 1360], "id": "036b4cdf-f148-42a1-9315-fcb895a94359", "name": "upload-image", "credentials": {"aws": {"id": "wB0AVObrmWcEXu3V", "name": "AWS (IAM) account"}}}, {"parameters": {"method": "POST", "url": "=https://api.gumloop.com/api/v1/start_pipeline?api_key={{ $env.GUMLOOP_API_KEY }}&user_id={{ $env.GUMLOOP_USER_ID }}&saved_item_id={{ $env.GUMLOOP_SAVED_ITEM_ID }}", "sendBody": true, "specifyBody": "json", "jsonBody": "={{ JSON.stringify({ adType: $json.adType, headline: $json.headline, concept: $json.concept, cta: $json.cta, angle: $json.angle, avatarTarget: $json.avatarTarget, awarenessLevel: $json.awarenessLevel, tags: $json.tags, productImageUrl: $json.productImageUrl, recordId: $json.recordId }) }}", "options": {}}, "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.3, "position": [-1536, 1232], "id": "975920e3-a98a-4950-9fe1-20c587d04f71", "name": "HTTP Request5"}, {"parameters": {"method": "POST", "url": "https://fal.run/fal-ai/flux/dev", "authentication": "genericCredentialType", "genericAuthType": "httpHeaderAuth", "sendBody": true, "specifyBody": "json", "jsonBody": "={\n  \"prompt\":{{ $json.cleanPrompt }} ,\n  \"image_size\": \"square_hd\",\n  \"num_inference_steps\": 28,\n  \"guidance_scale\": 3.5,\n  \"num_images\": 1,\n  \"enable_safety_checker\": false\n}", "options": {}}, "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.3, "position": [2608, 544], "id": "95e34ada-20ae-49ce-bd0e-868391403740", "name": "HTTP Request6", "credentials": {"httpHeaderAuth": {"id": "mvUTay4l3qzPwJ95", "name": "fal.ai"}}}, {"parameters": {"method": "POST", "url": "https://queue.fal.run/fal-ai/flux/dev", "authentication": "genericCredentialType", "genericAuthType": "httpHeaderAuth", "sendBody": true, "specifyBody": "json", "jsonBody": "={\n  \"prompt\": \"{{$json.prompt}}\",\n  \"image_url\": \"{{$json.productImageUrl}}\",\n  \"num_images\": 1,\n  \"image_size\": \"square_hd\"\n}\n", "options": {}}, "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.3, "position": [-1152, 1360], "id": "50ecab5b-2dcc-491a-b765-5a9bab731310", "name": "fal-post", "credentials": {"httpHeaderAuth": {"id": "mvUTay4l3qzPwJ95", "name": "fal.ai"}}}, {"parameters": {"amount": 30}, "type": "n8n-nodes-base.wait", "typeVersion": 1.1, "position": [-992, 1344], "id": "6f7c093b-25a2-4f81-89d7-96a201b0f291", "name": "Wait2", "webhookId": "ba0e1dc2-af57-47fb-8255-25c5b29435b3"}, {"parameters": {"url": "={{ $json.response_url }}", "authentication": "genericCredentialType", "genericAuthType": "httpHeaderAuth", "options": {}}, "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.3, "position": [-816, 1344], "id": "220a0327-e218-4c1a-a222-c08556142b0a", "name": "fal-render", "credentials": {"httpHeaderAuth": {"id": "mvUTay4l3qzPwJ95", "name": "fal.ai"}}}, {"parameters": {"url": "={{ $json.fields.A }}", "options": {"response": {"response": {"responseFormat": "file"}}}}, "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.3, "position": [-192, 1200], "id": "a1b2c3d4-download-fal-image-node", "name": "Download fal Image"}], "connections": {"Code in JavaScript4": {"main": [[{"node": "Loop Over Items3", "type": "main", "index": 0}]]}, "Create an image1": {"main": [[{"node": "Create an image1", "type": "main", "index": 0}]]}, "Loop Over Items3": {"main": [[{"node": "Aggregate", "type": "main", "index": 0}], [{"node": "fal-post", "type": "main", "index": 0}]]}, "Webhook Trigger1": {"main": [[{"node": "Get Ad Copy", "type": "main", "index": 0}]]}, "Aggregate": {"main": [[{"node": "Format Image Data", "type": "main", "index": 0}]]}, "Format Image Data": {"main": [[{"node": "Create Ad URLs", "type": "main", "index": 0}]]}, "Message a model1": {"main": [[{"node": "Code in JavaScript1", "type": "main", "index": 0}]]}, "Get Ad Copy": {"main": [[{"node": "Preserve Ad Copy Context", "type": "main", "index": 0}]]}, "Code in JavaScript1": {"main": [[{"node": "Code in JavaScript4", "type": "main", "index": 0}]]}, "HTTP Request": {"main": [[{"node": "Wait", "type": "main", "index": 0}]]}, "Wait": {"main": [[{"node": "HTTP Request1", "type": "main", "index": 0}]]}, "HTTP Request2": {"main": [[{"node": "Wait1", "type": "main", "index": 0}]]}, "Wait1": {"main": [[{"node": "HTTP Request4", "type": "main", "index": 0}]]}, "Create Ad URLs": {"main": [[{"node": "Download fal Image", "type": "main", "index": 0}]]}, "Preserve Ad Copy Context": {"main": [[{"node": "Classify Ad Type", "type": "main", "index": 0}]]}, "Extract Product Image URL": {"main": [[{"node": "get-binary-pa", "type": "main", "index": 0}]]}, "Get Product Record": {"main": [[{"node": "Extract Product Image URL", "type": "main", "index": 0}]]}, "Classify Ad Type": {"main": [[{"node": "Update Ad Type", "type": "main", "index": 0}]]}, "Update Ad Type": {"main": [[{"node": "Get Product Record", "type": "main", "index": 0}, {"node": "Merge", "type": "main", "index": 0}]]}, "Merge": {"main": [[{"node": "image-prompt-context", "type": "main", "index": 0}]]}, "get-binary-pa": {"main": [[{"node": "upload-image", "type": "main", "index": 0}]]}, "upload-image": {"main": [[{"node": "Merge", "type": "main", "index": 1}]]}, "image-prompt-context": {"main": [[{"node": "HTTP Request5", "type": "main", "index": 0}, {"node": "Message a model1", "type": "main", "index": 0}]]}, "Wait2": {"main": [[{"node": "fal-render", "type": "main", "index": 0}]]}, "fal-post": {"main": [[{"node": "Wait2", "type": "main", "index": 0}]]}, "fal-render": {"main": [[{"node": "Loop Over Items3", "type": "main", "index": 0}]]}, "Download fal Image": {"main": [[{"node": "Upload a file", "type": "main", "index": 0}]]}}, "settings": {"executionOrder": "v1", "binaryMode": "separate", "availableInMCP": false, "callerPolicy": "workflowsFromSameOwner"}, "staticData": null, "meta": {"templateCredsSetupCompleted": true}, "pinData": {}, "versionId": "f072e53a-d066-4d28-b974-c9f8ef812622", "activeVersionId": "f072e53a-d066-4d28-b974-c9f8ef812622", "versionCounter": 51, "triggerCount": 1, "shared": [{"updatedAt": "2026-02-10T05:51:23.255Z", "createdAt": "2026-02-10T05:51:23.255Z", "role": "workflow:owner", "workflowId": "ivINFwTVVJU0XKp6jTAwN", "projectId": "VaezLklQFnKxe5og", "project": {"updatedAt": "2026-02-10T05:27:49.067Z", "createdAt": "2026-02-10T03:44:06.577Z", "id": "VaezLklQFnKxe5og", "name": "Jacob Bottema <jake@williamsforeal.com>", "type": "personal", "icon": null, "description": null, "creatorId": "af111efb-a289-4bac-9091-cbef7b33aceb", "projectRelations": [{"updatedAt": "2026-02-10T03:44:06.577Z", "createdAt": "2026-02-10T03:44:06.577Z", "userId": "af111efb-a289-4bac-9091-cbef7b33aceb", "projectId": "VaezLklQFnKxe5og", "user": {"updatedAt": "2026-02-10T06:50:03.000Z", "createdAt": "2026-02-10T03:44:06.247Z", "id": "af111efb-a289-4bac-9091-cbef7b33aceb", "email": "jake@williamsforeal.com", "firstName": "Jacob", "lastName": "Bottema", "personalizationAnswers": {"version": "v4", "personalization_survey_submitted_at": "2026-02-10T05:28:24.063Z", "personalization_survey_n8n_version": "2.6.4", "companySize": "<20", "companyType": "ecommerce", "automationGoalSm": ["ad-campaign", "data-syncing", "reporting", "customer-communication"], "role": "sales-and-marketing", "reportedSource": "google"}, "settings": {"userActivated": false, "easyAIWorkflowOnboarded": true}, "disabled": false, "mfaEnabled": false, "lastActiveAt": "2026-02-10", "isPending": false}}]}}], "tags": [{"updatedAt": "2026-02-10T05:51:21.675Z", "createdAt": "2026-02-10T05:51:21.675Z", "id": "M6MgZ4ZBpexEo9UP", "name": "⚖️scale"}], "activeVersion": {"updatedAt": "2026-02-10T08:23:52.230Z", "createdAt": "2026-02-10T08:23:52.230Z", "versionId": "f072e53a-d066-4d28-b974-c9f8ef812622", "workflowId": "ivINFwTVVJU0XKp6jTAwN", "nodes": [{"parameters": {"jsCode": "// ── n8n Code Node: The Splitter ──\n// Handles both formats:\n//   Format 1: { prompt1: \"...\", prompt2: \"...\" }\n//   Format 2: { A: { description: \"...\" }, B: { description: \"...\" }, C: { description: \"...\" } }\n\nconst newItems = [];\nconst items = $input.all();\n\nfor (const item of items) {\n  const json = item.json;\n\n  // FORMAT 2: A/B/C variant objects (from GPT-4o)\n  for (const key of ['A', 'B', 'C', 'D', 'E']) {\n    if (json[key] && typeof json[key] === 'object' && json[key].description) {\n      const cleanText = json[key].description\n        .replace(/^(visual|image|prompt\\s?\\d*|scene\\s?\\d*|option\\s?\\d*|concept\\s?\\d*|pattern interrupt)\\s*[:.-]\\s*/i, \"\")\n        .replace(/^[\"']|[\"']$/g, \"\")\n        .replace(/\\*\\*/g, \"\")\n        .trim();\n\n      if (cleanText.length > 5) {\n        newItems.push({\n          json: {\n            ...json,\n            cleanPrompt: cleanText,\n            sourceField: key\n          }\n        });\n      }\n    }\n  }\n\n  // FORMAT 1: prompt1, prompt2, etc. (legacy)\n  if (newItems.length === 0) {\n    for (const key of Object.keys(json)) {\n      if (key.toLowerCase().startsWith('prompt') && typeof json[key] === 'string') {\n        let cleanText = json[key]\n          .replace(/^(visual|image|prompt\\s?\\d*|scene\\s?\\d*|option\\s?\\d*|concept\\s?\\d*|pattern interrupt)\\s*[:.-]\\s*/i, \"\")\n          .replace(/^[\"']|[\"']$/g, \"\")\n          .replace(/\\*\\*/g, \"\")\n          .trim();\n\n        if (cleanText.length > 5) {\n          newItems.push({\n            json: {\n              ...json,\n              cleanPrompt: cleanText,\n              sourceField: key\n            }\n          });\n        }\n      }\n    }\n  }\n}\n\nif (newItems.length === 0) {\n  return items.map(item => ({ json: { ...item.json, cleanPrompt: \"ERROR: No valid prompt fields found in input.\" }}));\n}\n\nreturn newItems;"}, "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [-1488, 1456], "id": "7814f2d6-6f17-4e28-a483-b1209702eac6", "name": "Code in JavaScript4"}, {"parameters": {"templateId": "=", "additionalFields": {}}, "type": "n8n-nodes-base.bannerbear", "typeVersion": 1, "position": [-208, 1696], "id": "d66b6228-f2b5-4b7a-96fa-cc586ad1523f", "name": "Create an image1", "credentials": {"bannerbearApi": {"id": "2QlDbvK9YUkxhYC0", "name": "Bannerbear account"}}, "disabled": true}, {"parameters": {"options": {}}, "type": "n8n-nodes-base.splitInBatches", "typeVersion": 3, "position": [-1376, 1344], "id": "16b0a257-5da4-4f71-97dc-df2097e6be49", "name": "Loop Over Items3"}, {"parameters": {"path": "ca26a744-db15-42d4-9986-66154ab84cbb", "options": {}}, "id": "70af976f-6f20-4157-8f1e-d1227d6b9b89", "name": "Webhook Trigger1", "type": "n8n-nodes-base.webhook", "typeVersion": 2, "position": [-3232, 1296], "webhookId": "ca26a744-db15-42d4-9986-66154ab84cbb", "alwaysOutputData": false, "executeOnce": false, "notes": "Alternative trigger via Airtable automation or manual call"}, {"parameters": {"aggregate": "aggregateAllItemData", "include": "specifiedFields", "fieldsToInclude": "images, images, images", "options": {}}, "type": "n8n-nodes-base.aggregate", "typeVersion": 1, "position": [-672, 1200], "id": "7252870e-5fe8-47cf-ae78-8d57cd38cc04", "name": "Aggregate"}, {"parameters": {"jsCode": "// Get aggregated items\nconst raw = $input.first().json;\nconst aggregatedData = raw.data || [raw];\n\nif (!aggregatedData || aggregatedData.length === 0) {\n  return [{ json: { \"Ad Sets\": \"Error - No Data\", \"Status\": \"Failed\", \"Error\": \"No aggregated image data found\" } }];\n}\n\n// Extract URLs from each fal.ai image response\nconst urls = [];\nfor (const item of aggregatedData) {\n  const url = item.images?.[0]?.url || null;\n  if (url) urls.push(url);\n}\n\n// Get metadata from first item\nconst first = aggregatedData[0] || {};\nconst firstImg = first.images?.[0] || {};\n\nconst output = {\n  \"Ad Sets\": \"Generated \" + new Date().toISOString().split('T')[0],\n  \"A\": urls[0] || null,\n  \"B\": urls[1] || null,\n  \"C\": urls[2] || null,\n  \"Seed\": first.seed || null,\n  \"Width\": firstImg.width || 1024,\n  \"Height\": firstImg.height || 1024,\n  \"Model\": \"fal-ai/flux/dev\",\n  \"Status\": urls.length > 0 ? \"Generated\" : \"Failed\",\n  \"Prompt Used\": first.prompt || null\n};\n\nreturn [{ json: output }];"}, "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [-512, 1200], "id": "294d2538-115c-42f1-bf03-1a17b25d2ebf", "name": "Format Image Data"}, {"parameters": {"operation": "create", "base": {"__rl": true, "value": "appvPrfjiuXIhdNuW", "mode": "list", "cachedResultName": "🎦Static Scaler 1000", "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW"}, "table": {"__rl": true, "value": "tblt1dje94IcK4kT2", "mode": "list", "cachedResultName": "Images", "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW/tblt1dje94IcK4kT2"}, "columns": {"mappingMode": "defineBelow", "value": {"Ad Sets": "={{ $json[\"Ad Sets\"] }}", "A": "={{ $json.A }}", "B": "={{ $json.B }}", "C": "={{ $json.C }}", "Model": "={{ $json.Model }}", "Width": "={{ $json.Width }}", "Height": "={{ $json.Height }}", "Status": "={{ $json.Status }}"}, "matchingColumns": [], "schema": [{"id": "Ad Sets", "displayName": "Ad Sets", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": false, "removed": false}, {"id": "A", "displayName": "A", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": false, "removed": false}, {"id": "Image Prompts", "displayName": "Image Prompts", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "array", "readOnly": false, "removed": true}, {"id": "Product", "displayName": "Product", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "array", "readOnly": false, "removed": true}, {"id": "Ad Copy", "displayName": "Ad Copy", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "array", "readOnly": false, "removed": true}, {"id": "recordId", "displayName": "recordId", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": true, "removed": true}, {"id": "B", "displayName": "B", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": false, "removed": false}, {"id": "C", "displayName": "C", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": false, "removed": false}, {"id": "Prompt Index", "displayName": "Prompt Index", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "number", "readOnly": false, "removed": true}, {"id": "Prompt Used", "displayName": "Prompt Used", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": false, "removed": true}, {"id": "Seed", "displayName": "Seed", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "number", "readOnly": false, "removed": true}, {"id": "Model", "displayName": "Model", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": false, "removed": false}, {"id": "Width", "displayName": "Width", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "number", "readOnly": false, "removed": false}, {"id": "Height", "displayName": "Height", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "number", "readOnly": false, "removed": false}, {"id": "Status", "displayName": "Status", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "options", "options": [{"name": "Generated", "value": "Generated"}, {"name": "Approved", "value": "Approved"}, {"name": "Rejected", "value": "Rejected"}, {"name": "Used", "value": "Used"}, {"name": "Failed", "value": "Failed"}], "readOnly": false, "removed": false}, {"id": "Generated At", "displayName": "Generated At", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "dateTime", "readOnly": false, "removed": true}, {"id": "Error", "displayName": "Error", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": false, "removed": false}], "attemptToConvertTypes": false, "convertFieldsToString": false}, "options": {"typecast": "={{ false }}"}}, "type": "n8n-nodes-base.airtable", "typeVersion": 2.1, "position": [-352, 1200], "id": "fe0c17f9-13f0-4ea9-ae07-8fddd45be23e", "name": "Create Ad URLs", "credentials": {"airtableTokenApi": {"id": "DQz0c1qORXGaW82y", "name": "Airtable Personal Access Token account"}}}, {"parameters": {"modelId": {"__rl": true, "value": "chatgpt-4o-latest", "mode": "list", "cachedResultName": "CHATGPT-4O-LATEST"}, "responses": {"values": [{"content": "=You are a prompt compiler for high-converting DTC image ads.\n\nDo not explain. Do not ask questions.\nReturn only valid JSON as instructed.\n\nCONTEXT OBJECT (AUTHORITATIVE):\n{{$json.image-prompt-context}}\n\nTASK:\nUsing the context object above:\n- Generate A/B/C image prompt variants\n- A = Control (same concept, better execution)\n- B = Angle variation\n- C = StoryBrand narrative\n\nRULES:\n- Do not invent product features\n- Do not alter product design\n- Assume the product image URL is a reference image\n- One dominant emotional promise per variant\n\nOUTPUT FORMAT:\n{ ...schema... }\n\n"}, {"type": "image", "imageUrl": "={{ $('Extract Product Image URL').item.json.productImageUrl }}"}]}, "simplify": false, "builtInTools": {}, "options": {"metadata": "{}", "parallelToolCalls": false}}, "type": "@n8n/n8n-nodes-langchain.openAi", "typeVersion": 2.1, "position": [-1936, 1456], "id": "fa517799-3465-4635-9fe1-986cf9c74a75", "name": "Message a model1", "credentials": {"openAiApi": {"id": "CZNu744TpA78SZOC", "name": "OpenAi account"}}}, {"parameters": {"base": {"__rl": true, "value": "appvPrfjiuXIhdNuW", "mode": "list", "cachedResultName": "🎦Static Scaler 1000", "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW"}, "table": {"__rl": true, "value": "tblh0GaqQOpBVbCLP", "mode": "list", "cachedResultName": "Ad Copy", "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW/tblh0GaqQOpBVbCLP"}, "id": "={{ $json.query.recordId }}", "options": {}}, "type": "n8n-nodes-base.airtable", "typeVersion": 2.1, "position": [-3104, 1360], "id": "80fc69f4-d08b-4019-9cf2-9062ce5c511e", "name": "Get Ad Copy", "credentials": {"airtableTokenApi": {"id": "DQz0c1qORXGaW82y", "name": "Airtable Personal Access Token account"}}}, {"parameters": {"jsCode": "const results = [];\n\nfor (const item of $input.all()) {\n  try {\n    let rawText;\n\n    // PATH 1: The \"Deep Nested\" Output (This is what your screenshot shows)\n    if (item.json.output && item.json.output[0] && item.json.output[0].content && item.json.output[0].content[0].text) {\n      rawText = item.json.output[0].content[0].text;\n    }\n    // PATH 2: Simple Text (Simplify Output = ON)\n    else if (item.json.text) {\n      rawText = item.json.text;\n    } \n    // PATH 3: Standard Content (Simplify Output = OFF)\n    else if (item.json.content && item.json.content[0] && item.json.content[0].text) {\n      rawText = item.json.content[0].text;\n    }\n    // PATH 4: Chat Message\n    else if (item.json.message && item.json.message.content) {\n      rawText = item.json.message.content;\n    }\n\n    if (!rawText) throw new Error(\"Could not find any text in the OpenAI output.\");\n\n    // CLEANUP: Remove markdown (```json)\n    const cleanJson = rawText.replace(/```json/g, \"\").replace(/```/g, \"\").trim();\n\n    // PARSE: Turn text into data\n    const parsedData = JSON.parse(cleanJson);\n\n    results.push({\n      json: parsedData\n    });\n\n  } catch (error) {\n    results.push({\n      json: {\n        error: \"PARSING FAILED: \" + error.message,\n        debug_input: item.json\n      }\n    });\n  }\n}\n\nreturn results;"}, "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [-1648, 1456], "id": "22527227-a2fa-4128-9663-f18ebbe621ed", "name": "Code in JavaScript1"}, {"parameters": {"method": "POST", "url": "https://platform.higgsfield.ai/higgsfield-ai/soul/standard", "authentication": "genericCredentialType", "genericAuthType": "httpHeaderAuth", "sendHeaders": true, "headerParameters": {"parameters": [{"name": "Authorization", "value": "Key 34474446-7b4f-4802-bbeb-376dc9f76f89:65785da94a84090b5fedaed17db2d88c0f736cf2f116808ace4ea62643dc7696"}]}, "sendBody": true, "specifyBody": "json", "jsonBody": "={\n  \"model\": \"higgsfield-ai/soul/standard\",\n  \"prompt\": \"{{ $json.cleanPrompt }} . The product is the 'PalmAura', a sleek, mitten-shaped hand massager in a matte 'Greige' (warm light gray) color. Material finish is soft PU leather with a structured fabric wrist cuff. Key Feature: A prominent, vertical oval control panel on the top center with a metallic rose-gold rim. Inside the rose-gold oval, there are 4 small, vertically stacked circular buttons. The device looks premium, ergonomic, and cozy. High-end commercial product photography, 8k resolution.\",\n  \"aspect_ratio\": \"1:1\",\n  \"negative_prompt\": \"blurry, low quality, distorted\"\n}", "options": {"batching": {"batch": {"batchSize": 1}}}}, "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.3, "position": [1472, 624], "id": "feaa9474-2493-4aa2-a6ab-f2cb8d4cab3f", "name": "HTTP Request", "credentials": {"httpHeaderAuth": {"id": "AmMgOpxnGeRUfLDq", "name": "Higgsfield"}}}, {"parameters": {"url": "={{ $json.status_url }}", "authentication": "genericCredentialType", "genericAuthType": "httpHeaderAuth", "options": {}}, "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.3, "position": [1824, 624], "id": "968520a5-daec-419d-9868-1fe449330f6a", "name": "HTTP Request1", "credentials": {"httpHeaderAuth": {"id": "AmMgOpxnGeRUfLDq", "name": "Higgsfield"}}}, {"parameters": {"amount": 30}, "type": "n8n-nodes-base.wait", "typeVersion": 1.1, "position": [1632, 624], "id": "4bc8c153-7104-4745-a419-7f6d61d4a1fb", "name": "Wait", "webhookId": "70337874-0b51-4d55-81fe-5e74d4b56c10"}, {"parameters": {"method": "POST", "url": "https://platform.higgsfield.ai/higgsfield-ai/soul/standard", "authentication": "genericCredentialType", "genericAuthType": "httpHeaderAuth", "sendHeaders": true, "headerParameters": {"parameters": [{"name": "Authorization", "value": "Key 34474446-7b4f-4802-bbeb-376dc9f76f89:65785da94a84090b5fedaed17db2d88c0f736cf2f116808ace4ea62643dc7696"}]}, "sendBody": true, "specifyBody": "json", "jsonBody": "={\n  \"model\": \"bytedance/seedream/v4/edit\",\n  \"prompt\": \"{{ $json.cleanPrompt }}\",\n  \"image_urls\": [\n    \"YOUR_PRODUCT_IMAGE_URL_HERE\"\n  ],\n  \"aspect_ratio\": \"1:1\",\n  \"negative_prompt\": \"blurry, low quality, distorted\"\n}", "options": {"batching": {"batch": {"batchSize": 1}}}}, "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.3, "position": [1456, 400], "id": "8cdab044-02cb-4070-94f0-54fbd4ab4f75", "name": "HTTP Request2", "credentials": {"httpHeaderAuth": {"id": "AmMgOpxnGeRUfLDq", "name": "Higgsfield"}}}, {"parameters": {"url": "={{ $json.status_url }}", "authentication": "genericCredentialType", "genericAuthType": "httpHeaderAuth", "options": {}}, "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.3, "position": [1792, 400], "id": "48a288ee-7edf-4bee-825c-72b7a1da4f06", "name": "HTTP Request4", "credentials": {"httpHeaderAuth": {"id": "AmMgOpxnGeRUfLDq", "name": "Higgsfield"}}}, {"parameters": {"amount": 30}, "type": "n8n-nodes-base.wait", "typeVersion": 1.1, "position": [1648, 400], "id": "0f014ce9-86e5-491b-9f96-ddab893ab80d", "name": "Wait1", "webhookId": "ba0e1dc2-af57-47fb-8255-25c5b29435b3"}, {"parameters": {"operation": "upload", "bucketName": "static-scaler-v2", "fileName": "=ads/{{ new Date().toISOString().split('T')[0] }}/{{ $json.id }}.jpg", "additionalFields": {}}, "type": "n8n-nodes-base.awsS3", "typeVersion": 2, "position": [-16, 1200], "id": "130f7bcf-bfa9-4720-b861-70779aed649a", "name": "Upload a file", "credentials": {"aws": {"id": "wB0AVObrmWcEXu3V", "name": "AWS (IAM) account"}}}, {"parameters": {"assignments": {"assignments": [{"id": "recordId", "name": "adCopyRecordId", "value": "={{ $json.id }}", "type": "string"}, {"id": "headline", "name": "headline", "value": "={{ $json.headline }}", "type": "string"}, {"id": "cta", "name": "cta", "value": "={{ $json.CTA }}", "type": "string"}, {"id": "concept", "name": "concept", "value": "={{ $json.Concept }}", "type": "string"}, {"id": "265c2bbe-4786-455c-a6fe-2d5f38162389", "name": "Product", "value": "={{ $json.Product }}", "type": "array"}, {"id": "8e0aa2ff-567b-40b8-b846-b02c30038a5f", "name": "Angle", "value": "={{ $json.Angle }}", "type": "string"}, {"id": "3a32f144-be89-4ddf-94f8-feb31ffec313", "name": "Awareness Level", "value": "={{ $json[\"Awareness Level\"] }}", "type": "array"}, {"id": "27553fc8-0bbb-41ca-9fe7-01b53c5dbc48", "name": "CTA strength", "value": "={{ $json[\"CTA strength\"] }}", "type": "array"}]}, "includeOtherFields": true, "options": {}}, "id": "e04429b9-387c-4d50-a0bd-8621c98325cb", "name": "Preserve Ad Copy Context", "type": "n8n-nodes-base.set", "typeVersion": 3.3, "position": [-2944, 1360]}, {"parameters": {"jsCode": "// Get the input data - fields are directly on $input.item.json\nconst data = $input.item.json;\n\n// Get Product Images field\nconst productImages = data[\"Product Images\"];\n\n// Validation\nif (!productImages || !Array.isArray(productImages) || productImages.length === 0) {\n  throw new Error('NO product images found - add images to Products table');\n}\n\n// Extract first image\nconst productImageUrl = productImages[0].url;\nconst productFilename = productImages[0].filename;\n\n// Return merged data\nreturn {\n  ...data,\n  productImageUrl: productImageUrl,\n  productFilename: productFilename\n};"}, "id": "80043507-62c4-4e9b-b10b-a7450a7f01b5", "name": "Extract Product Image URL", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [-2320, 1504]}, {"parameters": {"base": {"__rl": true, "value": "appvPrfjiuXIhdNuW", "mode": "list", "cachedResultName": "🎦Static Scaler 1000", "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW"}, "table": {"__rl": true, "value": "tblBnVh4S8suptxct", "mode": "list", "cachedResultName": "Products", "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW/tblBnVh4S8suptxct"}, "id": "={{ $('Preserve Ad Copy Context').item.json.Product[0] }}", "options": {}}, "id": "107c2b42-26a4-45b8-a80d-b325744b652f", "name": "Get Product Record", "type": "n8n-nodes-base.airtable", "typeVersion": 2.1, "position": [-2496, 1504], "credentials": {"airtableTokenApi": {"id": "DQz0c1qORXGaW82y", "name": "Airtable Personal Access Token account"}}}, {"parameters": {"jsCode": "// Classify Ad Type - Dynamic field handling\nconst items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  const data = item.json;\n  \n  // Convert any value (string, array, object) to searchable string\n  const getString = (val) => {\n    if (Array.isArray(val)) return val.join(' ').toLowerCase();\n    if (typeof val === 'object' && val !== null) return JSON.stringify(val).toLowerCase();\n    return (val || '').toLowerCase();\n  };\n  \n  // Dynamically combine ALL text fields for classification\n  // Excludes IDs, timestamps, URLs, and system fields\n  const excludeKeys = ['id', 'adCopyRecordId', 'recordId', 'createdTime', 'url', 'n8n'];\n  \n  let combined = '';\n  for (const [key, val] of Object.entries(data)) {\n    if (excludeKeys.some(ex => key.toLowerCase().includes(ex))) continue;\n    if (typeof val === 'string' || Array.isArray(val)) {\n      combined += ' ' + getString(val);\n    }\n  }\n  combined = combined.toLowerCase();\n  \n  // Classification rules - add new patterns here as needed\n  let adType = 'Lifestyle Composite';\n  \n  const rules = [\n    { type: 'Testimonial', pattern: /review|★|testimonial|ratings|quote|\"i was\"|\"i thought\"|\"finally\"|story|customer|said|told me/ },\n    { type: 'Comparison', pattern: /\\bvs\\b|comparison|old way|new way|side-by-side|competitor|versus|compared to/ },\n    { type: 'Before/After', pattern: /timeline|progression|before|transformation|journey|after using|results in/ },\n    { type: 'Benefits Wheel', pattern: /benefit|feature|breakdown|infographic|cost|mechanism|diagram|explainer|how it works|why it works/ },\n    { type: 'Product Hero', pattern: /product shot|hero|lineup|macro|packshot|unboxing|showcase|display/ }\n  ];\n  \n  for (const rule of rules) {\n    if (rule.pattern.test(combined)) {\n      adType = rule.type;\n      break;\n    }\n  }\n  \n  results.push({\n    json: {\n      ...data,\n      adType: adType\n    }\n  });\n}\n\nreturn results;"}, "id": "d8f98816-8652-4cb9-9ba6-69e0d372bf4e", "name": "Classify Ad Type", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [-2784, 1360], "notes": "Classifies each ad record into: Lifestyle Composite, Testimonial, Comparison, Before/After, Benefits Wheel, or Product Hero based on Concept, Angle, and Tags fields."}, {"parameters": {"operation": "update", "base": {"__rl": true, "value": "=appvPrfjiuXIhdNuW", "mode": "id"}, "table": {"__rl": true, "value": "tblh0GaqQOpBVbCLP", "mode": "list", "cachedResultName": "Ad Copy", "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW/tblh0GaqQOpBVbCLP"}, "columns": {"mappingMode": "defineBelow", "value": {"id": "={{ $json.id }}", "Ad Type": "={{ $json.adType }}", "Product": "={{ $json.Product }}"}, "matchingColumns": ["id", "Ad Type", "Product"], "schema": [{"id": "id", "displayName": "id", "required": false, "defaultMatch": true, "display": true, "type": "string", "readOnly": true, "removed": false}, {"id": "Concept", "displayName": "Concept", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": false, "removed": true}, {"id": "headline", "displayName": "headline", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": false, "removed": true}, {"id": "Angle", "displayName": "Angle", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "options", "options": [{"name": "Curiosity", "value": "Curiosity"}, {"name": "Identity", "value": "Identity"}, {"name": "Pain", "value": "Pain"}, {"name": "Social Proof", "value": "Social Proof"}, {"name": "Us vs Them", "value": "Us vs Them"}, {"name": "Urgency", "value": "Urgency"}, {"name": "Gift", "value": "Gift"}, {"name": "Cost", "value": "Cost"}, {"name": "Science", "value": "Science"}, {"name": "Transformation", "value": "Transformation"}, {"name": "Risk Reversal", "value": "Risk Reversal"}, {"name": "Scarcity", "value": "Scarcity"}, {"name": "Direct Offer", "value": "Direct Offer"}], "readOnly": false, "removed": true}, {"id": "Avatar Target", "displayName": "Avatar Target", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "options", "options": [{"name": "Desk Workers", "value": "Desk Workers"}, {"name": "Women 45+", "value": "Women 45+"}, {"name": "Gift Buyers", "value": "Gift Buyers"}, {"name": "Hobbyists", "value": "Hobbyists"}, {"name": "Professionals", "value": "Professionals"}, {"name": "General", "value": "General"}], "readOnly": false, "removed": true}, {"id": "Awareness Level", "displayName": "Awareness Level", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "array", "options": [{"name": "Unaware", "value": "Unaware"}, {"name": "Problem Aware", "value": "Problem Aware"}, {"name": "Solution Aware", "value": "Solution Aware"}, {"name": "Product Aware", "value": "Product Aware"}], "readOnly": false, "removed": true}, {"id": "Ad Type", "displayName": "Ad Type", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "options", "options": [{"name": "Lifestyle Composite", "value": "Lifestyle Composite"}, {"name": "Testimonial", "value": "Testimonial"}, {"name": "Comparison", "value": "Comparison"}, {"name": "Benefits Wheel", "value": "Benefits Wheel"}, {"name": "Before/After", "value": "Before/After"}, {"name": "Product Hero", "value": "Product Hero"}], "readOnly": false, "removed": false}, {"id": "CTA", "displayName": "CTA", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": false, "removed": true}, {"id": "Product", "displayName": "Product", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "array", "readOnly": false, "removed": false}, {"id": "n8n", "displayName": "n8n", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": true, "removed": true}, {"id": "Generate Image Prompt", "displayName": "Generate Image Prompt", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "boolean", "readOnly": false, "removed": true}, {"id": "Image Prompt Status", "displayName": "Image Prompt Status", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "options", "options": [{"name": "Running", "value": "Running"}, {"name": "Completed", "value": "Completed"}, {"name": "Generated", "value": "Generated"}, {"name": "Approved", "value": "Approved"}, {"name": "Rejected", "value": "Rejected"}], "readOnly": false, "removed": true}, {"id": "Full Analysis Json", "displayName": "Full Analysis Json", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": false, "removed": true}, {"id": "Generate Image Prompts", "displayName": "Generate Image Prompts", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "options", "options": [{"name": "Ready", "value": "Ready"}, {"name": "Run", "value": "Run"}, {"name": "Running", "value": "Running"}, {"name": "Done", "value": "Done"}, {"name": "Error", "value": "Error"}], "readOnly": false, "removed": true}, {"id": "Prompt 1", "displayName": "Prompt 1", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": false, "removed": true}, {"id": "Prompt 2", "displayName": "Prompt 2", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": false, "removed": true}, {"id": "Prompt 3", "displayName": "Prompt 3", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": false, "removed": true}, {"id": "Last Generated At", "displayName": "Last Generated At", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "dateTime", "readOnly": false, "removed": true}, {"id": "Generation Notes", "displayName": "Generation Notes", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": false, "removed": true}, {"id": "Image Prompts Link", "displayName": "Image Prompts Link", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "array", "readOnly": false, "removed": true}, {"id": "Images", "displayName": "Images", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "array", "readOnly": false, "removed": true}, {"id": "Visual Directions", "displayName": "Visual Directions", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "array", "readOnly": false, "removed": true}, {"id": "Ad Templates", "displayName": "Ad Templates", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "array", "readOnly": false, "removed": false}, {"id": "Tags", "displayName": "Tags", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "array", "options": [{"name": "Question", "value": "Question"}, {"name": "Story", "value": "Story"}, {"name": "Stat", "value": "Stat"}, {"name": "Pattern Interrupt", "value": "Pattern Interrupt"}, {"name": "Direct Benefit", "value": "Direct Benefit"}], "readOnly": false, "removed": true}, {"id": "CTA strength", "displayName": "CTA strength", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "array", "options": [{"name": "Strong", "value": "Strong"}], "readOnly": false, "removed": true}, {"id": "recordId", "displayName": "recordId", "required": false, "defaultMatch": false, "canBeUsedToMatch": true, "display": true, "type": "string", "readOnly": true, "removed": true}], "attemptToConvertTypes": false, "convertFieldsToString": false}, "options": {}}, "id": "c2d757c0-2c5d-4301-8118-b6e3ad0ea4c4", "name": "Update Ad Type", "type": "n8n-nodes-base.airtable", "typeVersion": 2.1, "position": [-2608, 1360], "alwaysOutputData": true, "credentials": {"airtableTokenApi": {"id": "DQz0c1qORXGaW82y", "name": "Airtable Personal Access Token account"}}, "notes": "Writes the classified Ad Type back to the Ad Copy table in Airtable"}, {"parameters": {"mode": "combine", "combineBy": "combineByPosition", "options": {}}, "type": "n8n-nodes-base.merge", "typeVersion": 3.2, "position": [-1984, 1296], "id": "6b0762df-48a0-400b-839e-7db3ae4dc153", "name": "Merge"}, {"parameters": {"jsCode": "const items = $input.all();\n\n// Find S3 data (has Location field)\nconst s3Item = items.find(i => i.json.Location);\nconst s3Url = s3Item?.json?.Location || '';\n\n// Find ad copy data (has fields object)\nconst adItem = items.find(i => i.json.fields);\nconst fields = adItem?.json?.fields || {};\nconst adType = adItem?.json?.adType || 'Lifestyle Composite';\n\nconst getString = (val) => {\n  if (Array.isArray(val)) return val.join(', ');\n  return val || '';\n};\n\nreturn [{\n  json: {\n    adType,\n    headline: fields.headline || '',\n    concept: fields.Concept || '',\n    cta: fields.CTA || '',\n    angle: fields.Angle || '',\n    avatarTarget: getString(fields['Avatar Target']),\n    awarenessLevel: getString(fields['Awareness Level']),\n    tags: getString(fields.Tags),\n    productImageUrl: s3Url,\n    recordId: adItem?.json?.id || ''\n  }\n}];"}, "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [-1824, 1296], "id": "9cd2b1d4-f0b7-4474-a686-0e8d42254f69", "name": "image-prompt-context"}, {"parameters": {"url": "={{ $json.productImageUrl }}", "options": {"response": {"response": {"responseFormat": "file"}}}}, "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.3, "position": [-2208, 1440], "id": "0b372be5-3f0e-4af9-96ae-39d0790f9061", "name": "get-binary-pa"}, {"parameters": {"operation": "upload", "bucketName": "static-scaler-v2", "fileName": "=products/{{ $json[\"Product Name\"].toLowerCase() }}_{{ $json.recordId }}.jpg", "additionalFields": {}}, "type": "n8n-nodes-base.awsS3", "typeVersion": 2, "position": [-2096, 1360], "id": "036b4cdf-f148-42a1-9315-fcb895a94359", "name": "upload-image", "credentials": {"aws": {"id": "wB0AVObrmWcEXu3V", "name": "AWS (IAM) account"}}}, {"parameters": {"method": "POST", "url": "=https://api.gumloop.com/api/v1/start_pipeline?api_key={{ $env.GUMLOOP_API_KEY }}&user_id={{ $env.GUMLOOP_USER_ID }}&saved_item_id={{ $env.GUMLOOP_SAVED_ITEM_ID }}", "sendBody": true, "specifyBody": "json", "jsonBody": "={{ JSON.stringify({ adType: $json.adType, headline: $json.headline, concept: $json.concept, cta: $json.cta, angle: $json.angle, avatarTarget: $json.avatarTarget, awarenessLevel: $json.awarenessLevel, tags: $json.tags, productImageUrl: $json.productImageUrl, recordId: $json.recordId }) }}", "options": {}}, "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.3, "position": [-1536, 1232], "id": "975920e3-a98a-4950-9fe1-20c587d04f71", "name": "HTTP Request5"}, {"parameters": {"method": "POST", "url": "https://fal.run/fal-ai/flux/dev", "authentication": "genericCredentialType", "genericAuthType": "httpHeaderAuth", "sendBody": true, "specifyBody": "json", "jsonBody": "={\n  \"prompt\":{{ $json.cleanPrompt }} ,\n  \"image_size\": \"square_hd\",\n  \"num_inference_steps\": 28,\n  \"guidance_scale\": 3.5,\n  \"num_images\": 1,\n  \"enable_safety_checker\": false\n}", "options": {}}, "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.3, "position": [2608, 544], "id": "95e34ada-20ae-49ce-bd0e-868391403740", "name": "HTTP Request6", "credentials": {"httpHeaderAuth": {"id": "mvUTay4l3qzPwJ95", "name": "fal.ai"}}}, {"parameters": {"method": "POST", "url": "https://queue.fal.run/fal-ai/flux/dev", "authentication": "genericCredentialType", "genericAuthType": "httpHeaderAuth", "sendBody": true, "specifyBody": "json", "jsonBody": "={\n  \"prompt\": \"{{$json.prompt}}\",\n  \"image_url\": \"{{$json.productImageUrl}}\",\n  \"num_images\": 1,\n  \"image_size\": \"square_hd\"\n}\n", "options": {}}, "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.3, "position": [-1152, 1360], "id": "50ecab5b-2dcc-491a-b765-5a9bab731310", "name": "fal-post", "credentials": {"httpHeaderAuth": {"id": "mvUTay4l3qzPwJ95", "name": "fal.ai"}}}, {"parameters": {"amount": 30}, "type": "n8n-nodes-base.wait", "typeVersion": 1.1, "position": [-992, 1344], "id": "6f7c093b-25a2-4f81-89d7-96a201b0f291", "name": "Wait2", "webhookId": "ba0e1dc2-af57-47fb-8255-25c5b29435b3"}, {"parameters": {"url": "={{ $json.response_url }}", "authentication": "genericCredentialType", "genericAuthType": "httpHeaderAuth", "options": {}}, "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.3, "position": [-816, 1344], "id": "220a0327-e218-4c1a-a222-c08556142b0a", "name": "fal-render", "credentials": {"httpHeaderAuth": {"id": "mvUTay4l3qzPwJ95", "name": "fal.ai"}}}, {"parameters": {"url": "={{ $json.fields.A }}", "options": {"response": {"response": {"responseFormat": "file"}}}}, "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.3, "position": [-192, 1200], "id": "a1b2c3d4-download-fal-image-node", "name": "Download fal Image"}], "connections": {"Code in JavaScript4": {"main": [[{"node": "Loop Over Items3", "type": "main", "index": 0}]]}, "Create an image1": {"main": [[{"node": "Create an image1", "type": "main", "index": 0}]]}, "Loop Over Items3": {"main": [[{"node": "Aggregate", "type": "main", "index": 0}], [{"node": "fal-post", "type": "main", "index": 0}]]}, "Webhook Trigger1": {"main": [[{"node": "Get Ad Copy", "type": "main", "index": 0}]]}, "Aggregate": {"main": [[{"node": "Format Image Data", "type": "main", "index": 0}]]}, "Format Image Data": {"main": [[{"node": "Create Ad URLs", "type": "main", "index": 0}]]}, "Message a model1": {"main": [[{"node": "Code in JavaScript1", "type": "main", "index": 0}]]}, "Get Ad Copy": {"main": [[{"node": "Preserve Ad Copy Context", "type": "main", "index": 0}]]}, "Code in JavaScript1": {"main": [[{"node": "Code in JavaScript4", "type": "main", "index": 0}]]}, "HTTP Request": {"main": [[{"node": "Wait", "type": "main", "index": 0}]]}, "Wait": {"main": [[{"node": "HTTP Request1", "type": "main", "index": 0}]]}, "HTTP Request2": {"main": [[{"node": "Wait1", "type": "main", "index": 0}]]}, "Wait1": {"main": [[{"node": "HTTP Request4", "type": "main", "index": 0}]]}, "Create Ad URLs": {"main": [[{"node": "Download fal Image", "type": "main", "index": 0}]]}, "Preserve Ad Copy Context": {"main": [[{"node": "Classify Ad Type", "type": "main", "index": 0}]]}, "Extract Product Image URL": {"main": [[{"node": "get-binary-pa", "type": "main", "index": 0}]]}, "Get Product Record": {"main": [[{"node": "Extract Product Image URL", "type": "main", "index": 0}]]}, "Classify Ad Type": {"main": [[{"node": "Update Ad Type", "type": "main", "index": 0}]]}, "Update Ad Type": {"main": [[{"node": "Get Product Record", "type": "main", "index": 0}, {"node": "Merge", "type": "main", "index": 0}]]}, "Merge": {"main": [[{"node": "image-prompt-context", "type": "main", "index": 0}]]}, "get-binary-pa": {"main": [[{"node": "upload-image", "type": "main", "index": 0}]]}, "upload-image": {"main": [[{"node": "Merge", "type": "main", "index": 1}]]}, "image-prompt-context": {"main": [[{"node": "HTTP Request5", "type": "main", "index": 0}, {"node": "Message a model1", "type": "main", "index": 0}]]}, "Wait2": {"main": [[{"node": "fal-render", "type": "main", "index": 0}]]}, "fal-post": {"main": [[{"node": "Wait2", "type": "main", "index": 0}]]}, "fal-render": {"main": [[{"node": "Loop Over Items3", "type": "main", "index": 0}]]}, "Download fal Image": {"main": [[{"node": "Upload a file", "type": "main", "index": 0}]]}}, "authors": "Jacob Bottema", "name": null, "description": null, "autosaved": false, "workflowPublishHistory": [{"createdAt": "2026-02-10T08:23:52.290Z", "id": 3, "workflowId": "ivINFwTVVJU0XKp6jTAwN", "versionId": "f072e53a-d066-4d28-b974-c9f8ef812622", "event": "activated", "userId": "af111efb-a289-4bac-9091-cbef7b33aceb"}]}}
+{
+  "updatedAt": "2026-02-10T08:23:52.229Z",
+  "createdAt": "2026-02-10T05:51:23.251Z",
+  "id": "ivINFwTVVJU0XKp6jTAwN",
+  "name": "Static Scaler v3",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "// ── n8n Code Node: The Splitter ──\n// Handles both formats:\n//   Format 1: { prompt1: \"...\", prompt2: \"...\" }\n//   Format 2: { A: { description: \"...\" }, B: { description: \"...\" }, C: { description: \"...\" } }\n\nconst newItems = [];\nconst items = $input.all();\n\nfor (const item of items) {\n  const json = item.json;\n\n  // FORMAT 2: A/B/C variant objects (from GPT-4o)\n  for (const key of ['A', 'B', 'C', 'D', 'E']) {\n    if (json[key] && typeof json[key] === 'object' && json[key].description) {\n      const cleanText = json[key].description\n        .replace(/^(visual|image|prompt\\s?\\d*|scene\\s?\\d*|option\\s?\\d*|concept\\s?\\d*|pattern interrupt)\\s*[:.-]\\s*/i, \"\")\n        .replace(/^[\"']|[\"']$/g, \"\")\n        .replace(/\\*\\*/g, \"\")\n        .trim();\n\n      if (cleanText.length > 5) {\n        newItems.push({\n          json: {\n            ...json,\n            cleanPrompt: cleanText,\n            sourceField: key\n          }\n        });\n      }\n    }\n  }\n\n  // FORMAT 1: prompt1, prompt2, etc. (legacy)\n  if (newItems.length === 0) {\n    for (const key of Object.keys(json)) {\n      if (key.toLowerCase().startsWith('prompt') && typeof json[key] === 'string') {\n        let cleanText = json[key]\n          .replace(/^(visual|image|prompt\\s?\\d*|scene\\s?\\d*|option\\s?\\d*|concept\\s?\\d*|pattern interrupt)\\s*[:.-]\\s*/i, \"\")\n          .replace(/^[\"']|[\"']$/g, \"\")\n          .replace(/\\*\\*/g, \"\")\n          .trim();\n\n        if (cleanText.length > 5) {\n          newItems.push({\n            json: {\n              ...json,\n              cleanPrompt: cleanText,\n              sourceField: key\n            }\n          });\n        }\n      }\n    }\n  }\n}\n\nif (newItems.length === 0) {\n  return items.map(item => ({ json: { ...item.json, cleanPrompt: \"ERROR: No valid prompt fields found in input.\" }}));\n}\n\nreturn newItems;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1488,
+        1456
+      ],
+      "id": "7814f2d6-6f17-4e28-a483-b1209702eac6",
+      "name": "Code in JavaScript4"
+    },
+    {
+      "parameters": {
+        "templateId": "=",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.bannerbear",
+      "typeVersion": 1,
+      "position": [
+        -208,
+        1696
+      ],
+      "id": "d66b6228-f2b5-4b7a-96fa-cc586ad1523f",
+      "name": "Create an image1",
+      "credentials": {
+        "bannerbearApi": {
+          "id": "2QlDbvK9YUkxhYC0",
+          "name": "Bannerbear account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -1376,
+        1344
+      ],
+      "id": "16b0a257-5da4-4f71-97dc-df2097e6be49",
+      "name": "Loop Over Items3"
+    },
+    {
+      "parameters": {
+        "path": "ca26a744-db15-42d4-9986-66154ab84cbb",
+        "options": {}
+      },
+      "id": "70af976f-6f20-4157-8f1e-d1227d6b9b89",
+      "name": "Webhook Trigger1",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -3232,
+        1296
+      ],
+      "webhookId": "ca26a744-db15-42d4-9986-66154ab84cbb",
+      "alwaysOutputData": false,
+      "executeOnce": false,
+      "notes": "Alternative trigger via Airtable automation or manual call"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "include": "specifiedFields",
+        "fieldsToInclude": "images, images, images",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -672,
+        1200
+      ],
+      "id": "7252870e-5fe8-47cf-ae78-8d57cd38cc04",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get aggregated items\nconst raw = $input.first().json;\nconst aggregatedData = raw.data || [raw];\n\nif (!aggregatedData || aggregatedData.length === 0) {\n  return [{ json: { \"Ad Sets\": \"Error - No Data\", \"Status\": \"Failed\", \"Error\": \"No aggregated image data found\" } }];\n}\n\n// Extract URLs from each fal.ai image response\nconst urls = [];\nfor (const item of aggregatedData) {\n  const url = item.images?.[0]?.url || null;\n  if (url) urls.push(url);\n}\n\n// Get metadata from first item\nconst first = aggregatedData[0] || {};\nconst firstImg = first.images?.[0] || {};\n\nconst output = {\n  \"Ad Sets\": \"Generated \" + new Date().toISOString().split('T')[0],\n  \"A\": urls[0] || null,\n  \"B\": urls[1] || null,\n  \"C\": urls[2] || null,\n  \"Seed\": first.seed || null,\n  \"Width\": firstImg.width || 1024,\n  \"Height\": firstImg.height || 1024,\n  \"Model\": \"fal-ai/flux/dev\",\n  \"Status\": urls.length > 0 ? \"Generated\" : \"Failed\",\n  \"Prompt Used\": first.prompt || null\n};\n\nreturn [{ json: output }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -512,
+        1200
+      ],
+      "id": "294d2538-115c-42f1-bf03-1a17b25d2ebf",
+      "name": "Format Image Data"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appvPrfjiuXIhdNuW",
+          "mode": "list",
+          "cachedResultName": "🎦Static Scaler 1000",
+          "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblt1dje94IcK4kT2",
+          "mode": "list",
+          "cachedResultName": "Images",
+          "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW/tblt1dje94IcK4kT2"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Ad Sets": "={{ $json[\"Ad Sets\"] }}",
+            "A": "={{ $json.A }}",
+            "B": "={{ $json.B }}",
+            "C": "={{ $json.C }}",
+            "Model": "={{ $json.Model }}",
+            "Width": "={{ $json.Width }}",
+            "Height": "={{ $json.Height }}",
+            "Status": "={{ $json.Status }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Ad Sets",
+              "displayName": "Ad Sets",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "A",
+              "displayName": "A",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Image Prompts",
+              "displayName": "Image Prompts",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Product",
+              "displayName": "Product",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Ad Copy",
+              "displayName": "Ad Copy",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "recordId",
+              "displayName": "recordId",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "B",
+              "displayName": "B",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "C",
+              "displayName": "C",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Prompt Index",
+              "displayName": "Prompt Index",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Prompt Used",
+              "displayName": "Prompt Used",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Seed",
+              "displayName": "Seed",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Model",
+              "displayName": "Model",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Width",
+              "displayName": "Width",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Height",
+              "displayName": "Height",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Generated",
+                  "value": "Generated"
+                },
+                {
+                  "name": "Approved",
+                  "value": "Approved"
+                },
+                {
+                  "name": "Rejected",
+                  "value": "Rejected"
+                },
+                {
+                  "name": "Used",
+                  "value": "Used"
+                },
+                {
+                  "name": "Failed",
+                  "value": "Failed"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Generated At",
+              "displayName": "Generated At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Error",
+              "displayName": "Error",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": "={{ false }}"
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        -352,
+        1200
+      ],
+      "id": "fe0c17f9-13f0-4ea9-ae07-8fddd45be23e",
+      "name": "Create Ad URLs",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "DQz0c1qORXGaW82y",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "chatgpt-4o-latest",
+          "mode": "list",
+          "cachedResultName": "CHATGPT-4O-LATEST"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=You are a prompt compiler for high-converting DTC image ads.\n\nDo not explain. Do not ask questions.\nReturn only valid JSON as instructed.\n\nCONTEXT OBJECT (AUTHORITATIVE):\n{{$json.image-prompt-context}}\n\nTASK:\nUsing the context object above:\n- Generate A/B/C image prompt variants\n- A = Control (same concept, better execution)\n- B = Angle variation\n- C = StoryBrand narrative\n\nRULES:\n- Do not invent product features\n- Do not alter product design\n- Assume the product image URL is a reference image\n- One dominant emotional promise per variant\n\nOUTPUT FORMAT:\n{ ...schema... }\n\n"
+            },
+            {
+              "type": "image",
+              "imageUrl": "={{ $('Extract Product Image URL').item.json.productImageUrl }}"
+            }
+          ]
+        },
+        "simplify": false,
+        "builtInTools": {},
+        "options": {
+          "metadata": "{}",
+          "parallelToolCalls": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        -1936,
+        1456
+      ],
+      "id": "fa517799-3465-4635-9fe1-986cf9c74a75",
+      "name": "Message a model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "CZNu744TpA78SZOC",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "base": {
+          "__rl": true,
+          "value": "appvPrfjiuXIhdNuW",
+          "mode": "list",
+          "cachedResultName": "🎦Static Scaler 1000",
+          "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblh0GaqQOpBVbCLP",
+          "mode": "list",
+          "cachedResultName": "Ad Copy",
+          "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW/tblh0GaqQOpBVbCLP"
+        },
+        "id": "={{ $json.query.recordId }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        -3104,
+        1360
+      ],
+      "id": "80fc69f4-d08b-4019-9cf2-9062ce5c511e",
+      "name": "Get Ad Copy",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "DQz0c1qORXGaW82y",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = [];\n\nfor (const item of $input.all()) {\n  try {\n    let rawText;\n\n    // PATH 1: The \"Deep Nested\" Output (This is what your screenshot shows)\n    if (item.json.output && item.json.output[0] && item.json.output[0].content && item.json.output[0].content[0].text) {\n      rawText = item.json.output[0].content[0].text;\n    }\n    // PATH 2: Simple Text (Simplify Output = ON)\n    else if (item.json.text) {\n      rawText = item.json.text;\n    } \n    // PATH 3: Standard Content (Simplify Output = OFF)\n    else if (item.json.content && item.json.content[0] && item.json.content[0].text) {\n      rawText = item.json.content[0].text;\n    }\n    // PATH 4: Chat Message\n    else if (item.json.message && item.json.message.content) {\n      rawText = item.json.message.content;\n    }\n\n    if (!rawText) throw new Error(\"Could not find any text in the OpenAI output.\");\n\n    // CLEANUP: Remove markdown (```json)\n    const cleanJson = rawText.replace(/```json/g, \"\").replace(/```/g, \"\").trim();\n\n    // PARSE: Turn text into data\n    const parsedData = JSON.parse(cleanJson);\n\n    results.push({\n      json: parsedData\n    });\n\n  } catch (error) {\n    results.push({\n      json: {\n        error: \"PARSING FAILED: \" + error.message,\n        debug_input: item.json\n      }\n    });\n  }\n}\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1648,
+        1456
+      ],
+      "id": "22527227-a2fa-4128-9663-f18ebbe621ed",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://platform.higgsfield.ai/higgsfield-ai/soul/standard",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Key 34474446-7b4f-4802-bbeb-376dc9f76f89:65785da94a84090b5fedaed17db2d88c0f736cf2f116808ace4ea62643dc7696"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"higgsfield-ai/soul/standard\",\n  \"prompt\": \"{{ $json.cleanPrompt }} . The product is the 'PalmAura', a sleek, mitten-shaped hand massager in a matte 'Greige' (warm light gray) color. Material finish is soft PU leather with a structured fabric wrist cuff. Key Feature: A prominent, vertical oval control panel on the top center with a metallic rose-gold rim. Inside the rose-gold oval, there are 4 small, vertically stacked circular buttons. The device looks premium, ergonomic, and cozy. High-end commercial product photography, 8k resolution.\",\n  \"aspect_ratio\": \"1:1\",\n  \"negative_prompt\": \"blurry, low quality, distorted\"\n}",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1472,
+        624
+      ],
+      "id": "feaa9474-2493-4aa2-a6ab-f2cb8d4cab3f",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "AmMgOpxnGeRUfLDq",
+          "name": "Higgsfield"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.status_url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1824,
+        624
+      ],
+      "id": "968520a5-daec-419d-9868-1fe449330f6a",
+      "name": "HTTP Request1",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "AmMgOpxnGeRUfLDq",
+          "name": "Higgsfield"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1632,
+        624
+      ],
+      "id": "4bc8c153-7104-4745-a419-7f6d61d4a1fb",
+      "name": "Wait",
+      "webhookId": "70337874-0b51-4d55-81fe-5e74d4b56c10"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://platform.higgsfield.ai/higgsfield-ai/soul/standard",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Key 34474446-7b4f-4802-bbeb-376dc9f76f89:65785da94a84090b5fedaed17db2d88c0f736cf2f116808ace4ea62643dc7696"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"bytedance/seedream/v4/edit\",\n  \"prompt\": \"{{ $json.cleanPrompt }}\",\n  \"image_urls\": [\n    \"YOUR_PRODUCT_IMAGE_URL_HERE\"\n  ],\n  \"aspect_ratio\": \"1:1\",\n  \"negative_prompt\": \"blurry, low quality, distorted\"\n}",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1456,
+        400
+      ],
+      "id": "8cdab044-02cb-4070-94f0-54fbd4ab4f75",
+      "name": "HTTP Request2",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "AmMgOpxnGeRUfLDq",
+          "name": "Higgsfield"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.status_url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1792,
+        400
+      ],
+      "id": "48a288ee-7edf-4bee-825c-72b7a1da4f06",
+      "name": "HTTP Request4",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "AmMgOpxnGeRUfLDq",
+          "name": "Higgsfield"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1648,
+        400
+      ],
+      "id": "0f014ce9-86e5-491b-9f96-ddab893ab80d",
+      "name": "Wait1",
+      "webhookId": "ba0e1dc2-af57-47fb-8255-25c5b29435b3"
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "bucketName": "static-scaler-v2",
+        "fileName": "=ads/{{ new Date().toISOString().split('T')[0] }}/{{ $json.id }}.jpg",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.awsS3",
+      "typeVersion": 2,
+      "position": [
+        -16,
+        1200
+      ],
+      "id": "130f7bcf-bfa9-4720-b861-70779aed649a",
+      "name": "Upload a file",
+      "credentials": {
+        "aws": {
+          "id": "wB0AVObrmWcEXu3V",
+          "name": "AWS (IAM) account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "recordId",
+              "name": "adCopyRecordId",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "headline",
+              "name": "headline",
+              "value": "={{ $json.headline }}",
+              "type": "string"
+            },
+            {
+              "id": "cta",
+              "name": "cta",
+              "value": "={{ $json.CTA }}",
+              "type": "string"
+            },
+            {
+              "id": "concept",
+              "name": "concept",
+              "value": "={{ $json.Concept }}",
+              "type": "string"
+            },
+            {
+              "id": "265c2bbe-4786-455c-a6fe-2d5f38162389",
+              "name": "Product",
+              "value": "={{ $json.Product }}",
+              "type": "array"
+            },
+            {
+              "id": "8e0aa2ff-567b-40b8-b846-b02c30038a5f",
+              "name": "Angle",
+              "value": "={{ $json.Angle }}",
+              "type": "string"
+            },
+            {
+              "id": "3a32f144-be89-4ddf-94f8-feb31ffec313",
+              "name": "Awareness Level",
+              "value": "={{ $json[\"Awareness Level\"] }}",
+              "type": "array"
+            },
+            {
+              "id": "27553fc8-0bbb-41ca-9fe7-01b53c5dbc48",
+              "name": "CTA strength",
+              "value": "={{ $json[\"CTA strength\"] }}",
+              "type": "array"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "e04429b9-387c-4d50-a0bd-8621c98325cb",
+      "name": "Preserve Ad Copy Context",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        -2944,
+        1360
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the input data - fields are directly on $input.item.json\nconst data = $input.item.json;\n\n// Get Product Images field\nconst productImages = data[\"Product Images\"];\n\n// Validation\nif (!productImages || !Array.isArray(productImages) || productImages.length === 0) {\n  throw new Error('NO product images found - add images to Products table');\n}\n\n// Extract first image\nconst productImageUrl = productImages[0].url;\nconst productFilename = productImages[0].filename;\n\n// Return merged data\nreturn {\n  ...data,\n  productImageUrl: productImageUrl,\n  productFilename: productFilename\n};"
+      },
+      "id": "80043507-62c4-4e9b-b10b-a7450a7f01b5",
+      "name": "Extract Product Image URL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2320,
+        1504
+      ]
+    },
+    {
+      "parameters": {
+        "base": {
+          "__rl": true,
+          "value": "appvPrfjiuXIhdNuW",
+          "mode": "list",
+          "cachedResultName": "🎦Static Scaler 1000",
+          "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblBnVh4S8suptxct",
+          "mode": "list",
+          "cachedResultName": "Products",
+          "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW/tblBnVh4S8suptxct"
+        },
+        "id": "={{ $('Preserve Ad Copy Context').item.json.Product[0] }}",
+        "options": {}
+      },
+      "id": "107c2b42-26a4-45b8-a80d-b325744b652f",
+      "name": "Get Product Record",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        -2496,
+        1504
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "DQz0c1qORXGaW82y",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Classify Ad Type - Dynamic field handling\nconst items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  const data = item.json;\n  \n  // Convert any value (string, array, object) to searchable string\n  const getString = (val) => {\n    if (Array.isArray(val)) return val.join(' ').toLowerCase();\n    if (typeof val === 'object' && val !== null) return JSON.stringify(val).toLowerCase();\n    return (val || '').toLowerCase();\n  };\n  \n  // Dynamically combine ALL text fields for classification\n  // Excludes IDs, timestamps, URLs, and system fields\n  const excludeKeys = ['id', 'adCopyRecordId', 'recordId', 'createdTime', 'url', 'n8n'];\n  \n  let combined = '';\n  for (const [key, val] of Object.entries(data)) {\n    if (excludeKeys.some(ex => key.toLowerCase().includes(ex))) continue;\n    if (typeof val === 'string' || Array.isArray(val)) {\n      combined += ' ' + getString(val);\n    }\n  }\n  combined = combined.toLowerCase();\n  \n  // Classification rules - add new patterns here as needed\n  let adType = 'Lifestyle Composite';\n  \n  const rules = [\n    { type: 'Testimonial', pattern: /review|★|testimonial|ratings|quote|\"i was\"|\"i thought\"|\"finally\"|story|customer|said|told me/ },\n    { type: 'Comparison', pattern: /\\bvs\\b|comparison|old way|new way|side-by-side|competitor|versus|compared to/ },\n    { type: 'Before/After', pattern: /timeline|progression|before|transformation|journey|after using|results in/ },\n    { type: 'Benefits Wheel', pattern: /benefit|feature|breakdown|infographic|cost|mechanism|diagram|explainer|how it works|why it works/ },\n    { type: 'Product Hero', pattern: /product shot|hero|lineup|macro|packshot|unboxing|showcase|display/ }\n  ];\n  \n  for (const rule of rules) {\n    if (rule.pattern.test(combined)) {\n      adType = rule.type;\n      break;\n    }\n  }\n  \n  results.push({\n    json: {\n      ...data,\n      adType: adType\n    }\n  });\n}\n\nreturn results;"
+      },
+      "id": "d8f98816-8652-4cb9-9ba6-69e0d372bf4e",
+      "name": "Classify Ad Type",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2784,
+        1360
+      ],
+      "notes": "Classifies each ad record into: Lifestyle Composite, Testimonial, Comparison, Before/After, Benefits Wheel, or Product Hero based on Concept, Angle, and Tags fields."
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "=appvPrfjiuXIhdNuW",
+          "mode": "id"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblh0GaqQOpBVbCLP",
+          "mode": "list",
+          "cachedResultName": "Ad Copy",
+          "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW/tblh0GaqQOpBVbCLP"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.id }}",
+            "Ad Type": "={{ $json.adType }}",
+            "Product": "={{ $json.Product }}"
+          },
+          "matchingColumns": [
+            "id",
+            "Ad Type",
+            "Product"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Concept",
+              "displayName": "Concept",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "headline",
+              "displayName": "headline",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Angle",
+              "displayName": "Angle",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Curiosity",
+                  "value": "Curiosity"
+                },
+                {
+                  "name": "Identity",
+                  "value": "Identity"
+                },
+                {
+                  "name": "Pain",
+                  "value": "Pain"
+                },
+                {
+                  "name": "Social Proof",
+                  "value": "Social Proof"
+                },
+                {
+                  "name": "Us vs Them",
+                  "value": "Us vs Them"
+                },
+                {
+                  "name": "Urgency",
+                  "value": "Urgency"
+                },
+                {
+                  "name": "Gift",
+                  "value": "Gift"
+                },
+                {
+                  "name": "Cost",
+                  "value": "Cost"
+                },
+                {
+                  "name": "Science",
+                  "value": "Science"
+                },
+                {
+                  "name": "Transformation",
+                  "value": "Transformation"
+                },
+                {
+                  "name": "Risk Reversal",
+                  "value": "Risk Reversal"
+                },
+                {
+                  "name": "Scarcity",
+                  "value": "Scarcity"
+                },
+                {
+                  "name": "Direct Offer",
+                  "value": "Direct Offer"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Avatar Target",
+              "displayName": "Avatar Target",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Desk Workers",
+                  "value": "Desk Workers"
+                },
+                {
+                  "name": "Women 45+",
+                  "value": "Women 45+"
+                },
+                {
+                  "name": "Gift Buyers",
+                  "value": "Gift Buyers"
+                },
+                {
+                  "name": "Hobbyists",
+                  "value": "Hobbyists"
+                },
+                {
+                  "name": "Professionals",
+                  "value": "Professionals"
+                },
+                {
+                  "name": "General",
+                  "value": "General"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Awareness Level",
+              "displayName": "Awareness Level",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "options": [
+                {
+                  "name": "Unaware",
+                  "value": "Unaware"
+                },
+                {
+                  "name": "Problem Aware",
+                  "value": "Problem Aware"
+                },
+                {
+                  "name": "Solution Aware",
+                  "value": "Solution Aware"
+                },
+                {
+                  "name": "Product Aware",
+                  "value": "Product Aware"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Ad Type",
+              "displayName": "Ad Type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Lifestyle Composite",
+                  "value": "Lifestyle Composite"
+                },
+                {
+                  "name": "Testimonial",
+                  "value": "Testimonial"
+                },
+                {
+                  "name": "Comparison",
+                  "value": "Comparison"
+                },
+                {
+                  "name": "Benefits Wheel",
+                  "value": "Benefits Wheel"
+                },
+                {
+                  "name": "Before/After",
+                  "value": "Before/After"
+                },
+                {
+                  "name": "Product Hero",
+                  "value": "Product Hero"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "CTA",
+              "displayName": "CTA",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Product",
+              "displayName": "Product",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "n8n",
+              "displayName": "n8n",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Generate Image Prompt",
+              "displayName": "Generate Image Prompt",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Image Prompt Status",
+              "displayName": "Image Prompt Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Running",
+                  "value": "Running"
+                },
+                {
+                  "name": "Completed",
+                  "value": "Completed"
+                },
+                {
+                  "name": "Generated",
+                  "value": "Generated"
+                },
+                {
+                  "name": "Approved",
+                  "value": "Approved"
+                },
+                {
+                  "name": "Rejected",
+                  "value": "Rejected"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Full Analysis Json",
+              "displayName": "Full Analysis Json",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Generate Image Prompts",
+              "displayName": "Generate Image Prompts",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Ready",
+                  "value": "Ready"
+                },
+                {
+                  "name": "Run",
+                  "value": "Run"
+                },
+                {
+                  "name": "Running",
+                  "value": "Running"
+                },
+                {
+                  "name": "Done",
+                  "value": "Done"
+                },
+                {
+                  "name": "Error",
+                  "value": "Error"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Prompt 1",
+              "displayName": "Prompt 1",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Prompt 2",
+              "displayName": "Prompt 2",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Prompt 3",
+              "displayName": "Prompt 3",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Last Generated At",
+              "displayName": "Last Generated At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Generation Notes",
+              "displayName": "Generation Notes",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Image Prompts Link",
+              "displayName": "Image Prompts Link",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Images",
+              "displayName": "Images",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Visual Directions",
+              "displayName": "Visual Directions",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Ad Templates",
+              "displayName": "Ad Templates",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Tags",
+              "displayName": "Tags",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "options": [
+                {
+                  "name": "Question",
+                  "value": "Question"
+                },
+                {
+                  "name": "Story",
+                  "value": "Story"
+                },
+                {
+                  "name": "Stat",
+                  "value": "Stat"
+                },
+                {
+                  "name": "Pattern Interrupt",
+                  "value": "Pattern Interrupt"
+                },
+                {
+                  "name": "Direct Benefit",
+                  "value": "Direct Benefit"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "CTA strength",
+              "displayName": "CTA strength",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "options": [
+                {
+                  "name": "Strong",
+                  "value": "Strong"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "recordId",
+              "displayName": "recordId",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "c2d757c0-2c5d-4301-8118-b6e3ad0ea4c4",
+      "name": "Update Ad Type",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        -2608,
+        1360
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "DQz0c1qORXGaW82y",
+          "name": "Airtable Personal Access Token account"
+        }
+      },
+      "notes": "Writes the classified Ad Type back to the Ad Copy table in Airtable"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -1984,
+        1296
+      ],
+      "id": "6b0762df-48a0-400b-839e-7db3ae4dc153",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\n// Find S3 data (has Location field)\nconst s3Item = items.find(i => i.json.Location);\nconst s3Url = s3Item?.json?.Location || '';\n\n// Find ad copy data (has fields object)\nconst adItem = items.find(i => i.json.fields);\nconst fields = adItem?.json?.fields || {};\nconst adType = adItem?.json?.adType || 'Lifestyle Composite';\n\nconst getString = (val) => {\n  if (Array.isArray(val)) return val.join(', ');\n  return val || '';\n};\n\nreturn [{\n  json: {\n    adType,\n    headline: fields.headline || '',\n    concept: fields.Concept || '',\n    cta: fields.CTA || '',\n    angle: fields.Angle || '',\n    avatarTarget: getString(fields['Avatar Target']),\n    awarenessLevel: getString(fields['Awareness Level']),\n    tags: getString(fields.Tags),\n    productImageUrl: s3Url,\n    recordId: adItem?.json?.id || ''\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1824,
+        1296
+      ],
+      "id": "9cd2b1d4-f0b7-4474-a686-0e8d42254f69",
+      "name": "image-prompt-context"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.productImageUrl }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -2208,
+        1440
+      ],
+      "id": "0b372be5-3f0e-4af9-96ae-39d0790f9061",
+      "name": "get-binary-pa"
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "bucketName": "static-scaler-v2",
+        "fileName": "=products/{{ $json[\"Product Name\"].toLowerCase() }}_{{ $json.recordId }}.jpg",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.awsS3",
+      "typeVersion": 2,
+      "position": [
+        -2096,
+        1360
+      ],
+      "id": "036b4cdf-f148-42a1-9315-fcb895a94359",
+      "name": "upload-image",
+      "credentials": {
+        "aws": {
+          "id": "wB0AVObrmWcEXu3V",
+          "name": "AWS (IAM) account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://fal.run/fal-ai/flux/dev",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"prompt\":{{ $json.cleanPrompt }} ,\n  \"image_size\": \"square_hd\",\n  \"num_inference_steps\": 28,\n  \"guidance_scale\": 3.5,\n  \"num_images\": 1,\n  \"enable_safety_checker\": false\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2608,
+        544
+      ],
+      "id": "95e34ada-20ae-49ce-bd0e-868391403740",
+      "name": "HTTP Request6",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "mvUTay4l3qzPwJ95",
+          "name": "fal.ai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://queue.fal.run/fal-ai/flux/dev",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"prompt\": \"{{$json.prompt}}\",\n  \"image_url\": \"{{$json.productImageUrl}}\",\n  \"num_images\": 1,\n  \"image_size\": \"square_hd\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1152,
+        1360
+      ],
+      "id": "50ecab5b-2dcc-491a-b765-5a9bab731310",
+      "name": "fal-post",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "mvUTay4l3qzPwJ95",
+          "name": "fal.ai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -992,
+        1344
+      ],
+      "id": "6f7c093b-25a2-4f81-89d7-96a201b0f291",
+      "name": "Wait2",
+      "webhookId": "ba0e1dc2-af57-47fb-8255-25c5b29435b3"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.response_url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -816,
+        1344
+      ],
+      "id": "220a0327-e218-4c1a-a222-c08556142b0a",
+      "name": "fal-render",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "mvUTay4l3qzPwJ95",
+          "name": "fal.ai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.fields.A }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -192,
+        1200
+      ],
+      "id": "a1b2c3d4-download-fal-image-node",
+      "name": "Download fal Image"
+    }
+  ],
+  "connections": {
+    "Code in JavaScript4": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an image1": {
+      "main": [
+        [
+          {
+            "node": "Create an image1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items3": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "fal-post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Get Ad Copy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Format Image Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Image Data": {
+      "main": [
+        [
+          {
+            "node": "Create Ad URLs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Ad Copy": {
+      "main": [
+        [
+          {
+            "node": "Preserve Ad Copy Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Ad URLs": {
+      "main": [
+        [
+          {
+            "node": "Download fal Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preserve Ad Copy Context": {
+      "main": [
+        [
+          {
+            "node": "Classify Ad Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Product Image URL": {
+      "main": [
+        [
+          {
+            "node": "get-binary-pa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Product Record": {
+      "main": [
+        [
+          {
+            "node": "Extract Product Image URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify Ad Type": {
+      "main": [
+        [
+          {
+            "node": "Update Ad Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Ad Type": {
+      "main": [
+        [
+          {
+            "node": "Get Product Record",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "image-prompt-context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get-binary-pa": {
+      "main": [
+        [
+          {
+            "node": "upload-image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "upload-image": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "image-prompt-context": {
+      "main": [
+        [
+          {
+            "node": "Message a model1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait2": {
+      "main": [
+        [
+          {
+            "node": "fal-render",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "fal-post": {
+      "main": [
+        [
+          {
+            "node": "Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "fal-render": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download fal Image": {
+      "main": [
+        [
+          {
+            "node": "Upload a file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "f072e53a-d066-4d28-b974-c9f8ef812622",
+  "activeVersionId": "f072e53a-d066-4d28-b974-c9f8ef812622",
+  "versionCounter": 51,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-02-10T05:51:23.255Z",
+      "createdAt": "2026-02-10T05:51:23.255Z",
+      "role": "workflow:owner",
+      "workflowId": "ivINFwTVVJU0XKp6jTAwN",
+      "projectId": "VaezLklQFnKxe5og",
+      "project": {
+        "updatedAt": "2026-02-10T05:27:49.067Z",
+        "createdAt": "2026-02-10T03:44:06.577Z",
+        "id": "VaezLklQFnKxe5og",
+        "name": "Jacob Bottema <jake@williamsforeal.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "af111efb-a289-4bac-9091-cbef7b33aceb",
+        "projectRelations": [
+          {
+            "updatedAt": "2026-02-10T03:44:06.577Z",
+            "createdAt": "2026-02-10T03:44:06.577Z",
+            "userId": "af111efb-a289-4bac-9091-cbef7b33aceb",
+            "projectId": "VaezLklQFnKxe5og",
+            "user": {
+              "updatedAt": "2026-02-10T06:50:03.000Z",
+              "createdAt": "2026-02-10T03:44:06.247Z",
+              "id": "af111efb-a289-4bac-9091-cbef7b33aceb",
+              "email": "jake@williamsforeal.com",
+              "firstName": "Jacob",
+              "lastName": "Bottema",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2026-02-10T05:28:24.063Z",
+                "personalization_survey_n8n_version": "2.6.4",
+                "companySize": "<20",
+                "companyType": "ecommerce",
+                "automationGoalSm": [
+                  "ad-campaign",
+                  "data-syncing",
+                  "reporting",
+                  "customer-communication"
+                ],
+                "role": "sales-and-marketing",
+                "reportedSource": "google"
+              },
+              "settings": {
+                "userActivated": false,
+                "easyAIWorkflowOnboarded": true
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2026-02-10",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2026-02-10T05:51:21.675Z",
+      "createdAt": "2026-02-10T05:51:21.675Z",
+      "id": "M6MgZ4ZBpexEo9UP",
+      "name": "⚖️scale"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-02-10T08:23:52.230Z",
+    "createdAt": "2026-02-10T08:23:52.230Z",
+    "versionId": "f072e53a-d066-4d28-b974-c9f8ef812622",
+    "workflowId": "ivINFwTVVJU0XKp6jTAwN",
+    "nodes": [
+      {
+        "parameters": {
+          "jsCode": "// ── n8n Code Node: The Splitter ──\n// Handles both formats:\n//   Format 1: { prompt1: \"...\", prompt2: \"...\" }\n//   Format 2: { A: { description: \"...\" }, B: { description: \"...\" }, C: { description: \"...\" } }\n\nconst newItems = [];\nconst items = $input.all();\n\nfor (const item of items) {\n  const json = item.json;\n\n  // FORMAT 2: A/B/C variant objects (from GPT-4o)\n  for (const key of ['A', 'B', 'C', 'D', 'E']) {\n    if (json[key] && typeof json[key] === 'object' && json[key].description) {\n      const cleanText = json[key].description\n        .replace(/^(visual|image|prompt\\s?\\d*|scene\\s?\\d*|option\\s?\\d*|concept\\s?\\d*|pattern interrupt)\\s*[:.-]\\s*/i, \"\")\n        .replace(/^[\"']|[\"']$/g, \"\")\n        .replace(/\\*\\*/g, \"\")\n        .trim();\n\n      if (cleanText.length > 5) {\n        newItems.push({\n          json: {\n            ...json,\n            cleanPrompt: cleanText,\n            sourceField: key\n          }\n        });\n      }\n    }\n  }\n\n  // FORMAT 1: prompt1, prompt2, etc. (legacy)\n  if (newItems.length === 0) {\n    for (const key of Object.keys(json)) {\n      if (key.toLowerCase().startsWith('prompt') && typeof json[key] === 'string') {\n        let cleanText = json[key]\n          .replace(/^(visual|image|prompt\\s?\\d*|scene\\s?\\d*|option\\s?\\d*|concept\\s?\\d*|pattern interrupt)\\s*[:.-]\\s*/i, \"\")\n          .replace(/^[\"']|[\"']$/g, \"\")\n          .replace(/\\*\\*/g, \"\")\n          .trim();\n\n        if (cleanText.length > 5) {\n          newItems.push({\n            json: {\n              ...json,\n              cleanPrompt: cleanText,\n              sourceField: key\n            }\n          });\n        }\n      }\n    }\n  }\n}\n\nif (newItems.length === 0) {\n  return items.map(item => ({ json: { ...item.json, cleanPrompt: \"ERROR: No valid prompt fields found in input.\" }}));\n}\n\nreturn newItems;"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -1488,
+          1456
+        ],
+        "id": "7814f2d6-6f17-4e28-a483-b1209702eac6",
+        "name": "Code in JavaScript4"
+      },
+      {
+        "parameters": {
+          "templateId": "=",
+          "additionalFields": {}
+        },
+        "type": "n8n-nodes-base.bannerbear",
+        "typeVersion": 1,
+        "position": [
+          -208,
+          1696
+        ],
+        "id": "d66b6228-f2b5-4b7a-96fa-cc586ad1523f",
+        "name": "Create an image1",
+        "credentials": {
+          "bannerbearApi": {
+            "id": "2QlDbvK9YUkxhYC0",
+            "name": "Bannerbear account"
+          }
+        },
+        "disabled": true
+      },
+      {
+        "parameters": {
+          "options": {}
+        },
+        "type": "n8n-nodes-base.splitInBatches",
+        "typeVersion": 3,
+        "position": [
+          -1376,
+          1344
+        ],
+        "id": "16b0a257-5da4-4f71-97dc-df2097e6be49",
+        "name": "Loop Over Items3"
+      },
+      {
+        "parameters": {
+          "path": "ca26a744-db15-42d4-9986-66154ab84cbb",
+          "options": {}
+        },
+        "id": "70af976f-6f20-4157-8f1e-d1227d6b9b89",
+        "name": "Webhook Trigger1",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          -3232,
+          1296
+        ],
+        "webhookId": "ca26a744-db15-42d4-9986-66154ab84cbb",
+        "alwaysOutputData": false,
+        "executeOnce": false,
+        "notes": "Alternative trigger via Airtable automation or manual call"
+      },
+      {
+        "parameters": {
+          "aggregate": "aggregateAllItemData",
+          "include": "specifiedFields",
+          "fieldsToInclude": "images, images, images",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.aggregate",
+        "typeVersion": 1,
+        "position": [
+          -672,
+          1200
+        ],
+        "id": "7252870e-5fe8-47cf-ae78-8d57cd38cc04",
+        "name": "Aggregate"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Get aggregated items\nconst raw = $input.first().json;\nconst aggregatedData = raw.data || [raw];\n\nif (!aggregatedData || aggregatedData.length === 0) {\n  return [{ json: { \"Ad Sets\": \"Error - No Data\", \"Status\": \"Failed\", \"Error\": \"No aggregated image data found\" } }];\n}\n\n// Extract URLs from each fal.ai image response\nconst urls = [];\nfor (const item of aggregatedData) {\n  const url = item.images?.[0]?.url || null;\n  if (url) urls.push(url);\n}\n\n// Get metadata from first item\nconst first = aggregatedData[0] || {};\nconst firstImg = first.images?.[0] || {};\n\nconst output = {\n  \"Ad Sets\": \"Generated \" + new Date().toISOString().split('T')[0],\n  \"A\": urls[0] || null,\n  \"B\": urls[1] || null,\n  \"C\": urls[2] || null,\n  \"Seed\": first.seed || null,\n  \"Width\": firstImg.width || 1024,\n  \"Height\": firstImg.height || 1024,\n  \"Model\": \"fal-ai/flux/dev\",\n  \"Status\": urls.length > 0 ? \"Generated\" : \"Failed\",\n  \"Prompt Used\": first.prompt || null\n};\n\nreturn [{ json: output }];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -512,
+          1200
+        ],
+        "id": "294d2538-115c-42f1-bf03-1a17b25d2ebf",
+        "name": "Format Image Data"
+      },
+      {
+        "parameters": {
+          "operation": "create",
+          "base": {
+            "__rl": true,
+            "value": "appvPrfjiuXIhdNuW",
+            "mode": "list",
+            "cachedResultName": "🎦Static Scaler 1000",
+            "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW"
+          },
+          "table": {
+            "__rl": true,
+            "value": "tblt1dje94IcK4kT2",
+            "mode": "list",
+            "cachedResultName": "Images",
+            "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW/tblt1dje94IcK4kT2"
+          },
+          "columns": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "Ad Sets": "={{ $json[\"Ad Sets\"] }}",
+              "A": "={{ $json.A }}",
+              "B": "={{ $json.B }}",
+              "C": "={{ $json.C }}",
+              "Model": "={{ $json.Model }}",
+              "Width": "={{ $json.Width }}",
+              "Height": "={{ $json.Height }}",
+              "Status": "={{ $json.Status }}"
+            },
+            "matchingColumns": [],
+            "schema": [
+              {
+                "id": "Ad Sets",
+                "displayName": "Ad Sets",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "string",
+                "readOnly": false,
+                "removed": false
+              },
+              {
+                "id": "A",
+                "displayName": "A",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "string",
+                "readOnly": false,
+                "removed": false
+              },
+              {
+                "id": "Image Prompts",
+                "displayName": "Image Prompts",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "array",
+                "readOnly": false,
+                "removed": true
+              },
+              {
+                "id": "Product",
+                "displayName": "Product",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "array",
+                "readOnly": false,
+                "removed": true
+              },
+              {
+                "id": "Ad Copy",
+                "displayName": "Ad Copy",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "array",
+                "readOnly": false,
+                "removed": true
+              },
+              {
+                "id": "recordId",
+                "displayName": "recordId",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "string",
+                "readOnly": true,
+                "removed": true
+              },
+              {
+                "id": "B",
+                "displayName": "B",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "string",
+                "readOnly": false,
+                "removed": false
+              },
+              {
+                "id": "C",
+                "displayName": "C",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "string",
+                "readOnly": false,
+                "removed": false
+              },
+              {
+                "id": "Prompt Index",
+                "displayName": "Prompt Index",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "number",
+                "readOnly": false,
+                "removed": true
+              },
+              {
+                "id": "Prompt Used",
+                "displayName": "Prompt Used",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "string",
+                "readOnly": false,
+                "removed": true
+              },
+              {
+                "id": "Seed",
+                "displayName": "Seed",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "number",
+                "readOnly": false,
+                "removed": true
+              },
+              {
+                "id": "Model",
+                "displayName": "Model",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "string",
+                "readOnly": false,
+                "removed": false
+              },
+              {
+                "id": "Width",
+                "displayName": "Width",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "number",
+                "readOnly": false,
+                "removed": false
+              },
+              {
+                "id": "Height",
+                "displayName": "Height",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "number",
+                "readOnly": false,
+                "removed": false
+              },
+              {
+                "id": "Status",
+                "displayName": "Status",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "options",
+                "options": [
+                  {
+                    "name": "Generated",
+                    "value": "Generated"
+                  },
+                  {
+                    "name": "Approved",
+                    "value": "Approved"
+                  },
+                  {
+                    "name": "Rejected",
+                    "value": "Rejected"
+                  },
+                  {
+                    "name": "Used",
+                    "value": "Used"
+                  },
+                  {
+                    "name": "Failed",
+                    "value": "Failed"
+                  }
+                ],
+                "readOnly": false,
+                "removed": false
+              },
+              {
+                "id": "Generated At",
+                "displayName": "Generated At",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "dateTime",
+                "readOnly": false,
+                "removed": true
+              },
+              {
+                "id": "Error",
+                "displayName": "Error",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "string",
+                "readOnly": false,
+                "removed": false
+              }
+            ],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": false
+          },
+          "options": {
+            "typecast": "={{ false }}"
+          }
+        },
+        "type": "n8n-nodes-base.airtable",
+        "typeVersion": 2.1,
+        "position": [
+          -352,
+          1200
+        ],
+        "id": "fe0c17f9-13f0-4ea9-ae07-8fddd45be23e",
+        "name": "Create Ad URLs",
+        "credentials": {
+          "airtableTokenApi": {
+            "id": "DQz0c1qORXGaW82y",
+            "name": "Airtable Personal Access Token account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "modelId": {
+            "__rl": true,
+            "value": "chatgpt-4o-latest",
+            "mode": "list",
+            "cachedResultName": "CHATGPT-4O-LATEST"
+          },
+          "responses": {
+            "values": [
+              {
+                "content": "=You are a prompt compiler for high-converting DTC image ads.\n\nDo not explain. Do not ask questions.\nReturn only valid JSON as instructed.\n\nCONTEXT OBJECT (AUTHORITATIVE):\n{{$json.image-prompt-context}}\n\nTASK:\nUsing the context object above:\n- Generate A/B/C image prompt variants\n- A = Control (same concept, better execution)\n- B = Angle variation\n- C = StoryBrand narrative\n\nRULES:\n- Do not invent product features\n- Do not alter product design\n- Assume the product image URL is a reference image\n- One dominant emotional promise per variant\n\nOUTPUT FORMAT:\n{ ...schema... }\n\n"
+              },
+              {
+                "type": "image",
+                "imageUrl": "={{ $('Extract Product Image URL').item.json.productImageUrl }}"
+              }
+            ]
+          },
+          "simplify": false,
+          "builtInTools": {},
+          "options": {
+            "metadata": "{}",
+            "parallelToolCalls": false
+          }
+        },
+        "type": "@n8n/n8n-nodes-langchain.openAi",
+        "typeVersion": 2.1,
+        "position": [
+          -1936,
+          1456
+        ],
+        "id": "fa517799-3465-4635-9fe1-986cf9c74a75",
+        "name": "Message a model1",
+        "credentials": {
+          "openAiApi": {
+            "id": "CZNu744TpA78SZOC",
+            "name": "OpenAi account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "base": {
+            "__rl": true,
+            "value": "appvPrfjiuXIhdNuW",
+            "mode": "list",
+            "cachedResultName": "🎦Static Scaler 1000",
+            "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW"
+          },
+          "table": {
+            "__rl": true,
+            "value": "tblh0GaqQOpBVbCLP",
+            "mode": "list",
+            "cachedResultName": "Ad Copy",
+            "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW/tblh0GaqQOpBVbCLP"
+          },
+          "id": "={{ $json.query.recordId }}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.airtable",
+        "typeVersion": 2.1,
+        "position": [
+          -3104,
+          1360
+        ],
+        "id": "80fc69f4-d08b-4019-9cf2-9062ce5c511e",
+        "name": "Get Ad Copy",
+        "credentials": {
+          "airtableTokenApi": {
+            "id": "DQz0c1qORXGaW82y",
+            "name": "Airtable Personal Access Token account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const results = [];\n\nfor (const item of $input.all()) {\n  try {\n    let rawText;\n\n    // PATH 1: The \"Deep Nested\" Output (This is what your screenshot shows)\n    if (item.json.output && item.json.output[0] && item.json.output[0].content && item.json.output[0].content[0].text) {\n      rawText = item.json.output[0].content[0].text;\n    }\n    // PATH 2: Simple Text (Simplify Output = ON)\n    else if (item.json.text) {\n      rawText = item.json.text;\n    } \n    // PATH 3: Standard Content (Simplify Output = OFF)\n    else if (item.json.content && item.json.content[0] && item.json.content[0].text) {\n      rawText = item.json.content[0].text;\n    }\n    // PATH 4: Chat Message\n    else if (item.json.message && item.json.message.content) {\n      rawText = item.json.message.content;\n    }\n\n    if (!rawText) throw new Error(\"Could not find any text in the OpenAI output.\");\n\n    // CLEANUP: Remove markdown (```json)\n    const cleanJson = rawText.replace(/```json/g, \"\").replace(/```/g, \"\").trim();\n\n    // PARSE: Turn text into data\n    const parsedData = JSON.parse(cleanJson);\n\n    results.push({\n      json: parsedData\n    });\n\n  } catch (error) {\n    results.push({\n      json: {\n        error: \"PARSING FAILED: \" + error.message,\n        debug_input: item.json\n      }\n    });\n  }\n}\n\nreturn results;"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -1648,
+          1456
+        ],
+        "id": "22527227-a2fa-4128-9663-f18ebbe621ed",
+        "name": "Code in JavaScript1"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://platform.higgsfield.ai/higgsfield-ai/soul/standard",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "Key 34474446-7b4f-4802-bbeb-376dc9f76f89:65785da94a84090b5fedaed17db2d88c0f736cf2f116808ace4ea62643dc7696"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"model\": \"higgsfield-ai/soul/standard\",\n  \"prompt\": \"{{ $json.cleanPrompt }} . The product is the 'PalmAura', a sleek, mitten-shaped hand massager in a matte 'Greige' (warm light gray) color. Material finish is soft PU leather with a structured fabric wrist cuff. Key Feature: A prominent, vertical oval control panel on the top center with a metallic rose-gold rim. Inside the rose-gold oval, there are 4 small, vertically stacked circular buttons. The device looks premium, ergonomic, and cozy. High-end commercial product photography, 8k resolution.\",\n  \"aspect_ratio\": \"1:1\",\n  \"negative_prompt\": \"blurry, low quality, distorted\"\n}",
+          "options": {
+            "batching": {
+              "batch": {
+                "batchSize": 1
+              }
+            }
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          1472,
+          624
+        ],
+        "id": "feaa9474-2493-4aa2-a6ab-f2cb8d4cab3f",
+        "name": "HTTP Request",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "AmMgOpxnGeRUfLDq",
+            "name": "Higgsfield"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "url": "={{ $json.status_url }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          1824,
+          624
+        ],
+        "id": "968520a5-daec-419d-9868-1fe449330f6a",
+        "name": "HTTP Request1",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "AmMgOpxnGeRUfLDq",
+            "name": "Higgsfield"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "amount": 30
+        },
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          1632,
+          624
+        ],
+        "id": "4bc8c153-7104-4745-a419-7f6d61d4a1fb",
+        "name": "Wait",
+        "webhookId": "70337874-0b51-4d55-81fe-5e74d4b56c10"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://platform.higgsfield.ai/higgsfield-ai/soul/standard",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "Key 34474446-7b4f-4802-bbeb-376dc9f76f89:65785da94a84090b5fedaed17db2d88c0f736cf2f116808ace4ea62643dc7696"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"model\": \"bytedance/seedream/v4/edit\",\n  \"prompt\": \"{{ $json.cleanPrompt }}\",\n  \"image_urls\": [\n    \"YOUR_PRODUCT_IMAGE_URL_HERE\"\n  ],\n  \"aspect_ratio\": \"1:1\",\n  \"negative_prompt\": \"blurry, low quality, distorted\"\n}",
+          "options": {
+            "batching": {
+              "batch": {
+                "batchSize": 1
+              }
+            }
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          1456,
+          400
+        ],
+        "id": "8cdab044-02cb-4070-94f0-54fbd4ab4f75",
+        "name": "HTTP Request2",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "AmMgOpxnGeRUfLDq",
+            "name": "Higgsfield"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "url": "={{ $json.status_url }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          1792,
+          400
+        ],
+        "id": "48a288ee-7edf-4bee-825c-72b7a1da4f06",
+        "name": "HTTP Request4",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "AmMgOpxnGeRUfLDq",
+            "name": "Higgsfield"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "amount": 30
+        },
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          1648,
+          400
+        ],
+        "id": "0f014ce9-86e5-491b-9f96-ddab893ab80d",
+        "name": "Wait1",
+        "webhookId": "ba0e1dc2-af57-47fb-8255-25c5b29435b3"
+      },
+      {
+        "parameters": {
+          "operation": "upload",
+          "bucketName": "static-scaler-v2",
+          "fileName": "=ads/{{ new Date().toISOString().split('T')[0] }}/{{ $json.id }}.jpg",
+          "additionalFields": {}
+        },
+        "type": "n8n-nodes-base.awsS3",
+        "typeVersion": 2,
+        "position": [
+          -16,
+          1200
+        ],
+        "id": "130f7bcf-bfa9-4720-b861-70779aed649a",
+        "name": "Upload a file",
+        "credentials": {
+          "aws": {
+            "id": "wB0AVObrmWcEXu3V",
+            "name": "AWS (IAM) account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "recordId",
+                "name": "adCopyRecordId",
+                "value": "={{ $json.id }}",
+                "type": "string"
+              },
+              {
+                "id": "headline",
+                "name": "headline",
+                "value": "={{ $json.headline }}",
+                "type": "string"
+              },
+              {
+                "id": "cta",
+                "name": "cta",
+                "value": "={{ $json.CTA }}",
+                "type": "string"
+              },
+              {
+                "id": "concept",
+                "name": "concept",
+                "value": "={{ $json.Concept }}",
+                "type": "string"
+              },
+              {
+                "id": "265c2bbe-4786-455c-a6fe-2d5f38162389",
+                "name": "Product",
+                "value": "={{ $json.Product }}",
+                "type": "array"
+              },
+              {
+                "id": "8e0aa2ff-567b-40b8-b846-b02c30038a5f",
+                "name": "Angle",
+                "value": "={{ $json.Angle }}",
+                "type": "string"
+              },
+              {
+                "id": "3a32f144-be89-4ddf-94f8-feb31ffec313",
+                "name": "Awareness Level",
+                "value": "={{ $json[\"Awareness Level\"] }}",
+                "type": "array"
+              },
+              {
+                "id": "27553fc8-0bbb-41ca-9fe7-01b53c5dbc48",
+                "name": "CTA strength",
+                "value": "={{ $json[\"CTA strength\"] }}",
+                "type": "array"
+              }
+            ]
+          },
+          "includeOtherFields": true,
+          "options": {}
+        },
+        "id": "e04429b9-387c-4d50-a0bd-8621c98325cb",
+        "name": "Preserve Ad Copy Context",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.3,
+        "position": [
+          -2944,
+          1360
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Get the input data - fields are directly on $input.item.json\nconst data = $input.item.json;\n\n// Get Product Images field\nconst productImages = data[\"Product Images\"];\n\n// Validation\nif (!productImages || !Array.isArray(productImages) || productImages.length === 0) {\n  throw new Error('NO product images found - add images to Products table');\n}\n\n// Extract first image\nconst productImageUrl = productImages[0].url;\nconst productFilename = productImages[0].filename;\n\n// Return merged data\nreturn {\n  ...data,\n  productImageUrl: productImageUrl,\n  productFilename: productFilename\n};"
+        },
+        "id": "80043507-62c4-4e9b-b10b-a7450a7f01b5",
+        "name": "Extract Product Image URL",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -2320,
+          1504
+        ]
+      },
+      {
+        "parameters": {
+          "base": {
+            "__rl": true,
+            "value": "appvPrfjiuXIhdNuW",
+            "mode": "list",
+            "cachedResultName": "🎦Static Scaler 1000",
+            "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW"
+          },
+          "table": {
+            "__rl": true,
+            "value": "tblBnVh4S8suptxct",
+            "mode": "list",
+            "cachedResultName": "Products",
+            "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW/tblBnVh4S8suptxct"
+          },
+          "id": "={{ $('Preserve Ad Copy Context').item.json.Product[0] }}",
+          "options": {}
+        },
+        "id": "107c2b42-26a4-45b8-a80d-b325744b652f",
+        "name": "Get Product Record",
+        "type": "n8n-nodes-base.airtable",
+        "typeVersion": 2.1,
+        "position": [
+          -2496,
+          1504
+        ],
+        "credentials": {
+          "airtableTokenApi": {
+            "id": "DQz0c1qORXGaW82y",
+            "name": "Airtable Personal Access Token account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "// Classify Ad Type - Dynamic field handling\nconst items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  const data = item.json;\n  \n  // Convert any value (string, array, object) to searchable string\n  const getString = (val) => {\n    if (Array.isArray(val)) return val.join(' ').toLowerCase();\n    if (typeof val === 'object' && val !== null) return JSON.stringify(val).toLowerCase();\n    return (val || '').toLowerCase();\n  };\n  \n  // Dynamically combine ALL text fields for classification\n  // Excludes IDs, timestamps, URLs, and system fields\n  const excludeKeys = ['id', 'adCopyRecordId', 'recordId', 'createdTime', 'url', 'n8n'];\n  \n  let combined = '';\n  for (const [key, val] of Object.entries(data)) {\n    if (excludeKeys.some(ex => key.toLowerCase().includes(ex))) continue;\n    if (typeof val === 'string' || Array.isArray(val)) {\n      combined += ' ' + getString(val);\n    }\n  }\n  combined = combined.toLowerCase();\n  \n  // Classification rules - add new patterns here as needed\n  let adType = 'Lifestyle Composite';\n  \n  const rules = [\n    { type: 'Testimonial', pattern: /review|★|testimonial|ratings|quote|\"i was\"|\"i thought\"|\"finally\"|story|customer|said|told me/ },\n    { type: 'Comparison', pattern: /\\bvs\\b|comparison|old way|new way|side-by-side|competitor|versus|compared to/ },\n    { type: 'Before/After', pattern: /timeline|progression|before|transformation|journey|after using|results in/ },\n    { type: 'Benefits Wheel', pattern: /benefit|feature|breakdown|infographic|cost|mechanism|diagram|explainer|how it works|why it works/ },\n    { type: 'Product Hero', pattern: /product shot|hero|lineup|macro|packshot|unboxing|showcase|display/ }\n  ];\n  \n  for (const rule of rules) {\n    if (rule.pattern.test(combined)) {\n      adType = rule.type;\n      break;\n    }\n  }\n  \n  results.push({\n    json: {\n      ...data,\n      adType: adType\n    }\n  });\n}\n\nreturn results;"
+        },
+        "id": "d8f98816-8652-4cb9-9ba6-69e0d372bf4e",
+        "name": "Classify Ad Type",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -2784,
+          1360
+        ],
+        "notes": "Classifies each ad record into: Lifestyle Composite, Testimonial, Comparison, Before/After, Benefits Wheel, or Product Hero based on Concept, Angle, and Tags fields."
+      },
+      {
+        "parameters": {
+          "operation": "update",
+          "base": {
+            "__rl": true,
+            "value": "=appvPrfjiuXIhdNuW",
+            "mode": "id"
+          },
+          "table": {
+            "__rl": true,
+            "value": "tblh0GaqQOpBVbCLP",
+            "mode": "list",
+            "cachedResultName": "Ad Copy",
+            "cachedResultUrl": "https://airtable.com/appvPrfjiuXIhdNuW/tblh0GaqQOpBVbCLP"
+          },
+          "columns": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "id": "={{ $json.id }}",
+              "Ad Type": "={{ $json.adType }}",
+              "Product": "={{ $json.Product }}"
+            },
+            "matchingColumns": [
+              "id",
+              "Ad Type",
+              "Product"
+            ],
+            "schema": [
+              {
+                "id": "id",
+                "displayName": "id",
+                "required": false,
+                "defaultMatch": true,
+                "display": true,
+                "type": "string",
+                "readOnly": true,
+                "removed": false
+              },
+              {
+                "id": "Concept",
+                "displayName": "Concept",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "string",
+                "readOnly": false,
+                "removed": true
+              },
+              {
+                "id": "headline",
+                "displayName": "headline",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "string",
+                "readOnly": false,
+                "removed": true
+              },
+              {
+                "id": "Angle",
+                "displayName": "Angle",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "options",
+                "options": [
+                  {
+                    "name": "Curiosity",
+                    "value": "Curiosity"
+                  },
+                  {
+                    "name": "Identity",
+                    "value": "Identity"
+                  },
+                  {
+                    "name": "Pain",
+                    "value": "Pain"
+                  },
+                  {
+                    "name": "Social Proof",
+                    "value": "Social Proof"
+                  },
+                  {
+                    "name": "Us vs Them",
+                    "value": "Us vs Them"
+                  },
+                  {
+                    "name": "Urgency",
+                    "value": "Urgency"
+                  },
+                  {
+                    "name": "Gift",
+                    "value": "Gift"
+                  },
+                  {
+                    "name": "Cost",
+                    "value": "Cost"
+                  },
+                  {
+                    "name": "Science",
+                    "value": "Science"
+                  },
+                  {
+                    "name": "Transformation",
+                    "value": "Transformation"
+                  },
+                  {
+                    "name": "Risk Reversal",
+                    "value": "Risk Reversal"
+                  },
+                  {
+                    "name": "Scarcity",
+                    "value": "Scarcity"
+                  },
+                  {
+                    "name": "Direct Offer",
+                    "value": "Direct Offer"
+                  }
+                ],
+                "readOnly": false,
+                "removed": true
+              },
+              {
+                "id": "Avatar Target",
+                "displayName": "Avatar Target",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "options",
+                "options": [
+                  {
+                    "name": "Desk Workers",
+                    "value": "Desk Workers"
+                  },
+                  {
+                    "name": "Women 45+",
+                    "value": "Women 45+"
+                  },
+                  {
+                    "name": "Gift Buyers",
+                    "value": "Gift Buyers"
+                  },
+                  {
+                    "name": "Hobbyists",
+                    "value": "Hobbyists"
+                  },
+                  {
+                    "name": "Professionals",
+                    "value": "Professionals"
+                  },
+                  {
+                    "name": "General",
+                    "value": "General"
+                  }
+                ],
+                "readOnly": false,
+                "removed": true
+              },
+              {
+                "id": "Awareness Level",
+                "displayName": "Awareness Level",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "array",
+                "options": [
+                  {
+                    "name": "Unaware",
+                    "value": "Unaware"
+                  },
+                  {
+                    "name": "Problem Aware",
+                    "value": "Problem Aware"
+                  },
+                  {
+                    "name": "Solution Aware",
+                    "value": "Solution Aware"
+                  },
+                  {
+                    "name": "Product Aware",
+                    "value": "Product Aware"
+                  }
+                ],
+                "readOnly": false,
+                "removed": true
+              },
+              {
+                "id": "Ad Type",
+                "displayName": "Ad Type",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "options",
+                "options": [
+                  {
+                    "name": "Lifestyle Composite",
+                    "value": "Lifestyle Composite"
+                  },
+                  {
+                    "name": "Testimonial",
+                    "value": "Testimonial"
+                  },
+                  {
+                    "name": "Comparison",
+                    "value": "Comparison"
+                  },
+                  {
+                    "name": "Benefits Wheel",
+                    "value": "Benefits Wheel"
+                  },
+                  {
+                    "name": "Before/After",
+                    "value": "Before/After"
+                  },
+                  {
+                    "name": "Product Hero",
+                    "value": "Product Hero"
+                  }
+                ],
+                "readOnly": false,
+                "removed": false
+              },
+              {
+                "id": "CTA",
+                "displayName": "CTA",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "string",
+                "readOnly": false,
+                "removed": true
+              },
+              {
+                "id": "Product",
+                "displayName": "Product",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "array",
+                "readOnly": false,
+                "removed": false
+              },
+              {
+                "id": "n8n",
+                "displayName": "n8n",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "string",
+                "readOnly": true,
+                "removed": true
+              },
+              {
+                "id": "Generate Image Prompt",
+                "displayName": "Generate Image Prompt",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "boolean",
+                "readOnly": false,
+                "removed": true
+              },
+              {
+                "id": "Image Prompt Status",
+                "displayName": "Image Prompt Status",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "options",
+                "options": [
+                  {
+                    "name": "Running",
+                    "value": "Running"
+                  },
+                  {
+                    "name": "Completed",
+                    "value": "Completed"
+                  },
+                  {
+                    "name": "Generated",
+                    "value": "Generated"
+                  },
+                  {
+                    "name": "Approved",
+                    "value": "Approved"
+                  },
+                  {
+                    "name": "Rejected",
+                    "value": "Rejected"
+                  }
+                ],
+                "readOnly": false,
+                "removed": true
+              },
+              {
+                "id": "Full Analysis Json",
+                "displayName": "Full Analysis Json",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "string",
+                "readOnly": false,
+                "removed": true
+              },
+              {
+                "id": "Generate Image Prompts",
+                "displayName": "Generate Image Prompts",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "options",
+                "options": [
+                  {
+                    "name": "Ready",
+                    "value": "Ready"
+                  },
+                  {
+                    "name": "Run",
+                    "value": "Run"
+                  },
+                  {
+                    "name": "Running",
+                    "value": "Running"
+                  },
+                  {
+                    "name": "Done",
+                    "value": "Done"
+                  },
+                  {
+                    "name": "Error",
+                    "value": "Error"
+                  }
+                ],
+                "readOnly": false,
+                "removed": true
+              },
+              {
+                "id": "Prompt 1",
+                "displayName": "Prompt 1",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "string",
+                "readOnly": false,
+                "removed": true
+              },
+              {
+                "id": "Prompt 2",
+                "displayName": "Prompt 2",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "string",
+                "readOnly": false,
+                "removed": true
+              },
+              {
+                "id": "Prompt 3",
+                "displayName": "Prompt 3",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "string",
+                "readOnly": false,
+                "removed": true
+              },
+              {
+                "id": "Last Generated At",
+                "displayName": "Last Generated At",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "dateTime",
+                "readOnly": false,
+                "removed": true
+              },
+              {
+                "id": "Generation Notes",
+                "displayName": "Generation Notes",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "string",
+                "readOnly": false,
+                "removed": true
+              },
+              {
+                "id": "Image Prompts Link",
+                "displayName": "Image Prompts Link",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "array",
+                "readOnly": false,
+                "removed": true
+              },
+              {
+                "id": "Images",
+                "displayName": "Images",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "array",
+                "readOnly": false,
+                "removed": true
+              },
+              {
+                "id": "Visual Directions",
+                "displayName": "Visual Directions",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "array",
+                "readOnly": false,
+                "removed": true
+              },
+              {
+                "id": "Ad Templates",
+                "displayName": "Ad Templates",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "array",
+                "readOnly": false,
+                "removed": false
+              },
+              {
+                "id": "Tags",
+                "displayName": "Tags",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "array",
+                "options": [
+                  {
+                    "name": "Question",
+                    "value": "Question"
+                  },
+                  {
+                    "name": "Story",
+                    "value": "Story"
+                  },
+                  {
+                    "name": "Stat",
+                    "value": "Stat"
+                  },
+                  {
+                    "name": "Pattern Interrupt",
+                    "value": "Pattern Interrupt"
+                  },
+                  {
+                    "name": "Direct Benefit",
+                    "value": "Direct Benefit"
+                  }
+                ],
+                "readOnly": false,
+                "removed": true
+              },
+              {
+                "id": "CTA strength",
+                "displayName": "CTA strength",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "array",
+                "options": [
+                  {
+                    "name": "Strong",
+                    "value": "Strong"
+                  }
+                ],
+                "readOnly": false,
+                "removed": true
+              },
+              {
+                "id": "recordId",
+                "displayName": "recordId",
+                "required": false,
+                "defaultMatch": false,
+                "canBeUsedToMatch": true,
+                "display": true,
+                "type": "string",
+                "readOnly": true,
+                "removed": true
+              }
+            ],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": false
+          },
+          "options": {}
+        },
+        "id": "c2d757c0-2c5d-4301-8118-b6e3ad0ea4c4",
+        "name": "Update Ad Type",
+        "type": "n8n-nodes-base.airtable",
+        "typeVersion": 2.1,
+        "position": [
+          -2608,
+          1360
+        ],
+        "alwaysOutputData": true,
+        "credentials": {
+          "airtableTokenApi": {
+            "id": "DQz0c1qORXGaW82y",
+            "name": "Airtable Personal Access Token account"
+          }
+        },
+        "notes": "Writes the classified Ad Type back to the Ad Copy table in Airtable"
+      },
+      {
+        "parameters": {
+          "mode": "combine",
+          "combineBy": "combineByPosition",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 3.2,
+        "position": [
+          -1984,
+          1296
+        ],
+        "id": "6b0762df-48a0-400b-839e-7db3ae4dc153",
+        "name": "Merge"
+      },
+      {
+        "parameters": {
+          "jsCode": "const items = $input.all();\n\n// Find S3 data (has Location field)\nconst s3Item = items.find(i => i.json.Location);\nconst s3Url = s3Item?.json?.Location || '';\n\n// Find ad copy data (has fields object)\nconst adItem = items.find(i => i.json.fields);\nconst fields = adItem?.json?.fields || {};\nconst adType = adItem?.json?.adType || 'Lifestyle Composite';\n\nconst getString = (val) => {\n  if (Array.isArray(val)) return val.join(', ');\n  return val || '';\n};\n\nreturn [{\n  json: {\n    adType,\n    headline: fields.headline || '',\n    concept: fields.Concept || '',\n    cta: fields.CTA || '',\n    angle: fields.Angle || '',\n    avatarTarget: getString(fields['Avatar Target']),\n    awarenessLevel: getString(fields['Awareness Level']),\n    tags: getString(fields.Tags),\n    productImageUrl: s3Url,\n    recordId: adItem?.json?.id || ''\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -1824,
+          1296
+        ],
+        "id": "9cd2b1d4-f0b7-4474-a686-0e8d42254f69",
+        "name": "image-prompt-context"
+      },
+      {
+        "parameters": {
+          "url": "={{ $json.productImageUrl }}",
+          "options": {
+            "response": {
+              "response": {
+                "responseFormat": "file"
+              }
+            }
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          -2208,
+          1440
+        ],
+        "id": "0b372be5-3f0e-4af9-96ae-39d0790f9061",
+        "name": "get-binary-pa"
+      },
+      {
+        "parameters": {
+          "operation": "upload",
+          "bucketName": "static-scaler-v2",
+          "fileName": "=products/{{ $json[\"Product Name\"].toLowerCase() }}_{{ $json.recordId }}.jpg",
+          "additionalFields": {}
+        },
+        "type": "n8n-nodes-base.awsS3",
+        "typeVersion": 2,
+        "position": [
+          -2096,
+          1360
+        ],
+        "id": "036b4cdf-f148-42a1-9315-fcb895a94359",
+        "name": "upload-image",
+        "credentials": {
+          "aws": {
+            "id": "wB0AVObrmWcEXu3V",
+            "name": "AWS (IAM) account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://fal.run/fal-ai/flux/dev",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"prompt\":{{ $json.cleanPrompt }} ,\n  \"image_size\": \"square_hd\",\n  \"num_inference_steps\": 28,\n  \"guidance_scale\": 3.5,\n  \"num_images\": 1,\n  \"enable_safety_checker\": false\n}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          2608,
+          544
+        ],
+        "id": "95e34ada-20ae-49ce-bd0e-868391403740",
+        "name": "HTTP Request6",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "mvUTay4l3qzPwJ95",
+            "name": "fal.ai"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://queue.fal.run/fal-ai/flux/dev",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"prompt\": \"{{$json.prompt}}\",\n  \"image_url\": \"{{$json.productImageUrl}}\",\n  \"num_images\": 1,\n  \"image_size\": \"square_hd\"\n}\n",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          -1152,
+          1360
+        ],
+        "id": "50ecab5b-2dcc-491a-b765-5a9bab731310",
+        "name": "fal-post",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "mvUTay4l3qzPwJ95",
+            "name": "fal.ai"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "amount": 30
+        },
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          -992,
+          1344
+        ],
+        "id": "6f7c093b-25a2-4f81-89d7-96a201b0f291",
+        "name": "Wait2",
+        "webhookId": "ba0e1dc2-af57-47fb-8255-25c5b29435b3"
+      },
+      {
+        "parameters": {
+          "url": "={{ $json.response_url }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          -816,
+          1344
+        ],
+        "id": "220a0327-e218-4c1a-a222-c08556142b0a",
+        "name": "fal-render",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "mvUTay4l3qzPwJ95",
+            "name": "fal.ai"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "url": "={{ $json.fields.A }}",
+          "options": {
+            "response": {
+              "response": {
+                "responseFormat": "file"
+              }
+            }
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.3,
+        "position": [
+          -192,
+          1200
+        ],
+        "id": "a1b2c3d4-download-fal-image-node",
+        "name": "Download fal Image"
+      }
+    ],
+    "connections": {
+      "Code in JavaScript4": {
+        "main": [
+          [
+            {
+              "node": "Loop Over Items3",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Create an image1": {
+        "main": [
+          [
+            {
+              "node": "Create an image1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Loop Over Items3": {
+        "main": [
+          [
+            {
+              "node": "Aggregate",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "fal-post",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Webhook Trigger1": {
+        "main": [
+          [
+            {
+              "node": "Get Ad Copy",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Aggregate": {
+        "main": [
+          [
+            {
+              "node": "Format Image Data",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Image Data": {
+        "main": [
+          [
+            {
+              "node": "Create Ad URLs",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Message a model1": {
+        "main": [
+          [
+            {
+              "node": "Code in JavaScript1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Ad Copy": {
+        "main": [
+          [
+            {
+              "node": "Preserve Ad Copy Context",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code in JavaScript1": {
+        "main": [
+          [
+            {
+              "node": "Code in JavaScript4",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "HTTP Request": {
+        "main": [
+          [
+            {
+              "node": "Wait",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait": {
+        "main": [
+          [
+            {
+              "node": "HTTP Request1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "HTTP Request2": {
+        "main": [
+          [
+            {
+              "node": "Wait1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait1": {
+        "main": [
+          [
+            {
+              "node": "HTTP Request4",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Create Ad URLs": {
+        "main": [
+          [
+            {
+              "node": "Download fal Image",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Preserve Ad Copy Context": {
+        "main": [
+          [
+            {
+              "node": "Classify Ad Type",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Extract Product Image URL": {
+        "main": [
+          [
+            {
+              "node": "get-binary-pa",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Product Record": {
+        "main": [
+          [
+            {
+              "node": "Extract Product Image URL",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Classify Ad Type": {
+        "main": [
+          [
+            {
+              "node": "Update Ad Type",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Update Ad Type": {
+        "main": [
+          [
+            {
+              "node": "Get Product Record",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Merge",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Merge": {
+        "main": [
+          [
+            {
+              "node": "image-prompt-context",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "get-binary-pa": {
+        "main": [
+          [
+            {
+              "node": "upload-image",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "upload-image": {
+        "main": [
+          [
+            {
+              "node": "Merge",
+              "type": "main",
+              "index": 1
+            }
+          ]
+        ]
+      },
+      "image-prompt-context": {
+        "main": [
+          [
+            {
+              "node": "Message a model1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait2": {
+        "main": [
+          [
+            {
+              "node": "fal-render",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "fal-post": {
+        "main": [
+          [
+            {
+              "node": "Wait2",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "fal-render": {
+        "main": [
+          [
+            {
+              "node": "Loop Over Items3",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Download fal Image": {
+        "main": [
+          [
+            {
+              "node": "Upload a file",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Jacob Bottema",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-02-10T08:23:52.290Z",
+        "id": 3,
+        "workflowId": "ivINFwTVVJU0XKp6jTAwN",
+        "versionId": "f072e53a-d066-4d28-b974-c9f8ef812622",
+        "event": "activated",
+        "userId": "af111efb-a289-4bac-9091-cbef7b33aceb"
+      }
+    ]
+  }
+}

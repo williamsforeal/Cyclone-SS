@@ -1377,24 +1377,6 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://api.gumloop.com/api/v1/start_pipeline?api_key={{ $env.GUMLOOP_API_KEY }}&user_id={{ $env.GUMLOOP_USER_ID }}&saved_item_id={{ $env.GUMLOOP_SAVED_ITEM_ID }}",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ adType: $json.adType, headline: $json.headline, concept: $json.concept, cta: $json.cta, angle: $json.angle, avatarTarget: $json.avatarTarget, awarenessLevel: $json.awarenessLevel, tags: $json.tags, productImageUrl: $json.productImageUrl, recordId: $json.recordId }) }}",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.3,
-      "position": [
-        -1536,
-        1232
-      ],
-      "id": "975920e3-a98a-4950-9fe1-20c587d04f71",
-      "name": "HTTP Request5"
-    },
-    {
-      "parameters": {
-        "method": "POST",
         "url": "https://fal.run/fal-ai/flux/dev",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
@@ -1813,11 +1795,6 @@
     "image-prompt-context": {
       "main": [
         [
-          {
-            "node": "HTTP Request5",
-            "type": "main",
-            "index": 0
-          },
           {
             "node": "Message a model1",
             "type": "main",
@@ -3333,24 +3310,6 @@
       {
         "parameters": {
           "method": "POST",
-          "url": "=https://api.gumloop.com/api/v1/start_pipeline?api_key={{ $env.GUMLOOP_API_KEY }}&user_id={{ $env.GUMLOOP_USER_ID }}&saved_item_id={{ $env.GUMLOOP_SAVED_ITEM_ID }}",
-          "sendBody": true,
-          "specifyBody": "json",
-          "jsonBody": "={{ JSON.stringify({ adType: $json.adType, headline: $json.headline, concept: $json.concept, cta: $json.cta, angle: $json.angle, avatarTarget: $json.avatarTarget, awarenessLevel: $json.awarenessLevel, tags: $json.tags, productImageUrl: $json.productImageUrl, recordId: $json.recordId }) }}",
-          "options": {}
-        },
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.3,
-        "position": [
-          -1536,
-          1232
-        ],
-        "id": "975920e3-a98a-4950-9fe1-20c587d04f71",
-        "name": "HTTP Request5"
-      },
-      {
-        "parameters": {
-          "method": "POST",
           "url": "https://fal.run/fal-ai/flux/dev",
           "authentication": "genericCredentialType",
           "genericAuthType": "httpHeaderAuth",
@@ -3715,11 +3674,6 @@
       "image-prompt-context": {
         "main": [
           [
-            {
-              "node": "HTTP Request5",
-              "type": "main",
-              "index": 0
-            },
             {
               "node": "Message a model1",
               "type": "main",

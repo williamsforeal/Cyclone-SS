@@ -59,9 +59,7 @@ List all unique credential types needed across ALL workflows:
 - OpenAI API
 - AWS (S3)
 - fal.ai
-- BannerBear
 - Higgsfield
-- Gumloop
 ```
 
 ### Step 6: Next Steps Recommendations

@@ -5,7 +5,6 @@
   "description": "MCP servers for Bomb Ecom OS",
   "scripts": {
     "n8n": "node n8n-server.js",
-    "airtable": "node airtable-server.js",
-    "gumloop": "node gumloop-server.js"
+    "airtable": "node airtable-server.js"
   }
 }

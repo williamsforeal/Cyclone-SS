@@ -1317,24 +1317,6 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://api.gumloop.com/api/v1/start_pipeline?api_key={{ $env.GUMLOOP_API_KEY }}&user_id={{ $env.GUMLOOP_USER_ID }}&saved_item_id={{ $env.GUMLOOP_SAVED_ITEM_ID }}",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"adType\": $json.adType,\n  \"headline\": $json.headline,\n  \"concept\": $json.concept,\n  \"cta\": $json.cta,\n  \"angle\": $json.angle,\n  \"avatarTarget\": $json.avatarTarget,\n  \"awarenessLevel\": $json.awarenessLevel,\n  \"tags\": $json.tags,\n  \"productImageUrl\": $json.productImageUrl,\n  \"recordId\": $json.recordId\n}",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.3,
-      "position": [
-        -1536,
-        1232
-      ],
-      "id": "975920e3-a98a-4950-9fe1-20c587d04f71",
-      "name": "HTTP Request5"
-    },
-    {
-      "parameters": {
-        "method": "POST",
         "url": "https://fal.run/fal-ai/flux/dev",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
@@ -1793,11 +1775,6 @@
     "image-prompt-context": {
       "main": [
         [
-          {
-            "node": "HTTP Request5",
-            "type": "main",
-            "index": 0
-          },
           {
             "node": "Build CD Payload",
             "type": "main",

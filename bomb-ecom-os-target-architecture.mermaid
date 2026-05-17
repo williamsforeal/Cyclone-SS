@@ -30,7 +30,7 @@ flowchart TB
     subgraph N8N["N8N WORKFLOWS — port 5678 (Docker)"]
         W1["WF1 Research Pipeline — Perplexity to Claude to Airtable"]
         W2["WF2 Ad Copy Generator — Claude Sonnet 4"]
-        W3["WF3 Image Generation Pipeline — GPT-4o prompts + fal/Higgsfield + BannerBear"]
+        W3["WF3 Image Generation Pipeline — GPT-4o prompts + fal/Higgsfield"]
         W4["WF4 Ad Concept — Shopify Style (Claude Vision)"]
         W5["WF5 Ad Clone — Vision reference to adapted creative"]
         W6["WF6 AI UGC Video Creator (SCALE) — Nano Banana + FAL"]
@@ -51,7 +51,7 @@ flowchart TB
         AI1["Anthropic Claude Sonnet 4 — research / copy / vision"]
         AI2["OpenAI GPT-4o — image prompts / agent tasks"]
         AI3["Perplexity API — deep research"]
-        AI4["Google Gemini — analysis (BannerBear guide)"]
+        AI4["Google Gemini — analysis"]
         AI5["Nano Banana LM — UGC video + image gen"]
         AI6["ComfyUI local :8188 — static scaler image gen"]
     end
@@ -59,7 +59,6 @@ flowchart TB
     subgraph IMG["IMAGE / ASSET PIPELINES"]
         I1["fal.ai Flux Dev — scene generation"]
         I2["Higgsfield Soul — scene gen w/ product reference"]
-        I3["BannerBear — text overlay compositing (headline + CTA)"]
     end
 
     subgraph SRC["DATA SOURCES / EXTERNAL"]
@@ -68,7 +67,7 @@ flowchart TB
         S3["PLANNED: TrendTrack.io — competitor intel"]
         S4["PLANNED: GA4 — analytics ingest"]
         S5["PLANNED: Google Ads + SEO"]
-        S6["Box / GitHub / Gumloop (auxiliary)"]
+        S6["Box / GitHub (auxiliary)"]
     end
 
     O2 -.->|"strategy decisions"| O1
@@ -124,16 +123,12 @@ flowchart TB
 
     W3 --> I1
     W3 --> I2
-    W3 --> I3
     W4 --> I1
-    W4 --> I3
     W5 --> I1
-    W5 --> I3
     W6 --> I1
 
     I1 --> D3
     I2 --> D3
-    I3 --> D3
     AI6 --> D3
     W6 --> D4
     W8 --> D4
