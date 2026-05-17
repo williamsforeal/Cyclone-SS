@@ -1,0 +1,254 @@
+{{ 'component-reviews.css' | asset_url | stylesheet_tag }}
+{{ 'section-image-banner.css' | asset_url | stylesheet_tag }}
+{{ 'component-slider.css' | asset_url | stylesheet_tag }}
+{{ 'component-slideshow.css' | asset_url | stylesheet_tag }}
+
+<div class="review-items-container" style="--star-color:{{ block.settings.star_color }};--margin-top: {{ block.settings.margin_top | divided_by: 10.0 }}rem;--margin-bottom: {{ block.settings.margin_bottom | divided_by: 10.0 }}rem;">
+  {%- assign items_count = 0 -%}
+  {%- if block.settings.text_1 != blank -%}
+    {%- assign items_count = items_count | plus: 1 -%}
+  {%- endif -%}
+  {%- if block.settings.text_2 != blank -%}
+    {%- assign items_count = items_count | plus: 1 -%}
+  {%- endif -%}
+  {%- if block.settings.text_3 != blank -%}
+    {%- assign items_count = items_count | plus: 1 -%}
+  {%- endif -%}
+
+  <slideshow-component
+    class="slider-mobile-gutter"
+    role="region"
+    aria-roledescription="{{ 'sections.slideshow.carousel' | t }}"
+    aria-label="Customer reviews"
+  >
+    <div
+      class="slideshow banner grid grid--1-col slider slider--everywhere"
+      id="Slider-{{ section.id }}"
+      aria-live="polite"
+      aria-atomic="true"
+      data-autoplay="false"
+      data-speed="5"
+    >
+      {%- unless block.settings.text_1 == blank -%}
+        <div
+          class="slideshow__slide grid__item grid--1-col slider__slide"
+          id="Slide-{{ section.id }}-1"
+          {{ block.shopify_attributes }}
+          role="group"
+          aria-roledescription="{{ 'sections.slideshow.slide' | t }}"
+          aria-label="1 {{ 'general.slider.of' | t }} 3"
+          tabindex="-1"
+        >
+          <div class="review-item review-item--{{ block.settings.avatar_alignment }}">
+            {%- unless block.settings.image_1 == blank -%}
+              <div class="review-item__image">
+                <img
+                  src="{{ block.settings.image_1 | image_url }}"
+                  alt="{{ block.settings.author_1 }}"
+                  width="auto"
+                  height="auto"
+                  loading="lazy"
+                >
+              </div>
+            {%- endunless -%}
+            <div class="review-item__right">
+              <div class="review-item__text">
+                {{ block.settings.text_1 }}
+              </div>
+              {%- unless block.settings.author_1 == blank and block.settings.display_stars == false -%}
+                <div class="review-item__author-and-stars">
+                  {%- unless block.settings.author_1 == blank -%}
+                    <p class="review-item__author">
+                      {{ block.settings.author_1 }}
+                    </p>
+                  {%- endunless -%}
+                  {%- if block.settings.display_stars -%}
+                    <span class="review-item__stars">★★★★★</span>
+                  {%- endif -%}
+                </div>
+              {%- endunless -%}
+            </div>
+          </div>
+        </div>
+      {%- endunless -%}
+      {%- unless block.settings.text_2 == blank -%}
+        <div
+          class="slideshow__slide grid__item grid--1-col slider__slide"
+          id="Slide-{{ section.id }}-2"
+          {{ block.shopify_attributes }}
+          role="group"
+          aria-roledescription="{{ 'sections.slideshow.slide' | t }}"
+          aria-label="2 {{ 'general.slider.of' | t }} 3"
+          tabindex="-1"
+        >
+          <div class="review-item review-item--{{ block.settings.avatar_alignment }}">
+            {%- unless block.settings.image_2 == blank -%}
+              <div class="review-item__image">
+                <img
+                  src="{{ block.settings.image_2 | image_url }}"
+                  alt="{{ block.settings.author_2 }}"
+                  width="auto"
+                  height="auto"
+                  loading="lazy"
+                >
+              </div>
+            {%- endunless -%}
+            <div class="review-item__right">
+              <div class="review-item__text">
+                {{ block.settings.text_2 }}
+              </div>
+              {%- unless block.settings.author_2 == blank and block.settings.display_stars == false -%}
+                <div class="review-item__author-and-stars">
+                  {%- unless block.settings.author_2 == blank -%}
+                    <p class="review-item__author">
+                      {{ block.settings.author_2 }}
+                    </p>
+                  {%- endunless -%}
+                  {%- if block.settings.display_stars -%}
+                    <span class="review-item__stars">★★★★★</span>
+                  {%- endif -%}
+                </div>
+              {%- endunless -%}
+            </div>
+          </div>
+        </div>
+      {%- endunless -%}
+
+      {%- unless block.settings.text_3 == blank -%}
+        <div
+          class="slideshow__slide grid__item grid--1-col slider__slide"
+          id="Slide-{{ section.id }}-1"
+          {{ block.shopify_attributes }}
+          role="group"
+          aria-roledescription="{{ 'sections.slideshow.slide' | t }}"
+          aria-label="3 {{ 'general.slider.of' | t }} 3"
+          tabindex="-1"
+        >
+          <div class="review-item review-item--{{ block.settings.avatar_alignment }}">
+            {%- unless block.settings.image_3 == blank -%}
+              <div class="review-item__image">
+                <img
+                  src="{{ block.settings.image_3 | image_url }}"
+                  alt="{{ block.settings.author_3 }}"
+                  width="auto"
+                  height="auto"
+                  loading="lazy"
+                >
+              </div>
+            {%- endunless -%}
+            <div class="review-item__right">
+              <div class="review-item__text">
+                {{ block.settings.text_3 }}
+              </div>
+              {%- unless block.settings.author_3 == blank and block.settings.display_stars == false -%}
+                <div class="review-item__author-and-stars">
+                  {%- unless block.settings.author_3 == blank -%}
+                    <p class="review-item__author">
+                      {{ block.settings.author_3 }}
+                    </p>
+                  {%- endunless -%}
+                  {%- if block.settings.display_stars -%}
+                    <span class="review-item__stars">★★★★★</span>
+                  {%- endif -%}
+                </div>
+              {%- endunless -%}
+            </div>
+          </div>
+        </div>
+      {%- endunless -%}
+    </div>
+
+    {%- if items_count > 1 -%}
+      <div class="slideshow__controls slider-buttons no-js-hidden slideshow__controls--border-radius-mobile">
+        <button
+          type="button"
+          class="slider-button slider-button--prev"
+          name="previous"
+          aria-label="{{ 'sections.slideshow.previous_slideshow' | t }}"
+          aria-controls="Slider-{{ section.id }}"
+        >
+          {% render 'icon-caret' %}
+        </button>
+        <div class="slider-counter slider-counter--dots">
+          <div class="slideshow__control-wrapper">
+            {%- unless block.settings.text_1 == blank -%}
+              <button
+                class="slider-counter__link slider-counter__link--dots link"
+                aria-label="{{ 'sections.slideshow.load_slide' | t }} 1 {{ 'general.slider.of' | t }} 3"
+                aria-controls="Slider-{{ section.id }}"
+              >
+                <span class="dot"></span>
+              </button>
+            {%- endunless -%}
+            {%- unless block.settings.text_2 == blank -%}
+              <button
+                class="slider-counter__link slider-counter__link--dots link"
+                aria-label="{{ 'sections.slideshow.load_slide' | t }} 2 {{ 'general.slider.of' | t }} 3"
+                aria-controls="Slider-{{ section.id }}"
+              >
+                <span class="dot"></span>
+              </button>
+            {%- endunless -%}
+            {%- unless block.settings.text_3 == blank -%}
+              <button
+                class="slider-counter__link slider-counter__link--dots link"
+                aria-label="{{ 'sections.slideshow.load_slide' | t }} 3 {{ 'general.slider.of' | t }} 3"
+                aria-controls="Slider-{{ section.id }}"
+              >
+                <span class="dot"></span>
+              </button>
+            {%- endunless -%}
+          </div>
+        </div>
+        <button
+          type="button"
+          class="slider-button slider-button--next"
+          name="next"
+          aria-label="{{ 'sections.slideshow.next_slideshow' | t }}"
+          aria-controls="Slider-{{ section.id }}"
+        >
+          {% render 'icon-caret' %}
+        </button>
+      </div>
+    {%- endif -%}
+    <noscript>
+      {%- if items_count > 1 -%}
+        <div class="slider-buttons">
+          <div class="slider-counter">
+            {%- unless block.settings.text_1 == blank -%}
+              <a
+                href="#Slide-{{ section.id }}-1"
+                class="slider-counter__link link"
+                aria-label="{{ 'sections.slideshow.load_slide' | t }} 1 {{ 'general.slider.of' | t }} 3"
+              >
+                1
+              </a>
+            {%- endunless -%}
+            {%- unless block.settings.text_2 == blank -%}
+              <a
+                href="#Slide-{{ section.id }}-2"
+                class="slider-counter__link link"
+                aria-label="{{ 'sections.slideshow.load_slide' | t }} 2 {{ 'general.slider.of' | t }} 3"
+              >
+                2
+              </a>
+            {%- endunless -%}
+            {%- unless block.settings.text_3 == blank -%}
+              <a
+                href="#Slide-{{ section.id }}-3"
+                class="slider-counter__link link"
+                aria-label="{{ 'sections.slideshow.load_slide' | t }} 3 {{ 'general.slider.of' | t }} 3"
+              >
+                3
+              </a>
+            {%- endunless -%}
+          </div>
+        </div>
+      {%- endif -%}
+    </noscript>
+  </slideshow-component>
+</div>
+
+{%- if request.design_mode -%}
+  <script src="{{ 'theme-editor.js' | asset_url }}" defer="defer"></script>
+{%- endif -%}

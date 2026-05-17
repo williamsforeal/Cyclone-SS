@@ -1,0 +1,34 @@
+<dynamic-dates
+  class="estimated-shipping{% if block.settings.icon_alignment == 'middle' %} estimated-shipping--align-center{% endif %}"
+  data-date-format="{{ block.settings.date_format }}"
+  data-day-labels="{{ block.settings.days_labels }}"
+  data-month-labels="{{ block.settings.months_labels }}"
+  data-days-to-skip="{{ block.settings.days_to_skip | replace: ' ', '' | downcase }}"
+  data-dates-to-skip="{{ block.settings.dates_to_skip | replace: ' ', '' | downcase }}"
+  {{ block.shopify_attributes }}
+  style="--margin-top: {{ block.settings.margin_top | divided_by: 10.0 }}rem;--margin-bottom: {{ block.settings.margin_bottom | divided_by: 10.0 }}rem;"
+>
+  {% if block.settings.display_icon %}
+    <div class="estimated-shipping__icon estimated-shipping__icon--{{ block.settings.icon_size }}">
+      {% if block.settings.custom_icon == blank %}
+        {% render 'icon-accordion', icon: 'truck' %}
+      {% else %}
+        <img
+          src="{{ block.settings.custom_icon | image_url }}"
+          width="auto"
+          height="auto"
+          loading="lazy"
+        >
+      {% endif %}
+    </div>
+  {% endif %}
+  <div 
+    class="estimated-shipping__text"
+    data-dynamic-date='true'
+    data-text="{{ block.settings.message }}"
+    data-min-days="{{ block.settings.min_shipping_days }}"
+    data-max-days="{{ block.settings.max_shipping_days }}"
+  >
+    {{ block.settings.message | replace: '[start_date]', '-' | replace: '[end_date]', '-' }}
+  </div>
+</dynamic-dates>

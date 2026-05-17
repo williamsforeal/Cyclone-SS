@@ -98,6 +98,23 @@ n8n listens on all interfaces inside the container and the host can reach it.
 
 Place your n8n workflow JSON files in the `workflows/` directory. You can import them through the n8n web interface.
 
+### Perplexity OpenAI Agents Example
+
+Run a standalone Python example that uses Perplexity Sonar through the OpenAI Agents SDK:
+
+```powershell
+python -m pip install -r scripts/requirements-perplexity-agent.txt
+$env:PERPLEXITY_API_KEY = "pplx-your-key"
+python scripts/perplexity_openai_agent.py "Find three current ecommerce ad creative trends"
+```
+
+Optional environment variables:
+
+```powershell
+$env:PERPLEXITY_BASE_URL = "https://api.perplexity.ai"
+$env:PERPLEXITY_MODEL_NAME = "sonar-pro"
+```
+
 ## 🚀 Production Deployment
 
 Planning to deploy Cyclone-SS as a SaaS application? See **[DEPLOYMENT.md](./DEPLOYMENT.md)** for:

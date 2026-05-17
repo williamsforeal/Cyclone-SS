@@ -1,16 +1,16 @@
-import { createPuppeteerRouter } from 'crawlee';
+import { createPuppeteerRouter, EnqueueStrategy } from 'crawlee';
 
 export const router = createPuppeteerRouter();
 
-router.addDefaultHandler(async ({ enqueueLinks, log }) => {
-    log.info(`enqueueing new URLs`);
+router.addDefaultHandler(async ({ enqueueLinks, log, request }) => {
+    log.info(`enqueueing new URLs from ${request.loadedUrl}`);
     await enqueueLinks({
-        globs: ['https://crawlee.dev/**'],
+        strategy: EnqueueStrategy.SameHostname,
         label: 'detail',
     });
 });
 
-router.addHandler('detail', async ({ request, page, log, pushData }) => {
+router.addHandler('detail', async ({ request, page, pushData, log }) => {
     const title = await page.title();
     log.info(`${title}`, { url: request.loadedUrl });
 

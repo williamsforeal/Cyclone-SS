@@ -1,0 +1,138 @@
+@charset 'UTF-8';
+/* Slider */
+
+/* Arrows */
+.slider-arrow {
+  outline: none;
+  width: 4rem;
+  height: 4rem;
+  border: none;
+  border-radius: 50%;
+  opacity: 0.8;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+.slider-arrow:hover {
+  opacity: 1;
+}
+
+.slider-arrow svg {
+  width: 55%;
+  height: 55%;
+}
+
+.slider-arrow-prev {
+  left: 1rem;
+}
+
+.slider-arrow-prev svg {
+  transform: rotate(-90deg);
+}
+
+.slider-arrow-next {
+  right: 1rem;
+}
+
+.slider-arrow-next svg {
+  transform: rotate(90deg);
+}
+@media screen and (max-width: 750px) {
+  .slider-arrow {
+    width: 3rem;
+    height: 3rem;
+  }
+  .slider-arrow-prev {
+    left: 0.5rem;
+  }
+  .slider-arrow-next {
+    right: 0.5rem;
+  }
+}
+
+/* Dots */
+.slick-dotted.slick-slider {
+  margin-bottom: 35px;
+}
+
+.slick-dots {
+  position: absolute;
+  bottom: -30px;
+
+  display: block;
+
+  width: 100%;
+  padding: 0;
+  margin: 0;
+
+  list-style: none;
+
+  text-align: center;
+}
+.slick-dots li {
+  position: relative;
+
+  display: inline-block;
+
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+
+  cursor: pointer;
+}
+.slick-dots li button {
+  font-size: 0;
+  line-height: 0;
+
+  display: block;
+
+  width: 2rem;
+  height: 2rem;
+  padding: 5px;
+
+  cursor: pointer;
+
+  color: transparent;
+  border: 0;
+  outline: none;
+  background: transparent;
+}
+.slick-dots li button:hover,
+.slick-dots li button:focus {
+  outline: none;
+}
+.slick-dots li button:hover:before,
+.slick-dots li button:focus:before {
+  opacity: 1;
+}
+.slick-dots li button:before {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  width: 0.6rem;
+  height: 0.6rem;
+  display: block;
+  border-radius: 50%;
+
+  content: "";
+  text-align: center;
+
+  opacity: 0.25;
+  background: rgb(var(--color-foreground));
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.slick-dots li.slick-active button:before {
+  opacity: 0.75;
+  width: 0.9rem;
+  height: 0.9rem;
+}

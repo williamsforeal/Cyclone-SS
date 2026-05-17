@@ -1,0 +1,127 @@
+.vertical-ticker__inner {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(
+    0deg,
+    transparent 0,
+    #000 20%,
+    #000 70%,
+    transparent
+  );
+  mask-image: linear-gradient(
+    180deg,
+    transparent 0,
+    #000 20%,
+    #000 70%,
+    transparent
+  );
+}
+.vertical-ticker__container {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  text-align: center;
+}
+.vertical-ticker__item {
+  margin: 0;
+  color: rgb(var(--color-foreground));
+}
+.vertical-ticker__item--italic {
+  font-style: italic;
+}
+.vertical-ticker__item--uppercase {
+  text-transform: uppercase;
+}
+.vertical-ticker__item--bold {
+  font-weight: 700;
+}
+@keyframes vertTicker {
+  to {
+    transform: translateY(-50%);
+  }
+}
+.vertical-ticker-and-content {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+}
+.vertical-ticker-content {
+  display: grid;
+  place-items: center;
+  position: relative;
+}
+.vertical-ticker-content .title {
+  margin-top: 0;
+}
+.vertical-ticker-content__bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+.vertical-ticker-content__bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -2;
+}
+.vertical-ticker-content .page-width {
+  position: relative;
+  z-index: 1;
+}
+
+@media screen and (min-width: 900px) {
+  .vertical-ticker-and-content--ticker-first .vertical-ticker {
+    order: -1;
+  }
+  .vertical-ticker-and-content {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .vertical-ticker-content {
+    padding-top: 36px;
+  }
+}
+@media screen and (max-width: 900px) {
+  .vertical-ticker-and-content--content-desktop-only .vertical-ticker-content {
+    display: none;
+  }
+}
+
+/* horizontal */
+.horizontal-ticker {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+.horizontal-ticker__inner {
+  overflow: hidden;
+}
+.horizontal-ticker__container {
+  display: flex;
+  width: fit-content;
+}
+.horizontal-ticker__item {
+  margin: 0;
+  color: rgb(var(--color-foreground));
+  line-height: 1;
+  white-space: nowrap;
+}
+.horizontal-ticker__item--italic {
+  font-style: italic;
+}
+.horizontal-ticker__item--uppercase {
+  text-transform: uppercase;
+}
+.horizontal-ticker__item--bold {
+  font-weight: 700;
+}
+
+@keyframes horTicker {
+  to {
+    transform: translateX(-50%);
+  }
+}

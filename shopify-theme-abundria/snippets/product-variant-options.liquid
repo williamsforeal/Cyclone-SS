@@ -1,0 +1,193 @@
+{% comment %}
+  Renders product variant options
+
+  Accepts:
+  - product: {Object} product object.
+  - option: {Object} current product_option object.
+  - block: {Object} block object.
+
+
+  Usage:
+  {% render 'product-variant-options',
+    product: product,
+    option: option,
+    block: block
+  %}
+{% endcomment %}
+{%- liquid
+  assign variants_available_arr = product.variants | map: 'available'
+  assign variants_option1_arr = product.variants | map: 'option1'
+  assign variants_option2_arr = product.variants | map: 'option2'
+  assign variants_option3_arr = product.variants | map: 'option3'
+
+  assign custom_colors_arr = block.settings.swatches_custom_colors_list | split: ','
+  assign predefined_colors = settings.swatches_predefined_colors_list | split: '</p><p>'
+
+  assign product_form_id = 'product-form-' | append: section.id
+-%}
+
+{%- for value in option.values -%}
+  {%- liquid
+    assign option_class = ''
+    assign option_disabled = true
+    assign option_index = forloop.index0
+    assign option_exists = false
+
+    for option1_name in variants_option1_arr
+      case option.position
+        when 1
+          if variants_option1_arr[forloop.index0] == value
+            assign option_exists = true
+            if variants_available_arr[forloop.index0]
+              assign option_disabled = false
+            endif
+          endif
+        when 2
+          if option1_name == product.selected_or_first_available_variant.option1 and variants_option2_arr[forloop.index0] == value
+            assign option_exists = true
+            if variants_available_arr[forloop.index0]
+              assign option_disabled = false
+            endif
+          endif
+        when 3
+          if option1_name == product.selected_or_first_available_variant.option1 and variants_option2_arr[forloop.index0] == product.selected_or_first_available_variant.option2 and variants_option3_arr[forloop.index0] == value
+            assign option_exists = true
+            if variants_available_arr[forloop.index0]
+              assign option_disabled = false
+            endif
+          endif
+      endcase
+    endfor
+
+    if option_exists == false
+      assign option_class = 'non-existent'
+    elsif option_disabled == true
+      assign option_class = 'unavailable'
+    endif
+  -%}
+
+  {% case type %}
+    {%- when 'swatches' -%}
+      {% liquid
+        assign hex_value = ''
+
+        for color in predefined_colors
+          assign color_line = color | remove: '<p>' | remove: '</p>'
+          assign color_parts = color_line | split: '='
+          assign option_name = color_parts[0] | strip
+          assign option_hex = color_parts[1] | strip
+
+          if value == option_name
+            assign hex_value = option_hex
+            assign current_option_name = option_name
+            assign option_value_index = option_value_index | plus: 1
+          endif
+        endfor
+
+        if value.swatch.image
+          assign image_url = value.swatch.image | image_url: width: 400
+          assign swatch_value = 'no-repeat center / cover url(' | append: image_url | append: ')'
+        else
+          assign swatch_value = 'rgb(' | append: value.swatch.color.rgb | append: ')'
+        endif
+      %}
+      <div class="color-swatch {{ option_class }}">
+        <input
+          type="radio"
+          id="{{ section.id }}-{{ option.position }}-{{ forloop.index0 }}"
+          name="{{ option.name }}{{ custom_name_identifier }}"
+          value="{{ value | escape }}"
+          form="{{ product_form_id }}"
+          data-swatch="true"
+          {% if option.selected_value == value %}
+            checked
+          {% endif %}
+          class="{{ option_class }}{% if option_disabled %} disabled{% endif %}"
+        >
+        <div class="color-swatch__image">
+          {% for variant in product.variants %}
+            {%- capture variant_option_key -%}
+              option{{- option.position -}}
+            {%- endcapture -%}
+
+            {% assign variant_option_val = variant[variant_option_key] %}
+
+            {% if variant_option_val == value %}
+              {% if block.settings.swatches_custom_colors == 'disabled' %}
+                {% if variant.image %}
+                  <img
+                    src="{{ variant.image | image_url: width: 200 }}"
+                    alt="{{ variant_option_val }}"
+                    width="auto"
+                    height="auto"
+                    loading="lazy"
+                  >
+                {% endif %}
+              {% else %}
+                {% liquid
+                  if block.settings.swatches_custom_colors == 'image_alt'
+                    assign custom_color = variant.image.alt
+                  elsif block.settings.swatches_custom_colors == 'custom'
+                    assign custom_color = custom_colors_arr[option_index]
+                  elsif block.settings.swatches_custom_colors == 'metafield'
+                    assign custom_color = swatch_value
+                  else
+                    assign custom_color = ''
+
+                    for color in predefined_colors
+                      assign color_line = color | remove: '<p>' | remove: '</p>'
+                      assign color_parts = color_line | split: '='
+                      assign option_name = color_parts[0] | strip
+                      assign option_hex = color_parts[1] | strip
+
+                      if value == option_name
+                        assign custom_color = option_hex
+                      endif
+                    endfor
+                  endif
+                %}
+                <div class="color-swatch__custom-color" style="--bg-color: {{ custom_color }}">&nbsp</div>
+              {% endif %}
+              {% break %}
+            {% endif %}
+          {% endfor %}
+        </div>
+        <label class="color-swatch_hidden-label" for="{{ section.id }}-{{ option.position }}-{{ forloop.index0 }}">
+        </label>
+        <span class="color-swatch__label">{{ value }}</span>
+      </div>
+    {%- when 'pills' -%}
+      <input
+        type="radio"
+        id="{{ section.id }}-{{ option.position }}-{{ forloop.index0 }}"
+        name="{{ option.name }}"
+        value="{{ value | escape }}"
+        form="{{ product_form_id }}"
+        {% if option.selected_value == value %}
+          checked
+        {% endif %}
+        class="{{ option_class }}{% if option_disabled %} disabled{% endif %}"
+      >
+      <label
+        for="{{ section.id }}-{{ option.position }}-{{ forloop.index0 }}"
+        class="color-foreground-{{ settings.variant_pills_accent_color }}"
+      >
+        {{ value -}}
+        <span class="visually-hidden">{{ 'products.product.variant_sold_out_or_unavailable' | t }}</span>
+      </label>
+    {%- when 'dropdown' -%}
+      <option
+        value="{{ value | escape }}"
+        {% if option.selected_value == value %}
+          selected="selected"
+        {% endif %}
+        class="{{ option_class }}"
+      >
+        {% if option_disabled -%}
+          {{- 'products.product.value_unavailable' | t: option_value: value -}}
+        {%- else -%}
+          {{- value -}}
+        {%- endif %}
+      </option>
+  {% endcase %}
+{%- endfor -%}

@@ -1,0 +1,22 @@
+{
+    "title": "Puppeteer Web Crawler",
+    "type": "object",
+    "schemaVersion": 1,
+    "properties": {
+        "startUrls": {
+            "title": "Start URLs",
+            "type": "array",
+            "description": "One or more URLs where the crawler starts. Stays on the same hostname.",
+            "prefill": [{ "url": "https://crawlee.dev" }],
+            "editor": "requestListSources"
+        },
+        "maxRequestsPerCrawl": {
+            "title": "Max requests per crawl",
+            "type": "integer",
+            "description": "Maximum number of pages to crawl. 0 = unlimited.",
+            "prefill": 20,
+            "editor": "number"
+        }
+    },
+    "required": ["startUrls"]
+}

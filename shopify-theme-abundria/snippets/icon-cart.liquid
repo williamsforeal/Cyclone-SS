@@ -1,0 +1,45 @@
+{% if settings.cart_icon == 'cart' %}
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 53.98 45.23"
+    class="icon icon-cart"
+    aria-hidden="true"
+    focusable="false"
+    fill="none"
+  >
+    <polyline stroke="currentColor" points="1.5 1.5 10.04 2.06 15.09 27.94 45.39 27.94 52.48 6.79 18.25 6.65" style="fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:3px"/>
+    <circle stroke="currentColor" cx="20.58" cy="39.74" r="3.99" style="fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:3px"/>
+    <circle stroke="currentColor" cx="40.02" cy="39.74" r="3.99" style="fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:3px"/>
+    <polyline stroke="currentColor" points="45.42 35.75 14.49 35.75 17.21 27.94" style="fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:3px"/>
+  </svg>
+{% elsif settings.cart_icon == 'bag_two' %}
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 500 418.951"
+    class="icon icon-cart"
+    aria-hidden="true"
+    focusable="false"
+    fill="none"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="31.5"
+    style="margin-bottom: 4px;"
+  >
+     <path d="m71.67 363.56 13.82-178.3a35.72 35.72 0 0 1 35.61-32.99h258.16a35.72 35.72 0 0 1 35.61 32.99l13.82 178.3c3.93 50.17-41.44 92.74-98.79 92.74H170.46c-57.35 0-102.72-42.57-98.79-92.74"></path>
+    <path d="M179 125.3c0-44.44 32.01-80.46 71.5-80.46S322 80.86 322 125.3v53.57c0 44.44-32.01 80.46-71.5 80.46S179 223.31 179 178.87z"></path>
+  </svg>
+{% else %}
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 36.52 45.01"
+    class="icon icon-cart"
+    aria-hidden="true"
+    focusable="false"
+    fill="none"
+    style="transform: scale(0.9);"
+  >
+    <path stroke="currentColor" d="M12.88,10.4H41.23l2.5,27.78a5,5,0,0,1-5,5.47H15.25a5,5,0,0,1-5-5.49Z" transform="translate(-8.73 -0.14)" style="fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:3px"/>
+    <path stroke="currentColor" d="M19.62,15.51V9.1a7.46,7.46,0,0,1,14.92,0v6.41" transform="translate(-8.73 -0.14)" style="fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:3px"/>
+  </svg>
+{% endif %}

@@ -1,0 +1,190 @@
+{% liquid
+  assign upsell_2_item = all_products[settings.cart_upsell_2_product]
+  assign display = true
+
+  if settings.cart_upsell_hide_when_in_cart
+    if upsell_2_item != blank
+      for item in cart.items
+        assign item_handle = item.product.handle
+        if item_handle == upsell_2_item.handle
+          assign display = false
+          break
+        endif
+      endfor
+    endif
+  endif
+%}
+
+{%- if upsell_2_item != blank and display and cart != empty %}
+  <div class="cart-upsell-container">
+    {% if settings.cart_upsell_2_title != blank %}
+      <h3 class="title h3 center">
+        {{ settings.cart_upsell_2_title }}
+      </h3>
+    {% endif -%}
+
+    {%- assign product_form_2_id = 'product-form-upsell-2' -%}
+
+    <div class="cart-secondary-upsell cart-upsell{% if settings.cart_upsell_drop_shadow == false %} cart-upsell--no-shadow{% endif %} color-{{ settings.cart_upsell_color_scheme }}">
+      <div class="cart-upsell__image">
+        <img
+          src="{{ upsell_2_item.featured_image | image_url: width: 300 }}"
+          alt="{{ upsell_2_item.featured_image.alt | escape }}"
+          loading="lazy"
+          width="100%"
+          height="auto"
+          class="cart-upsell__image__img"
+        >
+      </div>
+      <div class="cart-upsell__content">
+        <{% if settings.cart_upsell_title_link %}a href="{{ upsell_2_item.url }}"{% else %}h3{% endif %} class="cart-upsell__title h4 break">
+          {{- upsell_2_item.title | escape -}}
+        </{% if settings.cart_upsell_title_link %}a{% else %}h3{% endif %}>
+        {%- unless settings.cart_upsell_2_desc == blank -%}
+          <div class="cart-upsell__desc">
+            {{ settings.cart_upsell_2_desc }}
+          </div>
+        {%- endunless -%}
+        <!-- start variants -->
+        {%- unless upsell_2_item.has_only_default_variant -%}
+          <variant-selects
+            id="variant-selects-cart-upsell-2"
+            class="no-js-hidden variant-selects--small"
+            data-section="cart-drawer"
+            data-url="{{ upsell_2_item.url }}"
+            data-update-url="false"
+            data-product-id="{{ upsell_2_item.selected_or_first_available_variant.id }}"
+            onchange="secondaryUpsellVariantChange()"
+          >
+            {%- for option in upsell_2_item.options_with_values -%}
+              <div class="product-form__input product-form__input--dropdown">
+                <div class="visually-hidden product-form__input__type" data-type="dropdown">&nbsp</div>
+                <label class="form__label" for="Option-cart-upsell-2-{{ forloop.index0 }}">
+                  {{ option.name }}
+                </label>
+                <div class="select select--small color-background-1">
+                  <select
+                    id="Option-cart-upsell-2-{{ forloop.index0 }}"
+                    class="select__select variant-dropdown"
+                    name="options[{{ option.name | escape }}]"
+                    form="{{ product_form_2_id }}"
+                    data-product-id="{{ upsell_2_item.selected_or_first_available_variant.id }}"
+                  >
+                    {%- liquid
+                      assign variants_available_arr = upsell_2_item.variants | map: 'available'
+                      assign variants_option1_arr = upsell_2_item.variants | map: 'option1'
+                      assign variants_option2_arr = upsell_2_item.variants | map: 'option2'
+                      assign variants_option3_arr = upsell_2_item.variants | map: 'option3'
+                    -%}
+                    {% for value in option.values %}
+                      {%- liquid
+                        assign option_disabled = true
+
+                        for option1_name in variants_option1_arr
+                          case option.position
+                            when 1
+                              if variants_option1_arr[forloop.index0] == value and variants_available_arr[forloop.index0]
+                                assign option_disabled = false
+                              endif
+                            when 2
+                              if option1_name == upsell_2_item.selected_or_first_available_variant.option1 and variants_option2_arr[forloop.index0] == value and variants_available_arr[forloop.index0]
+                                assign option_disabled = false
+                              endif
+                            when 3
+                              if option1_name == upsell_2_item.selected_or_first_available_variant.option1 and variants_option2_arr[forloop.index0] == product.selected_or_first_available_variant.option2 and variants_option3_arr[forloop.index0] == value and variants_available_arr[forloop.index0]
+                                assign option_disabled = false
+                              endif
+                          endcase
+                        endfor
+                      -%}
+                      <option
+                        value="{{ value | escape }}"
+                        {% if option.selected_value == value %}
+                          selected="selected"
+                        {% endif %}
+                        form="{{ product_form_2_id }}"
+                      >
+                        {% if option_disabled -%}
+                          {{- 'products.product.value_unavailable' | t: option_value: value -}}
+                        {%- else -%}
+                          {{- value -}}
+                        {%- endif %}
+                      </option>
+                    {% endfor %}
+                  </select>
+                  {% render 'icon-caret' %}
+                </div>
+              </div>
+            {%- endfor -%}
+
+            <script type="application/json">
+              {{ upsell_2_item.variants | json }}
+            </script>
+          </variant-selects>
+        {% endunless %}
+        <!-- end variants -->
+        <div class="cart-upsell__prices-and-btn">
+          {%- render 'price',
+            product: upsell_2_item,
+            use_variant: true,
+            show_badges: false,
+            price_class: '',
+            hide_currency_code: true
+          -%}
+          <product-form>
+            {%- form 'product',
+              upsell_2_item,
+              id: product_form_2_id,
+              class: 'form',
+              novalidate: 'novalidate',
+              data-type: 'add-to-cart-form'
+            -%}
+              <input
+                type="hidden"
+                name="id"
+                value="{{ upsell_2_item.selected_or_first_available_variant.id }}"
+                disabled
+                class="bara"
+              >
+              <button
+                id="{{ product_form_id }}-submit"
+                type="submit"
+                name="add"
+                class="cart-upsell__btn"
+                aria-haspopup="dialog"
+                aria-labelledby="{{ product_form_id }}-submit title-{{ section_id }}-{{ upsell_2_item.id }}"
+                aria-live="polite"
+                data-sold-out-message="true"
+                {% if upsell_2_item.selected_or_first_available_variant.available == false %}
+                  disabled
+                {% endif %}
+              >
+                <span>
+                  {%- if upsell_2_item.selected_or_first_available_variant.available -%}
+                    {{ settings.cart_upsell_2_btn_label }}
+                  {%- else -%}
+                    {{ 'products.product.sold_out' | t }}
+                  {%- endif -%}
+                </span>
+                <span class="sold-out-message hidden">
+                  {{ 'products.product.sold_out' | t }}
+                </span>
+                <div class="loading-overlay__spinner hidden">
+                  <svg
+                    aria-hidden="true"
+                    focusable="false"
+                    class="spinner"
+                    viewBox="0 0 66 66"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <circle class="path" fill="none" stroke-width="6" cx="33" cy="33" r="30"></circle>
+                  </svg>
+                </div>
+              </button>
+            {%- endform -%}
+          </product-form>
+        </div>
+      </div>
+    </div>
+  </div>
+{%- endif -%}

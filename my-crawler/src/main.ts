@@ -1,17 +1,25 @@
-// For more information, see https://crawlee.dev/
-import { Browser, ImpitHttpClient } from '@crawlee/impit-client';
-import { log, PuppeteerCrawler } from 'crawlee';
+import { Actor } from 'apify';
+import { PuppeteerCrawler } from 'crawlee';
 
 import { router } from './routes.js';
 
-const startUrls = ['https://crawlee.dev'];
+await Actor.init();
+
+interface Input {
+    startUrls: { url: string }[];
+    maxRequestsPerCrawl?: number;
+}
+
+const {
+    startUrls = [{ url: 'https://crawlee.dev' }],
+    maxRequestsPerCrawl = 20,
+} = (await Actor.getInput<Input>()) ?? {};
 
 const crawler = new PuppeteerCrawler({
-    // proxyConfiguration: new ProxyConfiguration({ proxyUrls: ['...'] }),
-    httpClient: new ImpitHttpClient({ browser: Browser.Chrome }),
     requestHandler: router,
-    // Comment this option to scrape the full website.
-    maxRequestsPerCrawl: 20,
+    maxRequestsPerCrawl: maxRequestsPerCrawl === 0 ? Infinity : maxRequestsPerCrawl,
 });
 
-await crawler.run(startUrls);
+await crawler.run(startUrls.map((s) => s.url));
+
+await Actor.exit();

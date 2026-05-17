@@ -1,0 +1,734 @@
+{{ 'section-comparison-table.css' | asset_url | stylesheet_tag }}
+{{ 'component-rte.css' | asset_url | stylesheet_tag }}
+
+{%- style -%}
+  .section-{{ section.id }}-padding {
+    padding-top: {{ section.settings.padding_top | times: 0.75 | round: 0 }}px;
+    padding-bottom: {{ section.settings.padding_bottom | times: 0.75 | round: 0 }}px;
+  }
+
+  @media screen and (min-width: 750px) {
+    .section-{{ section.id }}-padding {
+      padding-top: {{ section.settings.padding_top }}px;
+      padding-bottom: {{ section.settings.padding_bottom }}px;
+    }
+  }
+
+  .comparison-table tbody {
+    border-radius: {{ section.settings.corner_radius | divided_by: 10.0 }}rem;
+  }
+  .comparison-table-{{ section.id }} {
+    --border-radius: {{ section.settings.corner_radius | divided_by: 10.0 }}rem;
+  }
+
+  .comparison-table tbody tr:first-of-type .comparison-table__row-name {
+    border-radius: {{ section.settings.corner_radius | divided_by: 10.0 }}rem 0 0 0;
+  }
+  .comparison-table tbody tr:last-of-type .comparison-table__row-name {
+    border-radius: 0 0 0 {{ section.settings.corner_radius | divided_by: 10.0 }}rem;
+  }
+  .comparison-table tbody tr:first-of-type td:last-child {
+     border-radius: 0 {{ section.settings.corner_radius | divided_by: 10.0 }}rem 0 0;
+  }
+  .comparison-table tbody tr:last-of-type td:last-child {
+     border-radius: 0 0 {{ section.settings.corner_radius | divided_by: 10.0 }}rem 0;
+  }
+
+  .color-scheme-{{ section.id }}.color-custom {
+    --color-background: {{ section.settings.custom_colors_background.red }}, {{ section.settings.custom_colors_background.green }}, {{ section.settings.custom_colors_background.blue }};
+    --gradient-background: {% if section.settings.custom_gradient_background != blank %}{{ section.settings.custom_gradient_background }}{% else %}{{ section.settings.custom_colors_background }}{% endif %};
+    {% if section.settings.custom_image_background != blank %}
+      {% # theme-check-disable %}
+      --gradient-background: url('{{ section.settings.custom_image_background | img_url: 'master' }}') center center / cover no-repeat;
+      {% # theme-check-enable %}
+    {% endif %}
+    --color-foreground: {{ section.settings.custom_colors_text.red }}, {{ section.settings.custom_colors_text.green }}, {{ section.settings.custom_colors_text.blue }};
+    --color-button: {{ section.settings.custom_colors_solid_button_background.red }}, {{ section.settings.custom_colors_solid_button_background.green }}, {{ section.settings.custom_colors_solid_button_background.blue }};
+    --color-button-text: {{ section.settings.custom_colors_solid_button_text.red }}, {{ section.settings.custom_colors_solid_button_text.green }}, {{ section.settings.custom_colors_solid_button_text.blue }};
+    --color-base-outline-button-labels: {{ section.settings.custom_colors_outline_button.red }}, {{ section.settings.custom_colors_outline_button.green }}, {{ section.settings.custom_colors_outline_button.blue }};
+  }
+  {% if section.settings.custom_mobile_image_background != blank %}
+    @media screen and (max-width: 740px) {
+      .color-scheme-{{ section.id }}.color-custom {
+        {% # theme-check-disable %}
+        --gradient-background: url('{{ section.settings.custom_mobile_image_background | img_url: 'master' }}') center center / cover no-repeat;
+        {% # theme-check-enable %}
+      }
+    }
+  {% endif %}
+{%- endstyle -%}
+
+<div class="color-{{ section.settings.color_scheme }} content-for-grouping color-scheme-{{ section.id }} gradient {{ section.settings.visibility }}">
+  <div class="page-width section-{{ section.id }}-padding">
+    <div class="content-and-comparison-table{% if section.settings.layout == 'table_first' %} content-and-comparison-table--table-first{% endif %}{% if section.settings.title == blank and section.settings.text == blank %} content-and-comparison-table--no-content{% endif %}">
+      <div class="content-container center">
+        {%- unless section.settings.title == blank -%}
+          <h2 class="title {{ section.settings.heading_size }}">
+            {{ section.settings.title | escape }}
+          </h2>
+        {%- endunless -%}
+        {%- unless section.settings.text == blank -%}
+          <div class="comparison-table__text">
+            {{ section.settings.text }}
+          </div>
+        {%- endunless -%}
+        {%- if section.settings.button_label != blank -%}
+          <a
+            {% if section.settings.link %}
+              href="{{ section.settings.link }}"
+            {% else %}
+              role="link" aria-disabled="true"
+            {% endif %}
+            class="button mb-1em {% if section.settings.button_style_secondary %}button--secondary{% else %}button--primary{% endif %}"
+          >
+            {{- section.settings.button_label | escape -}}
+          </a>
+        {%- endif -%}
+      </div>
+      <div class="comparison-table-container">
+        {% assign number_of_competitors = section.settings.number_of_competitors %}
+        <table class="comparison-table comparison-table-{{ section.id }}">
+          <thead>
+            <tr>
+              <th>&nbsp</th>
+              <th
+                align="center"
+                class="comparison-table__logo"
+                style="--mobile-logo-width: {{ section.settings.mobile_logo_width }}px;--font-size: {{ section.settings.us_label_size | divided_by: 10.0 }}rem;"
+              >
+                {%- if section.settings.logo != blank -%}
+                  {%- assign logo_width = section.settings.logo_width -%}
+                  {%- assign logo_height = logo_width | divided_by: section.settings.logo.aspect_ratio -%}
+                  {{
+                    section.settings.logo
+                    | image_url: width: 400
+                    | image_tag: width: logo_width, height: logo_height, alt: shop.name
+                  }}
+                {%- else -%}
+                  {{ section.settings.us_label | replace: '[shop_name]', shop.name }}
+                {%- endif -%}
+              </th>
+
+              {% for i in (1..number_of_competitors) %}
+                {% liquid
+                  if i == 1
+                    assign mobile_logo_width = section.settings.others_mobile_logo_width
+                    assign logo = section.settings.others_logo
+                    assign logo_width = section.settings.others_logo_width
+                    assign logo_height = logo_width | divided_by: section.settings.others_logo.aspect_ratio
+                    assign label = section.settings.others_label
+                    assign label_size = section.settings.others_label_size
+                  elsif i == 2
+                    assign mobile_logo_width = section.settings.others_2_mobile_logo_width
+                    assign logo = section.settings.others_2_logo
+                    assign logo_width = section.settings.others_2_logo_width
+                    assign logo_height = logo_width | divided_by: section.settings.others_2_logo.aspect_ratio
+                    assign label = section.settings.others_2_label
+                    assign label_size = section.settings.others_2_label_size
+                  elsif i == 3
+                    assign mobile_logo_width = section.settings.others_3_mobile_logo_width
+                    assign logo = section.settings.others_3_logo
+                    assign logo_width = section.settings.others_3_logo_width
+                    assign logo_height = logo_width | divided_by: section.settings.others_3_logo.aspect_ratio
+                    assign label = section.settings.others_3_label
+                    assign label_size = section.settings.others_3_label_size
+                  endif
+                %}
+
+                <th
+                  align="center"
+                  class="comparison-table__others"
+                  style="--mobile-logo-width: {{ mobile_logo_width }}px;--font-size: {{ label_size | divided_by: 10.0 }}rem;"
+                >
+                  {%- if logo != blank -%}
+                    {{ logo | image_url: width: 400 | image_tag: width: logo_width, height: logo_height, alt: label }}
+                  {%- else -%}
+                    {{ label }}
+                  {%- endif -%}
+                </th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {%- for block in section.blocks -%}
+              <tr>
+                <td align="center" class="comparison-table__row-name color-{{ section.settings.benefit_color_scheme }}">
+                  <h3>{{ block.settings.benefit }}</h3>
+                </td>
+                <td align="center" class="color-{{ section.settings.icon_cells_color_scheme }}">
+                  {%- if block.settings.us -%}
+                    <svg
+                      class="comparison-table__checkmark"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 25.45 25.43"
+                    >
+                      <defs><style>.cls-1{fill:{{ section.settings.checkmark_color }};}</style></defs>
+                      <polygon class="cls-1" points="25.45 0 24.06 0 9.5 15.27 2.12 10.24 0 12.55 9.28 25.43 25.45 2.48 25.45 0"/>
+                    </svg>
+                  {%- else -%}
+                    <div class="comparison-table__x"><span></span><span></span></div>
+                  {%- endif -%}
+                </td>
+
+                {% for i in (1..number_of_competitors) %}
+                  {% liquid
+                    if i == 1
+                      assign is_checkmark = block.settings.others
+                    elsif i == 2
+                      assign is_checkmark = block.settings.others_2
+                    elsif i == 3
+                      assign is_checkmark = block.settings.others_3
+                    endif
+                  %}
+
+                  <td align="center" class="color-{{ section.settings.icon_cells_color_scheme }}">
+                    {%- if is_checkmark -%}
+                      <svg
+                        class="comparison-table__checkmark"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 25.45 25.43"
+                      >
+                        <defs><style>.cls-1{fill:{{ section.settings.checkmark_color }};}</style></defs>
+                        <polygon class="cls-1" points="25.45 0 24.06 0 9.5 15.27 2.12 10.24 0 12.55 9.28 25.43 25.45 2.48 25.45 0"/>
+                      </svg>
+                    {%- else -%}
+                      <div class="comparison-table__x"><span></span><span></span></div>
+                    {%- endif -%}
+                  </td>
+                {% endfor %}
+              </tr>
+            {%- endfor -%}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Comparison table",
+  "settings": [
+    {
+      "type": "select",
+      "id": "visibility",
+      "options": [
+        {
+          "value": "desktop-hidden",
+          "label": "Mobile only"
+        },
+        {
+          "value": "mobile-hidden",
+          "label": "Desktop only"
+        },
+        {
+          "value": "always-display",
+          "label": "All devices"
+        }
+      ],
+      "label": "Display on",
+      "default": "always-display"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "default": "Comparison table",
+      "label": "Heading"
+    },
+    {
+      "type": "select",
+      "id": "heading_size",
+      "options": [
+        {
+          "value": "h2",
+          "label": "t:sections.all.heading_size.options__1.label"
+        },
+        {
+          "value": "h1",
+          "label": "t:sections.all.heading_size.options__2.label"
+        },
+        {
+          "value": "h0",
+          "label": "t:sections.all.heading_size.options__3.label"
+        }
+      ],
+      "default": "h1",
+      "label": "t:sections.all.heading_size.label"
+    },
+    {
+      "type": "richtext",
+      "id": "text",
+      "default": "<p>Talk about how and why is your brand better than the others.</p>",
+      "label": "Text"
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "t:sections.slideshow.blocks.slide.settings.button_label.label",
+      "info": "t:sections.slideshow.blocks.slide.settings.button_label.info"
+    },
+    {
+      "type": "url",
+      "id": "link",
+      "label": "t:sections.slideshow.blocks.slide.settings.link.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "button_style_secondary",
+      "label": "t:sections.slideshow.blocks.slide.settings.secondary_style.label",
+      "default": false
+    },
+    {
+      "type": "select",
+      "id": "color_scheme",
+      "options": [
+        {
+          "value": "accent-1",
+          "label": "t:sections.all.colors.accent_1.label"
+        },
+        {
+          "value": "accent-2",
+          "label": "t:sections.all.colors.accent_2.label"
+        },
+        {
+          "value": "background-1",
+          "label": "t:sections.all.colors.background_1.label"
+        },
+        {
+          "value": "background-2",
+          "label": "t:sections.all.colors.background_2.label"
+        },
+        {
+          "value": "inverse",
+          "label": "t:sections.all.colors.inverse.label"
+        },
+        {
+          "value": "custom",
+          "label": "Custom"
+        }
+      ],
+      "default": "background-1",
+      "label": "t:sections.all.colors.label"
+    },
+    {
+      "type": "header",
+      "content": "Table"
+    },
+    {
+      "type": "select",
+      "id": "layout",
+      "options": [
+        {
+          "value": "table_first",
+          "label": "Table first"
+        },
+        {
+          "value": "table_second",
+          "label": "Table second"
+        }
+      ],
+      "default": "table_second",
+      "label": "Desktop table placement"
+    },
+    {
+      "type": "range",
+      "id": "corner_radius",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "label": "Corner radius",
+      "default": 20
+    },
+    {
+      "type": "range",
+      "id": "number_of_competitors",
+      "min": 1,
+      "max": 3,
+      "step": 1,
+      "label": "Number of displayed competitors",
+      "default": 1,
+      "info": "Multiple competitors are not available with the Minimalistic style."
+    },
+    {
+      "type": "select",
+      "id": "benefit_color_scheme",
+      "options": [
+        {
+          "value": "accent-1",
+          "label": "t:sections.all.colors.accent_1.label"
+        },
+        {
+          "value": "accent-2",
+          "label": "t:sections.all.colors.accent_2.label"
+        },
+        {
+          "value": "background-1",
+          "label": "t:sections.all.colors.background_1.label"
+        },
+        {
+          "value": "background-2",
+          "label": "t:sections.all.colors.background_2.label"
+        },
+        {
+          "value": "inverse",
+          "label": "t:sections.all.colors.inverse.label"
+        }
+      ],
+      "default": "accent-1",
+      "label": "Benefit cells color scheme"
+    },
+    {
+      "type": "color",
+      "id": "checkmark_color",
+      "default": "#53AF01",
+      "label": "Checkmark color"
+    },
+    {
+      "type": "select",
+      "id": "icon_cells_color_scheme",
+      "options": [
+        {
+          "value": "accent-1",
+          "label": "t:sections.all.colors.accent_1.label"
+        },
+        {
+          "value": "accent-2",
+          "label": "t:sections.all.colors.accent_2.label"
+        },
+        {
+          "value": "background-1",
+          "label": "t:sections.all.colors.background_1.label"
+        },
+        {
+          "value": "background-2",
+          "label": "t:sections.all.colors.background_2.label"
+        },
+        {
+          "value": "inverse",
+          "label": "t:sections.all.colors.inverse.label"
+        }
+      ],
+      "default": "background-1",
+      "label": "Icon cells color scheme"
+    },
+    {
+      "type": "header",
+      "content": "Our label/logo"
+    },
+    {
+      "type": "text",
+      "id": "us_label",
+      "label": "Our label",
+      "default": "[shop_name]",
+      "info": "Displayed if logo image is not selected."
+    },
+    {
+      "type": "range",
+      "id": "us_label_size",
+      "min": 12,
+      "max": 28,
+      "step": 1,
+      "unit": "px",
+      "label": "Label font size",
+      "default": 18
+    },
+    {
+      "type": "image_picker",
+      "id": "logo",
+      "label": "Our logo"
+    },
+    {
+      "type": "range",
+      "id": "logo_width",
+      "min": 25,
+      "max": 150,
+      "step": 5,
+      "unit": "px",
+      "label": "Desktop logo width",
+      "default": 90
+    },
+    {
+      "type": "range",
+      "id": "mobile_logo_width",
+      "min": 25,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Mobile logo width",
+      "default": 60
+    },
+    {
+      "type": "header",
+      "content": "Competitor 1"
+    },
+    {
+      "type": "text",
+      "id": "others_label",
+      "label": "Competitor 1 label",
+      "default": "Others",
+      "info": "Displayed if logo image is not selected."
+    },
+    {
+      "type": "range",
+      "id": "others_label_size",
+      "min": 12,
+      "max": 28,
+      "step": 1,
+      "unit": "px",
+      "label": "Label font size",
+      "default": 18
+    },
+    {
+      "type": "image_picker",
+      "id": "others_logo",
+      "label": "Competitor 1 logo"
+    },
+    {
+      "type": "range",
+      "id": "others_logo_width",
+      "min": 25,
+      "max": 150,
+      "step": 5,
+      "unit": "px",
+      "label": "Desktop logo width",
+      "default": 90
+    },
+    {
+      "type": "range",
+      "id": "others_mobile_logo_width",
+      "min": 25,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Mobile logo width",
+      "default": 60
+    },
+    {
+      "type": "header",
+      "content": "Competitor 2"
+    },
+    {
+      "type": "text",
+      "id": "others_2_label",
+      "label": "Competitor 2 label",
+      "default": "Competitor 2",
+      "info": "Displayed if logo image is not selected."
+    },
+    {
+      "type": "range",
+      "id": "others_2_label_size",
+      "min": 12,
+      "max": 28,
+      "step": 1,
+      "unit": "px",
+      "label": "Label font size",
+      "default": 18
+    },
+    {
+      "type": "image_picker",
+      "id": "others_2_logo",
+      "label": "Competitor 2 logo"
+    },
+    {
+      "type": "range",
+      "id": "others_2_logo_width",
+      "min": 25,
+      "max": 150,
+      "step": 5,
+      "unit": "px",
+      "label": "Desktop logo width",
+      "default": 90
+    },
+    {
+      "type": "range",
+      "id": "others_2_mobile_logo_width",
+      "min": 25,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Mobile logo width",
+      "default": 60
+    },
+    {
+      "type": "header",
+      "content": "Competitor 3"
+    },
+    {
+      "type": "text",
+      "id": "others_3_label",
+      "label": "Competitor 3 label",
+      "default": "Competitor 3",
+      "info": "Displayed if logo image is not selected."
+    },
+    {
+      "type": "range",
+      "id": "others_3_label_size",
+      "min": 12,
+      "max": 28,
+      "step": 1,
+      "unit": "px",
+      "label": "Label font size",
+      "default": 18
+    },
+    {
+      "type": "image_picker",
+      "id": "others_3_logo",
+      "label": "Competitor 3 logo"
+    },
+    {
+      "type": "range",
+      "id": "others_3_logo_width",
+      "min": 25,
+      "max": 150,
+      "step": 5,
+      "unit": "px",
+      "label": "Desktop logo width",
+      "default": 90
+    },
+    {
+      "type": "range",
+      "id": "others_3_mobile_logo_width",
+      "min": 25,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Mobile logo width",
+      "default": 60
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_padding_heading"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_top",
+      "default": 36
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_bottom",
+      "default": 36
+    },
+    {
+      "type": "header",
+      "content": "Custom color scheme",
+      "info": "Applied if Color scheme setting is set to Custom."
+    },
+    {
+      "type": "color",
+      "id": "custom_colors_background",
+      "default": "#FFFFFF",
+      "label": "Background color"
+    },
+    {
+      "type": "color_background",
+      "id": "custom_gradient_background",
+      "label": "Gradient background",
+      "info": "If added, replaces Background color when applicable."
+    },
+    {
+      "type": "image_picker",
+      "id": "custom_image_background",
+      "label": "Image background"
+    },
+    {
+      "type": "image_picker",
+      "id": "custom_mobile_image_background",
+      "label": "Mobile image background",
+      "info": "If empty, the Image background will also be applied to mobile devices"
+    },
+    {
+      "type": "color",
+      "id": "custom_colors_text",
+      "default": "#2E2A39",
+      "label": "Text"
+    },
+    {
+      "type": "color",
+      "id": "custom_colors_solid_button_background",
+      "default": "#dd1d1d",
+      "label": "Solid button background"
+    },
+    {
+      "type": "color",
+      "id": "custom_colors_solid_button_text",
+      "default": "#ffffff",
+      "label": "Solid button label"
+    },
+    {
+      "type": "color",
+      "id": "custom_colors_outline_button",
+      "default": "#dd1d1d",
+      "label": "Outline button"
+    },
+  ],
+  "blocks": [
+    {
+      "type": "row",
+      "name": "Table row",
+      "settings": [
+        {
+          "type": "inline_richtext",
+          "id": "benefit",
+          "default": "<strong>Benefit</strong>",
+          "label": "Benefit"
+        },
+        {
+          "type": "checkbox",
+          "id": "us",
+          "default": true,
+          "label": "Us"
+        },
+        {
+          "type": "checkbox",
+          "id": "others",
+          "default": false,
+          "label": "Competitor 1"
+        },
+        {
+          "type": "checkbox",
+          "id": "others_2",
+          "default": false,
+          "label": "Competitor 2"
+        },
+        {
+          "type": "checkbox",
+          "id": "others_3",
+          "default": false,
+          "label": "Competitor 3"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Comparison table",
+      "blocks": [
+        {
+          "type": "row"
+        },
+        {
+          "type": "row"
+        },
+        {
+          "type": "row"
+        }
+      ]
+    }
+  ],
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  }
+}
+{% endschema %}

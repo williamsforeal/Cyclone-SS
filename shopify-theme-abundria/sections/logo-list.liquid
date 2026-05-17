@@ -1,0 +1,396 @@
+{{ 'section-logo-list.css' | asset_url | stylesheet_tag }}
+{{ 'slick.css' | asset_url | stylesheet_tag }}
+{{ 'slick-theme.css' | asset_url | stylesheet_tag }}
+
+{% liquid
+  assign is_rtl = false
+  if settings.enable_rtl == true
+    assign is_rtl = true
+  elsif settings.rtl_enabled_languages != blank
+    assign lang_array_trim = settings.rtl_enabled_languages | replace: ' ', '' | split: ','
+    if lang_array_trim contains localization.language.iso_code
+      assign is_rtl = true
+    endif
+  endif
+%}
+
+{%- style -%}
+  .section-{{ section.id }}-padding {
+    padding-top: {{ section.settings.padding_top | times: 0.75 | round: 0 }}px;
+    padding-bottom: {{ section.settings.padding_bottom | times: 0.75 | round: 0 }}px;
+  }
+
+  @media screen and (min-width: 750px) {
+    .section-{{ section.id }}-padding {
+      padding-top: {{ section.settings.padding_top }}px;
+      padding-bottom: {{ section.settings.padding_bottom }}px;
+    }
+
+    .logo-list-{{ section.id }} .logo-list__item svg, .logo-list-{{ section.id }} .logo-list__item, .logo-list-{{ section.id }} .logo-list__item img {
+      height: {{ section.settings.desktop_logo_height }}px;
+    }
+  }
+
+  @media screen and (max-width: 750px) {
+    .logo-list-{{ section.id }} .logo-list__item svg, .logo-list-{{ section.id }} .logo-list__item, .logo-list-{{ section.id }} .logo-list__item img {
+      height: {{ section.settings.mobile_logo_height }}px;
+    }
+  }
+
+  .color-scheme-{{ section.id }}.color-custom {
+    --color-background: {{ section.settings.custom_colors_background.red }}, {{ section.settings.custom_colors_background.green }}, {{ section.settings.custom_colors_background.blue }};
+    --gradient-background: {% if section.settings.custom_gradient_background != blank %}{{ section.settings.custom_gradient_background }}{% else %}{{ section.settings.custom_colors_background }}{% endif %};
+    {% if section.settings.custom_image_background != blank %}
+      {% # theme-check-disable %}
+      --gradient-background: url('{{ section.settings.custom_image_background | img_url: 'master' }}') center center / cover no-repeat;
+      {% # theme-check-enable %}
+    {% endif %}
+    --color-foreground: {{ section.settings.custom_colors_text.red }}, {{ section.settings.custom_colors_text.green }}, {{ section.settings.custom_colors_text.blue }};
+  }
+  {% if section.settings.custom_mobile_image_background != blank %}
+    @media screen and (max-width: 740px) {
+      .color-scheme-{{ section.id }}.color-custom {
+        {% # theme-check-disable %}
+        --gradient-background: url('{{ section.settings.custom_mobile_image_background | img_url: 'master' }}') center center / cover no-repeat;
+        {% # theme-check-enable %}
+      }
+    }
+  {% endif %}
+{%- endstyle -%}
+
+<div class="color-{{ section.settings.color_scheme }} color-scheme-{{ section.id }} gradient {{ section.settings.visibility }} ">
+  <div class="page-width section-{{ section.id }}-padding">
+    <div class="logo-list-container logo-list-container-{{ section.settings.layout }}">
+      {% if section.settings.title != blank %}
+        <div class="logo-list__heading">
+          <h2 class="title {{ section.settings.heading_size }}">
+            {{ section.settings.title | escape }}
+          </h2>
+        </div>
+      {% endif %}
+      <div class="logo-list logo-list-{{ section.id }}">
+        {% for block in section.blocks %}
+          <{% if block.settings.link != blank %}a href="{{ block.settings.link }}" {% if block.settings.target_blank %}target="_blank" rel="noreferrer"{% endif %} {% else %}div{% endif %} class="logo-list__item{% if section.settings.gray_logos %} logo-list__item--gray{% endif %}">
+            {% if block.settings.image != blank %}
+              <img
+                src="{{ block.settings.image | image_url }}"
+                {% if block.settings.image.alt != blank %}
+                  alt="{{ block.settings.image.alt | escape }}"
+                {% else %}
+                  role="presentation"
+                {% endif %}
+                height="auto"
+                width="auto"
+                loading="lazy"
+              >
+            {% else %}
+              {{ 'image' | placeholder_svg_tag: 'placeholder-svg placeholder' }}
+            {% endif %}
+          </{%- if block.settings.link != blank -%}a{% else %}div{%- endif -%}>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if section.settings.swipe_on_mobile %}
+<script>
+  function mobileSlider() {
+    $(".logo-list-{{ section.id }}").slick({
+      slidesToShow: {{ section.settings.columns_mobile }},
+      slidesToScroll: 1,
+      mobileFirst: true,
+      {% if is_rtl %}rtl: true,{% endif %}
+      autoplay: {{ section.settings.autoplay }},
+      autoplaySpeed: {{ section.settings.autoplay_speed | times: 1000 }},
+      dots: {{ section.settings.show_dots }},
+      arrows: false,
+      responsive: [
+        {
+          breakpoint: 750,
+          settings: 'unslick'
+        }
+      ]
+    })
+  }
+
+  document.addEventListener('DOMContentLoaded', mobileSlider);
+  window.addEventListener("resize", mobileSlider);
+</script>
+{% endif %}
+
+{% schema %}
+{
+    "name": "Featured on",
+    "settings": [
+          {
+      "type": "select",
+      "id": "visibility",
+      "options": [
+        {
+          "value": "desktop-hidden",
+          "label": "Mobile only"
+        },
+        {
+          "value": "mobile-hidden",
+          "label": "Desktop only"
+        },
+        {
+          "value": "always-display",
+          "label": "All devices"
+        }
+      ],
+      "label": "Display on",
+      "default": "always-display"
+    },
+      {
+        "type": "text",
+        "id": "title",
+        "default": "Featured on",
+        "label": "Heading"
+      },
+      {
+        "type": "select",
+        "id": "heading_size",
+        "options": [
+          {
+            "value": "h2",
+            "label": "t:sections.all.heading_size.options__1.label"
+          },
+          {
+            "value": "h1",
+            "label": "t:sections.all.heading_size.options__2.label"
+          },
+          {
+            "value": "h0",
+            "label": "t:sections.all.heading_size.options__3.label"
+          }
+        ],
+        "default": "h1",
+        "label": "t:sections.all.heading_size.label"
+      },
+      {
+        "type": "checkbox",
+        "id": "gray_logos",
+        "label": "Gray logos",
+        "default": false
+      },
+      {
+        "type": "select",
+        "id": "color_scheme",
+        "options": [
+          {
+            "value": "accent-1",
+            "label": "t:sections.all.colors.accent_1.label"
+          },
+          {
+            "value": "accent-2",
+            "label": "t:sections.all.colors.accent_2.label"
+          },
+          {
+            "value": "background-1",
+            "label": "t:sections.all.colors.background_1.label"
+          },
+          {
+            "value": "background-2",
+            "label": "t:sections.all.colors.background_2.label"
+          },
+          {
+            "value": "inverse",
+            "label": "t:sections.all.colors.inverse.label"
+          },
+          {
+            "value": "custom",
+            "label": "Custom"
+          }
+        ],
+        "default": "background-1",
+        "label": "t:sections.all.colors.label"
+      },
+      {
+        "type": "header",
+        "content": "Desktop"
+      },
+      {
+        "type": "select",
+        "id": "layout",
+        "options": [
+          {
+            "value": "vertical",
+            "label": "Vertical"
+          },
+          {
+            "value": "horizontal",
+            "label": "Horizontal"
+          }
+        ],
+        "default": "horizontal",
+        "label": "Desktop layout"
+      },
+      {
+        "type": "range",
+        "id": "desktop_logo_height",
+        "min": 30,
+        "max": 150,
+        "step": 10,
+        "default": 50,
+        "label": "Desktop logo height"
+      },
+      {
+        "type": "header",
+        "content": "Mobile"
+      },
+      {
+        "type": "range",
+        "id": "columns_mobile",
+        "min": 1,
+        "max": 4,
+        "step": 1,
+        "default": 2,
+        "label": "t:sections.multicolumn.settings.columns_mobile.label"
+      },
+      {
+        "type": "range",
+        "id": "mobile_logo_height",
+        "min": 30,
+        "max": 150,
+        "step": 10,
+        "default": 50,
+        "label": "Mobile logo height"
+      },
+      {
+        "type": "paragraph",
+        "content": "IMPORTANT: Due to liquid limitations, ONLY in Theme editor you need to save (to get the frame to refresh) after changing certain settings to display the slider."
+      },
+      {
+        "type": "checkbox",
+        "id": "swipe_on_mobile",
+        "default": true,
+        "label": "t:sections.multicolumn.settings.swipe_on_mobile.label"
+      },
+      {
+        "type": "checkbox",
+        "id": "autoplay",
+        "label": "Autoplay",
+        "default": true
+      },
+      {
+        "type": "range",
+        "id": "autoplay_speed",
+        "min": 1,
+        "max": 15,
+        "step": 0.5,
+        "default": 5,
+        "unit": "sec",
+        "label": "Autoplay speed"
+      },
+      {
+        "type": "checkbox",
+        "id": "show_dots",
+        "label": "Show dots",
+        "default": true
+      },
+      {
+        "type": "header",
+        "content": "t:sections.all.padding.section_padding_heading"
+      },
+      {
+        "type": "range",
+        "id": "padding_top",
+        "min": 0,
+        "max": 100,
+        "step": 4,
+        "unit": "px",
+        "label": "t:sections.all.padding.padding_top",
+        "default": 36
+      },
+      {
+        "type": "range",
+        "id": "padding_bottom",
+        "min": 0,
+        "max": 100,
+        "step": 4,
+        "unit": "px",
+        "label": "t:sections.all.padding.padding_bottom",
+        "default": 36
+      },
+      {
+        "type": "header",
+        "content": "Custom color scheme",
+        "info": "Applied if Color scheme setting is set to Custom."
+      },
+      {
+        "type": "color",
+        "id": "custom_colors_background",
+        "default": "#FFFFFF",
+        "label": "Background color"
+      },
+      {
+        "type": "color_background",
+        "id": "custom_gradient_background",
+        "label": "Gradient background",
+        "info": "If added, replaces Background color when applicable."
+      },
+      {
+      "type": "image_picker",
+      "id": "custom_image_background",
+      "label": "Image background"
+    },
+    {
+      "type": "image_picker",
+      "id": "custom_mobile_image_background",
+      "label": "Mobile image background",
+      "info": "If empty, the Image background will also be applied to mobile devices"
+    },
+      {
+        "type": "color",
+        "id": "custom_colors_text",
+        "default": "#121212",
+        "label": "Text"
+      }
+    ],
+    "blocks": [
+      {
+        "type": "logo",
+        "name": "Logo",
+        "settings": [
+          {
+            "type": "image_picker",
+            "id": "image",
+            "label": "Logo"
+          },
+          {
+            "type": "url",
+            "id": "link",
+            "label": "Link"
+          },
+          {
+            "type": "checkbox",
+            "id": "target_blank",
+            "label": "Open link in a new tab",
+            "default": false
+          }
+        ]
+      }
+    ],
+    "presets": [
+      {
+        "name": "Featured on",
+        "blocks": [
+          {
+            "type": "logo"
+          },
+          {
+            "type": "logo"
+          },
+          {
+            "type": "logo"
+          }
+        ]
+      }
+    ],
+    "disabled_on": {
+        "groups": ["header", "footer"]
+    }
+}
+{% endschema %}
