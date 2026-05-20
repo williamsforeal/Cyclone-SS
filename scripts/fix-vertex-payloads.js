@@ -1,5 +1,7 @@
 const fs = require('fs');
-const wf = JSON.parse(fs.readFileSync('c:/1. Business/williamsforeal LLC/repositories/Cyclone-SS/workflows/static-scaler-v3-vertex.json', 'utf8'));
+const path = require('path');
+const wfPath = path.resolve(__dirname, '..', 'workflows', 'static-scaler-v3-vertex.json');
+const wf = JSON.parse(fs.readFileSync(wfPath, 'utf8'));
 
 // ===== 1. Fix Build CD Payload (Creative Director) =====
 const buildCD = wf.nodes.find(n => n.name === 'Build CD Payload');
@@ -102,14 +104,11 @@ wf.nodes.forEach(n => {
 });
 
 // ===== 4. Write output =====
-fs.writeFileSync(
-  'c:/1. Business/williamsforeal LLC/repositories/Cyclone-SS/workflows/static-scaler-v3-vertex.json',
-  JSON.stringify(wf, null, 2)
-);
+fs.writeFileSync(wfPath, JSON.stringify(wf, null, 2));
 
 // ===== 5. Verify =====
 console.log('\n--- Verification ---');
-const v = JSON.parse(fs.readFileSync('c:/1. Business/williamsforeal LLC/repositories/Cyclone-SS/workflows/static-scaler-v3-vertex.json','utf8'));
+const v = JSON.parse(fs.readFileSync(wfPath, 'utf8'));
 
 const vBuildCD = v.nodes.find(n => n.name === 'Build CD Payload');
 const vBuildIPE = v.nodes.find(n => n.name === 'Build IPE Payload');

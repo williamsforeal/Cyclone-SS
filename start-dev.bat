@@ -18,8 +18,11 @@ docker ps --filter "name=n8n" --filter "name=postgres" --format "table {{.Names}
 echo.
 
 REM Step 3: Start ComfyUI in a new window
+REM Set COMFYUI_PORTABLE_ROOT in your .env or as a user env var.
+if not defined COMFYUI_PORTABLE_ROOT set COMFYUI_PORTABLE_ROOT=C:\Users\%USERNAME%\Downloads\ComfyUI_windows_portable_amd\ComfyUI_windows_portable
+
 echo [3/3] Starting ComfyUI in new window...
-start "ComfyUI" cmd /k "cd /d C:\Users\Jake\Downloads\ComfyUI_windows_portable_amd\ComfyUI_windows_portable && .\python_embeded\python.exe -s ComfyUI\main.py --windows-standalone-build --listen 127.0.0.1 --port 8188"
+start "ComfyUI" cmd /k "cd /d %COMFYUI_PORTABLE_ROOT% && .\python_embeded\python.exe -s ComfyUI\main.py --windows-standalone-build --listen 127.0.0.1 --port 8188"
 timeout /t 2 /nobreak >nul
 echo.
 
@@ -30,7 +33,7 @@ echo.
 echo   n8n:      http://localhost:5678
 echo   ComfyUI:  http://127.0.0.1:8188
 echo.
-echo   Login: admin / changeme
+echo   n8n uses User Management (email login set up in n8n UI).
 echo.
 echo Press any key to open n8n in browser...
 pause >nul

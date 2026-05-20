@@ -4,7 +4,10 @@
 # Usage: powershell -ExecutionPolicy Bypass -File scripts\comfyui\download-all-models.ps1
 # =============================================================================
 
-$base = "C:\1. Business\williamsforeal LLC\repositories\Cyclone-SS\comfyui\ComfyUI\models"
+# Set COMFYUI_ROOT in your .env or as a user env var. Default: C:\ComfyUI
+$comfyRoot = if ($env:COMFYUI_ROOT) { $env:COMFYUI_ROOT } else { "C:\ComfyUI" }
+$base = Join-Path $comfyRoot "models"
+Write-Host "Downloading models to: $base" -ForegroundColor Cyan
 
 # Create all directories
 $dirs = @(
