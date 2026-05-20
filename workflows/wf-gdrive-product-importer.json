@@ -1,0 +1,297 @@
+{
+  "name": "Google Drive Product Importer",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bomb-import-from-drive",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [180, 300],
+      "id": "gdrive-webhook",
+      "name": "Webhook: Import From Drive"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://www.googleapis.com/drive/v3/files",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "name='AI Com Product Research' and mimeType='application/vnd.google-apps.folder'"
+            },
+            {
+              "name": "fields",
+              "value": "files(id,name)"
+            }
+          ]
+        },
+        "authentication": "oAuth2Api",
+        "credential": {
+          "oAuth2Api": {
+            "id": "google-drive-account",
+            "name": "Google Drive account"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [400, 300],
+      "id": "gdrive-find-folder",
+      "name": "Find Folder: AI Com Product Research"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://www.googleapis.com/drive/v3/files?q={{ encodeURIComponent(\"'\" + $json.files[0].id + \"' in parents and mimeType='application/vnd.google-apps.document'\") }}&fields=files(id,name,webViewLink,createdTime)&orderBy=createdTime",
+        "authentication": "oAuth2Api",
+        "credential": {
+          "oAuth2Api": {
+            "id": "google-drive-account",
+            "name": "Google Drive account"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [620, 300],
+      "id": "gdrive-list-docs",
+      "name": "List Docs In Folder"
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {
+          "reset": false
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [860, 300],
+      "id": "gdrive-split-batches",
+      "name": "Split In Batches"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://docs.googleapis.com/v1/documents/{{ $json.id }}",
+        "authentication": "oAuth2Api",
+        "credential": {
+          "oAuth2Api": {
+            "id": "google-drive-account",
+            "name": "Google Drive account"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1100, 300],
+      "id": "gdrive-get-doc",
+      "name": "Get Document Content"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract plain text from Google Doc body content\nconst doc = $input.item.json;\nconst docMeta = $('Split In Batches').item.json;\n\nlet text = '';\nif (doc.body && doc.body.content) {\n  for (const element of doc.body.content) {\n    if (element.paragraph) {\n      for (const el of element.paragraph.elements || []) {\n        if (el.textRun) text += el.textRun.content;\n      }\n    }\n  }\n}\n\nreturn [{\n  json: {\n    docText: text.trim().slice(0, 8000),\n    docId: docMeta.id,\n    docTitle: docMeta.name,\n    docUrl: docMeta.webViewLink || `https://docs.google.com/document/d/${docMeta.id}`,\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1320, 300],
+      "id": "gdrive-extract-text",
+      "name": "Extract Text From Doc"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://us-central1-aiplatform.googleapis.com/v1/projects/gen-lang-client-0234791928/locations/us-central1/publishers/google/models/gemini-2.0-flash-001:generateContent",
+        "authentication": "oAuth2Api",
+        "credential": {
+          "oAuth2Api": {
+            "id": "google-cloud-account",
+            "name": "Google Cloud account"
+          }
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [{\n    \"role\": \"user\",\n    \"parts\": [{\n      \"text\": \"You are a product research analyst. Extract structured data from this product research document.\\n\\nDocument: {{ $json.docText }}\\n\\nReturn ONLY valid JSON with these exact fields:\\n{\\n  \\\"productName\\\": \\\"short product name (2-5 words)\\\",\\n  \\\"description\\\": \\\"2-3 sentence summary of the product opportunity\\\",\\n  \\\"keywords\\\": [\\\"keyword1\\\", \\\"keyword2\\\", \\\"keyword3\\\"],\\n  \\\"aliexpressKeyword\\\": \\\"best search term to find this on AliExpress\\\",\\n  \\\"rankSignal\\\": 7\\n}\\n\\nrankSignal is 1-10 based on how positively the document discusses the product's potential. Return JSON only, no markdown.\"\n    }]\n  }],\n  \"generationConfig\": {\n    \"temperature\": 0.2,\n    \"maxOutputTokens\": 512\n  }\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1540, 300],
+      "id": "gdrive-vertex-gemini",
+      "name": "Vertex AI: Gemini Extract Product"
+    },
+    {
+      "parameters": {
+        "jsCode": "const geminiText = $input.item.json.candidates?.[0]?.content?.parts?.[0]?.text || '{}';\nconst prev = $('Extract Text From Doc').item.json;\n\nlet parsed = {};\ntry {\n  const match = geminiText.match(/\\{[\\s\\S]*\\}/);\n  parsed = JSON.parse(match ? match[0] : geminiText);\n} catch(e) {\n  parsed = { productName: prev.docTitle, keywords: [], rankSignal: 5 };\n}\n\nreturn [{\n  json: {\n    productName: parsed.productName || prev.docTitle,\n    description: parsed.description || '',\n    keywords: parsed.keywords || [],\n    aliexpressKeyword: parsed.aliexpressKeyword || parsed.productName || prev.docTitle,\n    rankInFolder: parsed.rankSignal || 5,\n    sourceDocTitle: prev.docTitle,\n    sourceDocUrl: prev.docUrl,\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1760, 300],
+      "id": "gdrive-parse-gemini",
+      "name": "Parse Gemini Response"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:5000/api/ingest/product-from-doc",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1980, 300],
+      "id": "gdrive-ingest-product",
+      "name": "Ingest Product To Express"
+    },
+    {
+      "parameters": {
+        "unit": "seconds",
+        "amount": 2,
+        "resume": "timeInterval"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [2200, 300],
+      "id": "gdrive-wait",
+      "name": "Wait 2 Seconds"
+    }
+  ],
+  "connections": {
+    "Webhook: Import From Drive": {
+      "main": [
+        [
+          {
+            "node": "Find Folder: AI Com Product Research",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Folder: AI Com Product Research": {
+      "main": [
+        [
+          {
+            "node": "List Docs In Folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Docs In Folder": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split In Batches": {
+      "main": [
+        [
+          {
+            "node": "Get Document Content",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Get Document Content": {
+      "main": [
+        [
+          {
+            "node": "Extract Text From Doc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Text From Doc": {
+      "main": [
+        [
+          {
+            "node": "Vertex AI: Gemini Extract Product",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Vertex AI: Gemini Extract Product": {
+      "main": [
+        [
+          {
+            "node": "Parse Gemini Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Gemini Response": {
+      "main": [
+        [
+          {
+            "node": "Ingest Product To Express",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ingest Product To Express": {
+      "main": [
+        [
+          {
+            "node": "Wait 2 Seconds",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 2 Seconds": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "gdrive-product-importer-v1",
+  "meta": {
+    "instanceId": "cyclone-ss-local"
+  },
+  "id": "wf-gdrive-product-importer",
+  "tags": ["gdrive", "product-import", "gemini", "vertex-ai"]
+}
