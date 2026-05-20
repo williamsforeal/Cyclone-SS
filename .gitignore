@@ -158,6 +158,9 @@ public/tiktok-images/
 bom-ecom/uploads/
 bom-ecom/attached_assets/
 
+# Generated outputs (per CLAUDE.md: outputs/ is for deliverables, not tracked)
+/output/
+
 # Global skills — excluded items (personal/binary/junk that ended up in ~/.claude/skills/)
 global-skills/Clawdbot-setup/
 global-skills/_master-prompts/

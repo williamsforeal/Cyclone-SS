@@ -1,0 +1,18 @@
+[submodule "comfyui/ComfyUI"]
+	path = comfyui/ComfyUI
+	url = https://github.com/williamsforeal/ComfyUI.git
+[submodule "comfyui/custom_nodes/ComfyUI-Manager"]
+	path = comfyui/custom_nodes/ComfyUI-Manager
+	url = https://github.com/williamsforeal/ComfyUI-Manager.git
+[submodule "comfyui/custom_nodes/comfyui-custom-scripts"]
+	path = comfyui/custom_nodes/comfyui-custom-scripts
+	url = https://github.com/williamsforeal/comfyui-custom-scripts.git
+[submodule "comfyui/custom_nodes/efficiency-nodes-comfyui"]
+	path = comfyui/custom_nodes/efficiency-nodes-comfyui
+	url = https://github.com/williamsforeal/efficiency-nodes-comfyui.git
+[submodule "comfyui/custom_nodes/comfyui-impact-pack"]
+	path = comfyui/custom_nodes/comfyui-impact-pack
+	url = https://github.com/williamsforeal/comfyui-impact-pack.git
+[submodule "comfyui/custom_nodes/comfyui-workflows"]
+	path = comfyui/custom_nodes/comfyui-workflows
+	url = https://github.com/williamsforeal/comfyui-workflows.git
