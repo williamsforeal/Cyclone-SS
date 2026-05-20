@@ -1,0 +1,45 @@
+﻿The key topics discussed in the video include:
+
+
+Product Research and Validation
+* Finding a good product is based on experience and a balance of factors, not just one specific metric or piece of data.
+* Lack of validation (reviews) on Amazon does not mean a product is bad, especially if there are active competitors and ads on platforms like Meta, and the product is sourceable and the pricing is good.
+* A strong product might not have Kalo data, but if other validation is present (sourceable, good COGS and perceived value, active drop shipping competitors on Facebook running ads for an extended time), there is enough confidence to move forward.
+* It is always recommended to get a product reviewed.
+* Product research should include checking Amazon reviews for insight, looking at the overall rating, and seeing if other drop shippers are running the product.
+* For product ideas:
+   * Outlet Heater: Performance is decent, and it doesn't seem to be selling on a cheap basis. However, the speaker questions what makes it significantly better than a traditional, portable space heater. The revenue is present, so the speaker cannot dismiss it, and they suggest focusing on a specific angle, like using it in a bathroom.
+   * Work Boots: Normally, apparel should be avoided. The boots shown look like a generic, easily buyable style, and the "indestructible steel toe" and waterproof features are common.
+   * Chair Cover (for spills/kids): This product addresses a problem (chairs getting dirty from kids eating/spilling). Marketing at this angle could show potential due to the revenue shown.
+   * Oil Filter Adjuster/Tightener: This product is available at any auto repair shop and is highly commoditized (other tools do the same thing). It is not a good pick, despite having multiple red flags that would normally prompt further research, such as cheap price and alternative tools being shown in the ad.
+   * Proteolytic Gummies: This is a branded, proprietary formula and should be avoided.
+   * Wind Protection Face Mask/Subzero Mesh: This product has a problem-solving angle (combating the cold) and potential, especially for those who work outside. However, it is seasonal and considered a low-ticket item, so active drop shipping competitors should be confirmed.
+   * Jacket/Warmer for Baby: The speaker likes the concept for the baby niche and suggests looking into it more, checking for active competitors and Amazon reviews. The speaker notes this niche is tough due to domination by brands like MomCozy.
+   * Wigs: The speaker advises staying away from wigs because they are often branded (e.g., CurlyMe), and customer expectations regarding texture, color, and length make returns and chargebacks likely and frustrating.
+   * Eyebrow/Facial Hair Remover: This product seems interesting as a more efficient and less painful alternative to plucking, and the speaker recommends looking into it more, though they have no personal experience.
+   * Moro (Fitness Gadget): This is a branded product from Moro, a huge fitness brand. Competition is tough, and sourcing is expensive, which cuts into margins.
+   * Inkless Portable Printer (Thermal): This is an older product that a similar version of which the speaker successfully sold with organic drop shipping. The main issue is whether it is effectively marketed as a problem solver, since customers now need to buy thermal paper instead of ink.
+   * Self-Heating Lunch Box: This product is a problem solver for people who lack microwaves at work (outdoor jobs, flight crew) or school, and the speaker recommends looking into that angle more.
+Identifying Branded Products
+* The easiest and most consistent way to identify a branded product is to look for consistency in the shop information, the title, and the actual product.
+* Generic products from China do not have branding on the product and the title is usually descriptive for search ranking.
+* A further step is to look for multiple listings on Kalo data of the exact same product.
+Advertising and Marketing
+* The speaker uses the 'Static Flow' tool, which is included in the tool suite subscription, and its top-performing ads as templates for inspiration.
+* AI (like ChatGPT) can be used to generate ads more efficiently.
+* A good way to use AI is to talk to it like a person, asking for the most efficient way to achieve a desired outcome or to modify prompts for image recreation.
+Operational and Course Advice
+* It is not ideal to run holiday-specific products like for Valentine's Day at a late stage because customers will be upset about late delivery, leading to refund requests and chargebacks.
+* Students should get their product approved before proceeding with store building and the course to ensure they have a validated product.
+* When offering a free gift as part of a bundle, the customer will receive two separate shipments. Later, an agent can potentially put it all together, but separate fulfillment is common in the beginning.
+* For products with sizing concerns (like the elastic chair cover), it is ideal to be transparent about dimensions and ideal chair size ranges to avoid customer problems.
+* If a supplier needs to be swapped out, there is a section in the product editor where that can be changed; if unsure, consult Chat GPT.
+* The calls are intended to be more interactive, and students are encouraged to share products in the chat for review and to network with each other to expedite their journey.
+* The speaker encourages students to operate out of the identity of a "drop shipper" and "successful business brand owner" to change their perspective and opportunities.
+* Students should be aware that if they choose a product discussed on the call, they will be running it with many other students, and success will depend on the intentional time and effort they put in.
+
+
+
+
+Sources:
+* Product Research Call with Kai Jan 31st.mkv
